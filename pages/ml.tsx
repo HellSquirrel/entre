@@ -3,10 +3,9 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react";
-import Link from 'next/link';
 
 
-const Home: NextPage = () => {
+const Planner: NextPage = () => {
   return (
     <div className={styles.container}>
       <Head>
@@ -16,15 +15,15 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <nav>
-          <Link href="/planner" >Planner</Link> |
-          <Link href="/ml" >ML</Link>
-          <Link href="/blog/first" >Blog</Link>
-        </nav>
+      <Editor
+        height="90vh"
+        defaultLanguage="mdx"
+        defaultValue="# Start"
+      />
       </main>
         
     </div>
   )
 }
 
-export default Home
+export default Planner

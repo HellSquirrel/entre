@@ -8,7 +8,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mdx-js/loader": "^2.0.0",
     "@monaco-editor/react": "^4.3.1",
+    "@next/mdx": "^12.0.10",
     "next": "12.0.10",
     "react": "17.0.2",
     "react-dom": "17.0.2"
