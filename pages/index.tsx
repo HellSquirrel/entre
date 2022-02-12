@@ -1,12 +1,10 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react";
 import Link from 'next/link';
 
 
-const Home: NextPage = () => {
+const Main: NextPage = () => {
   return (
     <div className={styles.container}>
       <Head>
@@ -27,4 +25,4 @@ const Home: NextPage = () => {
   )
 }
 
-export default Home
+export default Main

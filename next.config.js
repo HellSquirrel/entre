@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  pageExtensions: ['md', 'mdx'],
+  pageExtensions: ['md', 'mdx', 'tsx'],
 }
 
 const withMDX = require('@next/mdx')({
