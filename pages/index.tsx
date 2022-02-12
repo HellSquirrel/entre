@@ -15,8 +15,8 @@ const Main: NextPage = () => {
 
       <main className={styles.main}>
         <nav>
-          <Link href="/planner" >Planner</Link> |
-          <Link href="/ml" >ML</Link>
+          <Link href="/planner" >Planner</Link>  |{'  '}
+          <Link href="/ml" >ML</Link>  |{'  '}
           <Link href="/blog/first" >Blog</Link>
         </nav>
       </main>

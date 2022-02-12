@@ -1,6 +1,5 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
 import Editor from "@monaco-editor/react";
 
 
@@ -14,12 +13,11 @@ const Planner: NextPage = () => {
 
       <main>
       <Editor
-        height="90vh"
-        defaultLanguage="mdx"
-        defaultValue="# Start"
+        height="100vh"
+        defaultLanguage="typescript"
+        defaultValue=""
       />
       </main>
-        
     </>
   )
 }
