@@ -16,7 +16,10 @@ const Main: NextPage = () => {
         <nav>
           <Link href="/planner" >Planner</Link>  |{'  '}
           <Link href="/ml" >ML</Link>  |{'  '}
-          <Link href="/blog/first" >Blog</Link>
+          <Link href="/blog/first" >Blog</Link>  |{'  '}
+          <Link href="/api/auth/login">Login</Link>  |{'  '}
+          <Link href="/api/auth/logout">Logout</Link>
+
         </nav>
       </main>
         
