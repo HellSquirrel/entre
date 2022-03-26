@@ -1,5 +1,6 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
+import Link from 'next/link'
 
 const Planner: NextPage = () => {
   return (
@@ -10,9 +11,8 @@ const Planner: NextPage = () => {
       </Head>
 
       <main>
-      ML will live here :)
+        <Link href="/ml/get-started">Get Started</Link>
       </main>
-        
     </div>
   )
 }

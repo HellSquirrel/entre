@@ -3,7 +3,6 @@ import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import Link from 'next/link';
 
-
 const Main: NextPage = () => {
   return (
     <div className={styles.container}>
@@ -17,8 +16,10 @@ const Main: NextPage = () => {
           <Link href="/planner" >Planner</Link>  |{'  '}
           <Link href="/ml" >ML</Link>  |{'  '}
           <Link href="/blog/first" >Blog</Link>  |{'  '}
+          <Link href="/demos/imgproxy">Imgproxy</Link>  |{'  '}
           <Link href="/api/auth/login">Login</Link>  |{'  '}
           <Link href="/api/auth/logout">Logout</Link>
+
 
         </nav>
       </main>

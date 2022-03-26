@@ -5,7 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "imgproxy": "docker run -p 7000:7000 -it darthsim/imgproxy"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^1.7.0",
