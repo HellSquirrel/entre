@@ -13,7 +13,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@styles": ["./stitches.config"],
+      "@components": ["./components"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/blog/images.mdx"],
   "exclude": ["node_modules"]
