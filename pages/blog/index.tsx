@@ -1,4 +1,3 @@
-import { promises } from 'fs'
 import { NextPage, GetStaticProps } from 'next'
 import { getAllFrontmatter } from 'lib/mdx'
 import Link from 'next/link'
