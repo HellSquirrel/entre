@@ -2,6 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['md', 'mdx', 'tsx'],
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/blog',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 const withMDX = require('@next/mdx')({
