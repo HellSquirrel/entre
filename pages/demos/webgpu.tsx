@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 
 const runDemo = async () => {
-  const adapter = await navigator.gpu.requestAdapter()
+  const adapter = await navigator.gpu?.requestAdapter()
+  if (!adapter) return
   const device = await adapter.requestDevice()
   console.log(device)
 
