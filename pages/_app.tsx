@@ -3,7 +3,6 @@ import type { AppProps } from 'next/app'
 import { Layout } from '../components/Layout'
 import { MDXProvider } from '@mdx-js/react'
 import { ThemeProvider } from 'next-themes'
-import Image from 'next/image'
 
 function NextAPP({ Component, pageProps }: AppProps) {
   return (

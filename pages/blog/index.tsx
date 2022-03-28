@@ -1,20 +1,23 @@
 import { promises } from 'fs'
-import { NextPage } from 'next'
+import { NextPage, GetStaticProps } from 'next'
+import { getAllFrontmatter } from 'lib/mdx'
+import Link from 'next/link'
 
-export const meta = [
-  {
-    title: 'Очевидности оптимизации картинок. Часть 1',
-    date: '2022-03-27T20:57:25.682Z',
-    tags: ['images', 'performance'],
-  },
-]
+export const getStaticProps: GetStaticProps = () => {
+  return {
+    props: { matters: getAllFrontmatter(`${process.cwd()}/pages/blog/posts`) },
+  }
+}
 
-const ListOfAllPosts: NextPage = () => {
+const ListOfAllPosts: NextPage = ({ matters }) => {
+  console.log(matters)
   return (
     <ul>
-      {meta.map(({ title, date, tags }) => (
+      {matters.map(({ title, date, tags, slug }) => (
         <li key={title}>
-          <h2>{title}</h2>
+          <h2>
+            <Link href={`/blog/posts/${slug}`}>{title}</Link>
+          </h2>
           <div>{new Date(date).toLocaleDateString()}</div>
           <ul>
             {tags.map(t => (
