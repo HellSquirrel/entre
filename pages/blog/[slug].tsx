@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { GetStaticProps } from 'next'
+import { GetStaticPropsContext } from 'next'
 import { getPosts } from 'lib/mdx'
 import { Post, Frontmatter } from '../../types/blog'
 import { serialize } from 'next-mdx-remote/serialize'
@@ -23,21 +23,24 @@ const components = {
   },
 }
 
-const Post: FC<Props> = ({ frontmatter, mdxSource }) => (
-  // @ts-ignore
-  <MDXProvider components={components}>
-    <div>
-      <div>{new Date(frontmatter?.date).toLocaleDateString()}</div>
-      <MDXRemote {...mdxSource} />
-    </div>
-  </MDXProvider>
-)
+export async function getStaticPaths() {
+  const matters = getPosts(`${process.cwd()}/blog`)
+  const paths = matters.map(m => ({
+    params: {
+      slug: `/blog/${m.slug}`,
+    },
+  }))
+  return {
+    paths,
+    fallback: true,
+  }
+}
 
-export const getStaticProps: GetStaticProps = async context => {
-  console.log('here!')
-  const post = getPosts(`${process.cwd()}/blog`).find(
-    f => f.slug === context?.params?.slug
-  ) as Post
+export async function getStaticProps(context: GetStaticPropsContext) {
+  const posts = getPosts(`${process.cwd()}/blog`)
+  const post =
+    posts.find(f => context?.params?.slug?.includes(f.slug)) ||
+    (posts[0] as Post)
 
   const mdxSource = await serialize(post.content)
 
@@ -50,17 +53,14 @@ export const getStaticProps: GetStaticProps = async context => {
   }
 }
 
-export const getStaticPaths = async () => {
-  const matters = getPosts(`${process.cwd()}/blog`)
-  const paths = matters.map(m => ({
-    params: {
-      slug: `/blog/${m.slug}`,
-    },
-  }))
-  return {
-    paths,
-    fallback: true,
-  }
-}
+const Post: FC<Props> = ({ frontmatter, mdxSource }) => (
+  // @ts-ignore
+  <MDXProvider components={components}>
+    <div>
+      <div>{new Date(frontmatter?.date).toLocaleDateString()}</div>
+      <MDXRemote {...mdxSource} />
+    </div>
+  </MDXProvider>
+)
 
 export default Post
