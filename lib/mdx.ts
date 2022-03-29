@@ -7,6 +7,7 @@ import { Post } from 'types/blog'
 // the front matter and content of all mdx files based on `docsPaths`
 export const getPosts = (fromPath: string): Post[] => {
   const paths = glob.sync(`${path.join(fromPath)}/**/*.mdx`)
+
   return paths.map((filePath: string) => {
     const source = fs.readFileSync(path.join(filePath), 'utf8')
     const { data, content } = matter(source)

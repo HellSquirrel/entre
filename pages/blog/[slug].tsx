@@ -27,14 +27,14 @@ const Post: FC<Props> = ({ frontmatter, mdxSource }) => (
   // @ts-ignore
   <MDXProvider components={components}>
     <div>
-      <div>{frontmatter.title}</div>
-      <div>{new Date(frontmatter.date).toLocaleDateString()}</div>
+      <div>{new Date(frontmatter?.date).toLocaleDateString()}</div>
       <MDXRemote {...mdxSource} />
     </div>
   </MDXProvider>
 )
 
 export const getStaticProps: GetStaticProps = async context => {
+  console.log('here!')
   const post = getPosts(`${process.cwd()}/blog`).find(
     f => f.slug === context?.params?.slug
   ) as Post

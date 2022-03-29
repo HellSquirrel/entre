@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import Head from 'next/head'
 import { styled, globalCss } from '@styles'
-import { ThemeToggler } from './ThemeToggler'
+import { Navigation } from './Navigation'
 
 const Main = styled('main', {
   flex: '1 0 auto',
@@ -59,12 +59,8 @@ export const Layout: FC = ({ children }) => {
           rel="stylesheet"
         />
       </Head>
-      <Main>
-        <nav>
-          <ThemeToggler />
-        </nav>
-        {children}
-      </Main>
+      <Navigation />
+      <Main>{children}</Main>
     </>
   )
 }
