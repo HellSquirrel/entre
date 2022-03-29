@@ -4,6 +4,12 @@ import { getPosts } from 'lib/mdx'
 import { Post, Frontmatter } from '../../types/blog'
 import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote, MDXRemoteProps } from 'next-mdx-remote'
+import { MDXProvider } from '@mdx-js/react'
+import { styled } from '@styles'
+
+const Img = styled('img', {
+  maxWidth: '$max',
+})
 
 type Props = {
   mdxSource: MDXRemoteProps
@@ -11,12 +17,21 @@ type Props = {
   slug: string
 }
 
+const components = {
+  img: (props: { src: string; alt: string }) => {
+    return <Img src={props.src} alt={props.alt} />
+  },
+}
+
 const Post: FC<Props> = ({ frontmatter, mdxSource }) => (
-  <div>
-    <div>{frontmatter.title}</div>
-    <div>{new Date(frontmatter.date).toLocaleDateString()}</div>
-    <MDXRemote {...mdxSource} />
-  </div>
+  // @ts-ignore
+  <MDXProvider components={components}>
+    <div>
+      <div>{frontmatter.title}</div>
+      <div>{new Date(frontmatter.date).toLocaleDateString()}</div>
+      <MDXRemote {...mdxSource} />
+    </div>
+  </MDXProvider>
 )
 
 export const getStaticProps: GetStaticProps = async context => {
@@ -25,7 +40,7 @@ export const getStaticProps: GetStaticProps = async context => {
   ) as Post
 
   const mdxSource = await serialize(post.content)
-  console.log(mdxSource, post?.frontmatter)
+
   return {
     props: {
       mdxSource,
