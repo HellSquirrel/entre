@@ -6,6 +6,7 @@ import { serialize } from 'next-mdx-remote/serialize'
 import { MDXRemote, MDXRemoteProps } from 'next-mdx-remote'
 import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
+import ImageOptimisations from '../../blog/image-optimizations.mdx'
 
 const Img = styled('img', {
   maxWidth: '$max',
@@ -58,7 +59,7 @@ const Post: FC<Props> = ({ frontmatter, mdxSource }) => (
   <MDXProvider components={components}>
     <div>
       <div>{new Date(frontmatter?.date).toLocaleDateString()}</div>
-      <MDXRemote {...mdxSource} />
+      <ImageOptimisations />
     </div>
   </MDXProvider>
 )
