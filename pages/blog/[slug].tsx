@@ -52,7 +52,7 @@ const Post: FC<Props> = ({ frontmatter }) => (
   // @ts-ignore
   <MDXProvider components={components}>
     <div>
-      <div>{new Date(frontmatter?.date).toLocaleDateString()}</div>
+      {/* <div>{new Date(frontmatter?.date).toLocaleDateString()}</div> */}
       <ImageOptimisations />
     </div>
   </MDXProvider>
