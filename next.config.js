@@ -14,6 +14,15 @@ const withMDX = require('@next/mdx')({
 const nextConfig = withMDX({
   reactStrictMode: true,
   pageExtensions: ['tsx'],
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/blog',
+        permanent: true,
+      },
+    ]
+  },
 })
 
 module.exports = nextConfig
