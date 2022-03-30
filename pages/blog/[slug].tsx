@@ -3,7 +3,6 @@ import { GetStaticPropsContext } from 'next'
 import { getPosts } from 'lib/mdx'
 import { Post, Frontmatter } from '../../types/blog'
 import { serialize } from 'next-mdx-remote/serialize'
-import { MDXRemote, MDXRemoteProps } from 'next-mdx-remote'
 import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
 import ImageOptimisations from '../../blog/image-optimizations.mdx'
@@ -13,7 +12,6 @@ const Img = styled('img', {
 })
 
 type Props = {
-  mdxSource: MDXRemoteProps
   frontmatter: Frontmatter
   slug: string
 }
@@ -24,11 +22,12 @@ const components = {
   },
 }
 
-export async function getStaticPaths() {
-  const matters = getPosts(`${process.cwd()}/blog`)
-  const paths = matters.map(m => ({
+export async function getStaticPaths(context) {
+  console.log(context)
+  const posts = getPosts(`${process.cwd()}/blog`)
+  const paths = posts.map(p => ({
     params: {
-      slug: `/blog/${m.slug}`,
+      slug: `/blog/${p.slug}`,
     },
   }))
   return {
@@ -54,7 +53,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   }
 }
 
-const Post: FC<Props> = ({ frontmatter, mdxSource }) => (
+const Post: FC<Props> = ({ frontmatter }) => (
   // @ts-ignore
   <MDXProvider components={components}>
     <div>

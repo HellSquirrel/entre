@@ -16,7 +16,7 @@ type Props = {
 
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <ul>
-    {posts.map(({ frontmatter: { title, slug, date, tags } }) => (
+    {posts.map(({ frontmatter: { title, date, tags }, slug }) => (
       <li key={title}>
         <h2>
           <Link href={`/blog/${slug}`}>{title}</Link>
