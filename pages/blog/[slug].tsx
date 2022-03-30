@@ -2,7 +2,6 @@ import { FC } from 'react'
 import { GetStaticPropsContext } from 'next'
 import { getPosts } from 'lib/mdx'
 import { Post, Frontmatter } from '../../types/blog'
-import { serialize } from 'next-mdx-remote/serialize'
 import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
 import ImageOptimisations from '../../blog/image-optimizations.mdx'
@@ -41,11 +40,8 @@ export async function getStaticProps(context: GetStaticPropsContext) {
     posts.find(f => context?.params?.slug?.includes(f.slug)) ||
     (posts[0] as Post)
 
-  const mdxSource = await serialize(post.content)
-
   return {
     props: {
-      mdxSource,
       frontmatter: post?.frontmatter || {},
       slug: post?.slug,
     },
