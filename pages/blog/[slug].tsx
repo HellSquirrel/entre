@@ -22,8 +22,7 @@ const components = {
   },
 }
 
-export async function getStaticPaths(context) {
-  console.log(context)
+export async function getStaticPaths() {
   const posts = getPosts(`${process.cwd()}/blog`)
   const paths = posts.map(p => ({
     params: {

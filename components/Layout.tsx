@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import Head from 'next/head'
 import { styled, globalCss } from '@styles'
 import { Navigation } from './Navigation'
+import { Footer } from './Footer'
 
 const Main = styled('main', {
   flex: '1 0 auto',
@@ -14,7 +15,12 @@ const globalStyles = globalCss({
     margin: 0,
     padding: 0,
     background: '$mauve2',
+  },
+
+  '#__next': {
     display: 'flex',
+    width: '100%',
+    justifyContent: 'center',
     minHeight: '100vh',
     flexDirection: 'column',
     alignItems: 'center',
@@ -22,7 +28,13 @@ const globalStyles = globalCss({
     fontSize: '$main',
     lineHeight: '$main',
   },
-  '& *': { boxSizing: 'border-box' },
+
+  html: {
+    margin: 0,
+    padding: 0,
+  },
+
+  '*': { boxSizing: 'border-box' },
 
   'h1, h2, h3, h3': {
     fontFamily: 'Fira Code',
@@ -60,7 +72,10 @@ export const Layout: FC = ({ children }) => {
         />
       </Head>
       <Navigation />
-      <Main>{children}</Main>
+      <Main>
+        {children}
+        <Footer />
+      </Main>
     </>
   )
 }

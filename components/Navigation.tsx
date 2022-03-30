@@ -7,6 +7,7 @@ const Nav = styled('nav', {
   display: 'flex',
   justifyContent: 'flex-end',
   padding: '$1 $1',
+  alignSelf: 'flex-end',
 })
 
 export const Navigation = () => (

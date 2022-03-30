@@ -29,9 +29,11 @@ export const {
     },
     sizes: {
       max: '800px',
+      step: '100px',
     },
     fontSizes: {
       main: '20px',
+      secondary: '16px',
       h1: '54px',
     },
     lineHeights: {
