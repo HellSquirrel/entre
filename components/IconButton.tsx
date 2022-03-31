@@ -16,9 +16,15 @@ const Button = styled('button', {
   userSelect: 'none',
   border: 'none',
   background: 'none',
+  transition: 'opcity 300ms',
+
+  ['& svg']: {
+    width: '$icon',
+    height: '$icon',
+  },
 
   '&:hover': {
-    color: '$violet4',
+    opacity: 0.8,
   },
 })
 

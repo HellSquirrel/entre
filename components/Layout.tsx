@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { styled, globalCss } from '@styles'
 import { Navigation } from './Navigation'
 import { Footer } from './Footer'
+import { theme } from '@styles'
 
 const Main = styled('main', {
   flex: '1 0 auto',
@@ -14,7 +15,8 @@ const globalStyles = globalCss({
   body: {
     margin: 0,
     padding: 0,
-    background: '$mauve2',
+    background:
+      'radial-gradient(circle at bottom, $pink5 0, $indigo3 50%, transparent)',
   },
 
   '#__next': {
@@ -45,12 +47,25 @@ const globalStyles = globalCss({
   },
 
   a: {
-    color: '$violet7',
+    color: '$violet12',
     textDecoration: 'underline',
     transition: 'color 150ms',
 
     '&:hover': {
-      color: '$violet5',
+      color: '$plum12',
+    },
+  },
+
+  [`html[data-theme='light']`]: {
+    body: {
+      background: '$plumA1',
+    },
+
+    a: {
+      color: '$violet8',
+      '&:hover': {
+        color: '$plum7',
+      },
     },
   },
 })
