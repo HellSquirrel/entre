@@ -5,8 +5,6 @@ import { Analytics } from '../components/Analytics'
 import { getCssText } from '@styles'
 import Head from 'next/head'
 
-console.log(getCssText())
-
 function NextAPP({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider defaultTheme="dark">
