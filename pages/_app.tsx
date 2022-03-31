@@ -5,6 +5,8 @@ import { Analytics } from '../components/Analytics'
 import { getCssText } from '@styles'
 import Head from 'next/head'
 
+console.log(getCssText())
+
 function NextAPP({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider defaultTheme="dark">
@@ -14,6 +16,7 @@ function NextAPP({ Component, pageProps }: AppProps) {
           id="stitches"
           dangerouslySetInnerHTML={{ __html: getCssText() }}
         />
+        <meta name="robots" content="noindex" />
         <Analytics />
       </Head>
       <Layout>
