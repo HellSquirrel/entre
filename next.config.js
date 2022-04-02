@@ -4,7 +4,7 @@ const fs = require('fs')
 const path = require('path')
 const glob = require('glob')
 const matter = require('gray-matter')
-const { redirect } = require('next/dist/server/api-utils')
+const highlight = require('./lib/highlighter.js')
 
 const getPosts = fromPath => {
   const paths = glob.sync(`${path.join(fromPath)}/**/*.mdx`)
@@ -32,7 +32,7 @@ const nextConfig = {
           loader: require.resolve('@mdx-js/loader'),
           options: {
             remarkPlugins: [],
-            rehypePlugins: [],
+            rehypePlugins: [highlight],
             providerImportSource: '@mdx-js/react',
           },
         },

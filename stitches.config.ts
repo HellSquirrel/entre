@@ -32,6 +32,11 @@ export const {
       secondary: '16px',
       h1: '54px',
     },
+
+    fonts: {
+      code: "'Fira Code', monospace",
+    },
+
     lineHeights: {
       main: '1.3',
     },
