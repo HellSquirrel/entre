@@ -1,10 +1,13 @@
 import { FC } from 'react'
 import { GetStaticPropsContext } from 'next'
-import { getPosts } from 'lib/mdx'
 import { Post, Frontmatter } from '../../types/blog'
 import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
-import ImageOptimisations from '../../blog/image-optimizations.mdx'
+
+import * as ImageOptimization from '../../blog/image-optimizations.mdx'
+import * as PerfectLoader from '../../blog/perfect-loader.mdx'
+
+const pages = [ImageOptimization, PerfectLoader]
 
 const Img = styled('img', {
   maxWidth: '$max',
@@ -12,6 +15,7 @@ const Img = styled('img', {
 
 type Props = {
   frontmatter: Frontmatter
+  Component: React.FunctionComponent
   slug: string
 }
 
@@ -21,11 +25,11 @@ const components = {
   },
 }
 
-export async function getStaticPaths() {
-  const posts = getPosts(`${process.cwd()}/blog`)
-  const paths = posts.map(p => ({
+export function getStaticPaths() {
+  // @ts-ignore
+  const paths = __POSTS__.map(p => ({
     params: {
-      slug: `/blog/${p.slug}`,
+      slug: `/blog/${p.frontmatter.slug}`,
     },
   }))
   return {
@@ -34,28 +38,34 @@ export async function getStaticPaths() {
   }
 }
 
-export async function getStaticProps(context: GetStaticPropsContext) {
-  const posts = getPosts(`${process.cwd()}/blog`)
+export function getStaticProps(context: GetStaticPropsContext) {
+  const currentSlug = context?.params?.slug || ''
   const post =
-    posts.find(f => context?.params?.slug?.includes(f.slug)) ||
-    (posts[0] as Post)
-
+    // @ts-ignore
+    __POSTS__.find(f => currentSlug.includes(f.slug)) || (__POSTS__[0] as Post)
   return {
     props: {
       frontmatter: post?.frontmatter || {},
-      slug: post?.slug,
+      slug: currentSlug,
     },
   }
 }
 
-const Post: FC<Props> = ({ frontmatter }) => (
-  // @ts-ignore
-  <MDXProvider components={components}>
-    <div>
-      {/* <div>{new Date(frontmatter?.date).toLocaleDateString()}</div> */}
-      <ImageOptimisations />
-    </div>
-  </MDXProvider>
-)
+const Post: FC<Props> = ({ frontmatter, slug }) => {
+  const CurrentPage = pages.find(
+    // @ts-ignore
+    p => p?.frontmatter?.slug === slug
+  )?.default
+
+  return (
+    // @ts-ignore
+    <MDXProvider components={components}>
+      <div>
+        {/* @ts-ignore */}
+        {CurrentPage ? <CurrentPage /> : null}
+      </div>
+    </MDXProvider>
+  )
+}
 
 export default Post

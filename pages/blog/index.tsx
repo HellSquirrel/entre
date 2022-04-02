@@ -1,12 +1,12 @@
 import { FC } from 'react'
 import { GetStaticProps } from 'next'
-import { getPosts } from 'lib/mdx'
 import Link from 'next/link'
 import { Post } from '../../types/blog'
 
 export const getStaticProps: GetStaticProps = () => {
   return {
-    props: { posts: getPosts(`${process.cwd()}/blog`) },
+    // @ts-ignore
+    props: { posts: __POSTS__ },
   }
 }
 
@@ -16,7 +16,7 @@ type Props = {
 
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <ul>
-    {posts.map(({ frontmatter: { title, date, tags }, slug }) => (
+    {posts.map(({ frontmatter: { title, date, tags, slug } }) => (
       <li key={title}>
         <h2>
           <Link href={`/blog/${slug}`}>{title}</Link>

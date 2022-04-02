@@ -15,7 +15,6 @@ export const getPosts = (fromPath: string): Post[] => {
     return {
       frontmatter: data,
       content,
-      slug: path.basename(filePath).replace('.mdx', ''),
     } as Post
   })
 }
