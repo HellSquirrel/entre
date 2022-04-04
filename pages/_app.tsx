@@ -1,9 +1,7 @@
 import type { AppProps } from 'next/app'
 import { Layout } from '../components/Layout'
 import { ThemeProvider } from 'next-themes'
-import { Analytics } from '../components/Analytics'
 import { globalCss } from '@styles'
-import Head from 'next/head'
 
 const globalStyles = globalCss({
   body: {
@@ -40,26 +38,9 @@ const globalStyles = globalCss({
     fontSize: '$h1',
   },
 
-  a: {
-    color: '$violet12',
-    textDecoration: 'underline',
-    transition: 'color 150ms',
-
-    '&:hover': {
-      color: '$plum12',
-    },
-  },
-
   [`html[data-theme='light']`]: {
     body: {
       background: '$plumA1',
-    },
-
-    a: {
-      color: '$violet8',
-      '&:hover': {
-        color: '$plum7',
-      },
     },
   },
 })

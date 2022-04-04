@@ -31,6 +31,7 @@ export const {
       main: '20px',
       secondary: '16px',
       h1: '54px',
+      h2: '32px',
     },
 
     fonts: {

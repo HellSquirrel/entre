@@ -1,7 +1,8 @@
 import { FC } from 'react'
 import { GetStaticProps } from 'next'
-import Link from 'next/link'
+import { Link } from '../../components/Link'
 import { Post } from '../../types/blog'
+import { styled } from '@styles'
 
 export const getStaticProps: GetStaticProps = () => {
   return {
@@ -14,13 +15,20 @@ type Props = {
   posts: Post[]
 }
 
+const StyledList = styled('ul', {
+  listStyle: 'none',
+})
+
+const StyledLink = styled(Link, {
+  fontSize: '$h2',
+})
+
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
-  <ul>
+  <StyledList>
     {posts.map(({ frontmatter: { title, date, tags, slug } }) => (
       <li key={title}>
-        <h2>
-          <Link href={`/blog/${slug}`}>{title}</Link>
-        </h2>
+        {/* @ts-ignore */}
+        <StyledLink href={`/blog/${slug}`}>{title}</StyledLink>
         <div>{new Date(date).toLocaleDateString()}</div>
         <ul>
           {tags.map(t => (
@@ -29,7 +37,7 @@ const ListOfAllPosts: FC<Props> = ({ posts }) => (
         </ul>
       </li>
     ))}
-  </ul>
+  </StyledList>
 )
 
 export default ListOfAllPosts

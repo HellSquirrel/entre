@@ -4,6 +4,7 @@ import { Post, Frontmatter } from '../../types/blog'
 import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
 import { Pre } from '../../components/Pre'
+import { Link } from '../../components/Link'
 
 import * as ImageOptimization from '../../blog/image-optimizations.mdx'
 import * as PerfectLoader from '../../blog/perfect-loader.mdx'
@@ -25,6 +26,7 @@ const components = {
     return <Img src={props.src} alt={props.alt} />
   },
   pre: Pre,
+  a: Link,
 }
 
 export function getStaticPaths() {
