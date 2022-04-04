@@ -5,10 +5,8 @@ import { IconButton } from './IconButton'
 import { GitHubLogoIcon, TwitterLogoIcon } from '@radix-ui/react-icons'
 
 const FooterEl = styled('footer', {
-  maxWidth: '$max',
   padding: '$sizes$step 0',
   display: 'flex',
-  alignSelf: 'flex-start',
 })
 
 const Photo = styled('img', {
@@ -23,7 +21,6 @@ const Left = styled('div', {
 })
 
 const Right = styled('div', {
-  flex: '1 0 auto',
   maxWidth: 'calc(5 * $step)',
 })
 

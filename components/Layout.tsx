@@ -13,10 +13,8 @@ export const Layout: FC = ({ children }) => {
   return (
     <>
       <Navigation />
-      <Main>
-        {children}
-        <Footer />
-      </Main>
+      <Main>{children}</Main>
+      <Footer />
     </>
   )
 }

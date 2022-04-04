@@ -9,17 +9,19 @@ const StyledLink = styled('a', {
   cursor: 'pointer',
   display: 'inline-flex',
   alignItems: 'center',
+  textDecorationThickness: '$sizes$unit',
+  textUnderlineOffset: '$sizes$small',
+  textDecorationColor: 'rgba(0, 0, 0, 0)',
 
   '&:hover': {
     color: '$plum12',
+    textDecorationColor: 'inherit',
   },
 
-  [`html[data-theme='light']`]: {
-    '&': {
-      color: '$violet8',
-      '&:hover': {
-        color: '$plum7',
-      },
+  [`html[data-theme='light'] &`]: {
+    color: '$plum7',
+    '&:hover': {
+      color: '$plum10',
     },
   },
 })

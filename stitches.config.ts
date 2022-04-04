@@ -21,13 +21,17 @@ export const {
       1: '4px',
       2: '12px',
       3: '24px',
+      4: '36px',
     },
     sizes: {
       max: '800px',
       step: '100px',
       icon: '20px',
+      unit: '1px',
+      small: '3px',
     },
     fontSizes: {
+      small: '12px',
       main: '20px',
       secondary: '16px',
       h1: '54px',

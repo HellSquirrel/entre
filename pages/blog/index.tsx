@@ -23,19 +23,43 @@ const StyledLink = styled(Link, {
   fontSize: '$h2',
 })
 
+const StyledDate = styled('div', {
+  fontSize: '$small',
+})
+
+const StyledPost = styled('li', {
+  '& + &': {
+    marginTop: '$4',
+  },
+})
+
+const StyledTags = styled('ul', {
+  display: 'flex',
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+})
+
+const StyledTag = styled('li', {
+  color: '$pink9',
+  '& + &': {
+    marginLeft: '$space$2',
+  },
+})
+
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <StyledList>
     {posts.map(({ frontmatter: { title, date, tags, slug } }) => (
-      <li key={title}>
+      <StyledPost key={title}>
+        <StyledDate>{new Date(date).toLocaleDateString()}</StyledDate>
         {/* @ts-ignore */}
         <StyledLink href={`/blog/${slug}`}>{title}</StyledLink>
-        <div>{new Date(date).toLocaleDateString()}</div>
-        <ul>
+        <StyledTags>
           {tags.map(t => (
-            <li key={t}>{t}</li>
+            <StyledTag key={t}>{t}</StyledTag>
           ))}
-        </ul>
-      </li>
+        </StyledTags>
+      </StyledPost>
     ))}
   </StyledList>
 )
