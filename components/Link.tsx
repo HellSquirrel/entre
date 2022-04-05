@@ -28,7 +28,7 @@ const StyledLink = styled('a', {
 
 // @ts-ignore
 export const Link = ({ children, href, ...rest }: LinkProps) => (
-  <NextLink href={href}>
+  <NextLink href={href} passHref>
     <StyledLink {...rest}>{children}</StyledLink>
   </NextLink>
 )

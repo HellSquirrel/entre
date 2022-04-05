@@ -35,6 +35,14 @@ const Socials = styled('ul', {
   listStyle: 'none',
   padding: 0,
   margin: 0,
+  display: 'flex',
+  alignItems: 'center',
+})
+
+const Twitter = styled(IconButton, {
+  position: 'relative',
+  left: '-10px',
+  top: '1px',
 })
 
 const Author = styled('div', {
@@ -58,12 +66,14 @@ export const Footer: FC = () => {
           Полина Гуртовая
           <Socials>
             <li>
-              <IconButton onClick={() => {}}>
+              {/* @ts-ignore */}
+              <IconButton href="https://github.com/hellsquirrel">
                 <GitHubLogoIcon />
               </IconButton>
-              <IconButton onClick={() => {}}>
+              {/* @ts-ignore */}
+              <Twitter href="https://twitter.com/pgurtovaya">
                 <TwitterLogoIcon />
-              </IconButton>
+              </Twitter>
             </li>
           </Socials>
         </Author>

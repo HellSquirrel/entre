@@ -1,5 +1,6 @@
 import { styled } from '@styles'
 import { FC } from 'react'
+import { Link } from './Link'
 
 const Button = styled('button', {
   alignItems: 'center',
@@ -29,9 +30,19 @@ const Button = styled('button', {
 })
 
 type Props = {
-  onClick: () => void
+  onClick?: () => void
+  href?: string
+  className?: string
 }
 
-export const IconButton: FC<Props> = ({ children, onClick }) => (
-  <Button onClick={onClick}>{children}</Button>
-)
+export const IconButton: FC<Props> = ({ children, onClick, href, className }) =>
+  onClick ? (
+    <Button onClick={onClick} className={className}>
+      {children}
+    </Button>
+  ) : (
+    // @ts-ignore
+    <Button href={href} as={Link} className={className}>
+      {children}
+    </Button>
+  )
