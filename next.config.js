@@ -24,24 +24,31 @@ const nextConfig = {
   pageExtensions: ['tsx'],
 
   webpack(config, options) {
-    config.module.rules.push({
-      test: /\.mdx?$/,
-      use: [
-        options.defaultLoaders.babel,
-        {
-          loader: require.resolve('@mdx-js/loader'),
-          options: {
-            remarkPlugins: [],
-            rehypePlugins: [highlight],
-            providerImportSource: '@mdx-js/react',
+    config.module.rules = config.module.rules.concat([
+      {
+        test: /\.mdx?$/,
+        use: [
+          options.defaultLoaders.babel,
+          {
+            loader: require.resolve('@mdx-js/loader'),
+            options: {
+              remarkPlugins: [],
+              rehypePlugins: [highlight],
+              providerImportSource: '@mdx-js/react',
+            },
           },
-        },
-        {
-          loader: require.resolve('./lib/frontmatterLoader.js'),
-          options: {},
-        },
-      ],
-    })
+          {
+            loader: require.resolve('./lib/frontmatterLoader.js'),
+            options: {},
+          },
+        ],
+      },
+      {
+        test: /\.svg$/i,
+        issuer: /\.[jt]sx?$/,
+        use: ['@svgr/webpack'],
+      },
+    ])
     config.plugins.push(
       new options.webpack.DefinePlugin({
         __POSTS__: JSON.stringify(getPosts(path.resolve(__dirname, './blog'))),

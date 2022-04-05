@@ -3,16 +3,23 @@ import me from './me.jpg'
 import { styled } from '@styles'
 import { IconButton } from './IconButton'
 import { GitHubLogoIcon, TwitterLogoIcon } from '@radix-ui/react-icons'
+import Dragon from './dragon.svg'
 
 const FooterEl = styled('footer', {
   padding: '$sizes$step 0',
   display: 'flex',
 })
 
-const Photo = styled('img', {
+const StyledDragon = styled(Dragon, {
   width: '$step',
   height: '$step',
   objectFit: 'cover',
+
+  [`html[data-theme='dark'] &`]: {
+    path: {
+      stroke: '$colors$mauve12 !important',
+    },
+  },
 })
 
 const Left = styled('div', {
@@ -44,7 +51,7 @@ export const Footer: FC = () => {
     <FooterEl>
       {/*  @ts-ignore */}
       <Left>
-        <Photo {...me} />
+        <StyledDragon />
       </Left>
       <Right>
         <Author>

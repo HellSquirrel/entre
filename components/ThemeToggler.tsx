@@ -5,11 +5,11 @@ import { useCallback } from 'react'
 import type { Theme } from 'types/theme'
 
 export const ThemeToggler = () => {
-  const { setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   const toggleTheme = useCallback(
-    () => setTheme((theme: Theme) => (theme === 'light' ? 'dark' : 'light')),
-    []
+    () => setTheme(theme === 'light' ? 'dark' : 'light'),
+    [theme]
   )
 
   return (

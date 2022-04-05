@@ -21,6 +21,7 @@ const StyledList = styled('ul', {
 
 const StyledLink = styled(Link, {
   fontSize: '$h2',
+  fontFamily: 'Fira Code',
 })
 
 const StyledDate = styled('div', {
