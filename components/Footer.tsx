@@ -6,7 +6,7 @@ import { GitHubLogoIcon, TwitterLogoIcon } from '@radix-ui/react-icons'
 import Dragon from './dragon.svg'
 
 const FooterEl = styled('footer', {
-  padding: '$sizes$step 0',
+  padding: '$sizes$step $3',
   display: 'flex',
 })
 
