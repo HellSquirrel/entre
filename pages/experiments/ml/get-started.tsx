@@ -2,9 +2,9 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import * as tf from '@tensorflow/tfjs'
 import { useEffect, useRef } from 'react'
-import data from '../../data/input-1.json'
-import out from '../../data/out.json'
-import outPred from '../../data/out_pred.json'
+import data from '../../../data/input-1.json'
+import out from '../../../data/out.json'
+import outPred from '../../../data/out_pred.json'
 
 const runModel = async () => {
   const path = '/model/model.json'
