@@ -48,20 +48,24 @@ const StyledTag = styled('li', {
   },
 })
 
+const skipUnpublished = process.env.NODE_ENV === 'production'
+
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <StyledList>
-    {posts.map(({ frontmatter: { title, date, tags, slug } }) => (
-      <StyledPost key={title}>
-        <StyledDate>{new Date(date).toLocaleDateString()}</StyledDate>
-        {/* @ts-ignore */}
-        <StyledLink href={`/blog/${slug}`}>{title}</StyledLink>
-        <StyledTags>
-          {tags.map(t => (
-            <StyledTag key={t}>{t}</StyledTag>
-          ))}
-        </StyledTags>
-      </StyledPost>
-    ))}
+    {posts
+      .filter(p => p.frontmatter.published || !skipUnpublished)
+      .map(({ frontmatter: { title, date, tags, slug } }) => (
+        <StyledPost key={title}>
+          <StyledDate>{new Date(date).toLocaleDateString()}</StyledDate>
+          {/* @ts-ignore */}
+          <StyledLink href={`/blog/${slug}`}>{title}</StyledLink>
+          <StyledTags>
+            {tags.map(t => (
+              <StyledTag key={t}>{t}</StyledTag>
+            ))}
+          </StyledTags>
+        </StyledPost>
+      ))}
   </StyledList>
 )
 
