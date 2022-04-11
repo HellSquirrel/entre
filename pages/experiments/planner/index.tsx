@@ -5,7 +5,7 @@ import { UserProvider, useUser } from '@auth0/nextjs-auth0'
 import Profile from '../../../components/Profile'
 
 const PageWithUser = () => {
-  const { user, error, isLoading } = useUser()
+  const { user, isLoading } = useUser()
   if (isLoading) return <>...Loading</>
   return (
     <Profile name={user?.nickname as string} img={user?.picture as string} />

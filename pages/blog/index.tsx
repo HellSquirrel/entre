@@ -53,7 +53,7 @@ const skipUnpublished = process.env.NODE_ENV === 'production'
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <StyledList>
     {posts
-      .filter(p => p.frontmatter.published || !skipUnpublished)
+      .filter(p => !skipUnpublished || p.frontmatter.published)
       .map(({ frontmatter: { title, date, tags, slug } }) => (
         <StyledPost key={title}>
           <StyledDate>{new Date(date).toLocaleDateString()}</StyledDate>

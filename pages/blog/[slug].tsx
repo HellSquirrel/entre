@@ -8,8 +8,10 @@ import { Link } from '../../components/Link'
 
 import * as ImageOptimization from '../../blog/image-optimizations.mdx'
 import * as PerfectLoader from '../../blog/perfect-loader.mdx'
+import * as StateOfML from '../../blog/state-of-ml-on-the-frontend.mdx'
+import * as BestSecondLanguage from '../../blog/perfect-loader.mdx'
 
-const pages = [ImageOptimization, PerfectLoader]
+const pages = [ImageOptimization, PerfectLoader, StateOfML, BestSecondLanguage]
 
 const Img = styled('img', {
   maxWidth: '$max',
