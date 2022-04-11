@@ -7,6 +7,7 @@ const Main = styled('main', {
   flex: '1 0 auto',
   padding: '$3',
   maxWidth: '$max',
+  width: '100%',
 })
 
 export const Layout: FC = ({ children }) => {

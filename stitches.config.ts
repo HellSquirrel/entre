@@ -23,6 +23,7 @@ export const {
       3: '24px',
       4: '36px',
     },
+
     sizes: {
       max: '800px',
       step: '100px',
@@ -31,6 +32,7 @@ export const {
       small: '3px',
     },
     fontSizes: {
+      big: '36px',
       small: '12px',
       main: '20px',
       secondary: '16px',
@@ -49,7 +51,7 @@ export const {
   },
 
   media: {
-    bp1: '(min-width: 480px)',
+    bp1: '(min-width: 640px)',
   },
 })
 

@@ -8,12 +8,22 @@ import Dragon from './dragon.svg'
 const FooterEl = styled('footer', {
   padding: '$sizes$step $3',
   display: 'flex',
+  flexDirection: 'column',
+
+  '@bp1': {
+    flexDirection: 'row',
+  },
 })
 
 const StyledDragon = styled(Dragon, {
   width: '$step',
   height: '$step',
   objectFit: 'cover',
+  marginBottom: 'calc(-$3)',
+
+  '@bp1': {
+    marginBottom: 0,
+  },
 
   [`html[data-theme='dark'] &`]: {
     path: {

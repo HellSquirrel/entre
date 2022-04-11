@@ -35,7 +35,11 @@ const globalStyles = globalCss({
   },
 
   h1: {
-    fontSize: '$h1',
+    fontSize: '$big',
+
+    '@bp1': {
+      fontSize: '$h1',
+    },
   },
 
   [`html[data-theme='light']`]: {
