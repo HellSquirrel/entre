@@ -7,6 +7,7 @@ published: true
 ---
 
 import Image from 'next/image'
+import ImperativeSquirrel from '../pages/experiments/demos/imperativeSquirrel.tsx'
 
 import tf from './assets/tf.png'
 
@@ -48,10 +49,80 @@ import tf from './assets/tf.png'
 В первом случае у нас есть некая машинерия которая позволяет нам формулировать проблемы на человеческом языке
 и описывать решения этим проблем в виде "я хочу чтобы..."
 
-При этом, используя декларативный подход мы не особо заморачиваемся на детали реализации. Мы говорим _что_ мы хотим и получаем это
-Императивный стиль ровно противоположный - мы сосредотачиваемся на деталях реализации
+При этом, используя декларативный подход мы не особо заморачиваемся на детали реализации. Мы говорим _что_ мы хотим. Нам не важно _как_ мы получим результат.
+А вот используя императивный мы сосредотачиваемся на деталях реализации.
 
 Давайте сделаем что-нибудь императивное :)
+Пусть у нас дана карнитка белочки и нам нужно ее заблюрить.
+Я не буду приводить здесь код преобразования пикселей в `Uint8ClampedArray` и рисования красивостей на `canvas`
+Посмотрим только на блюрющую математику
+
+```js
+const kernel = [
+  [1 / 16, 1 / 8, 1 / 16],
+  [1 / 8, 1 / 4, 1 / 8],
+  [1 / 16, 1 / 8, 1 / 16],
+]
+
+const convStep = (arr1: number[], kernel): number =>
+  kernel.flat().reduce((acc, v, i) => acc + v * arr1[i], 0)
+
+const convolve = (
+  array: Uint8ClampedArray,
+  kernel: number[][],
+  w: number,
+  h: number,
+  stride = 1,
+  chInImage = 4
+): Uint8ClampedArray => {
+  const result = new Uint8ClampedArray(w * h * chInImage).fill(255)
+  const kh = kernel.length
+  const kw = kernel[0].length
+
+  for (let i = 0; i < w - kw; i += stride) {
+    for (let j = 0; j < h - kh; j += stride) {
+      for (let c = 0; c < chInImage; c++) {
+        const arrToConsolve: number[] = []
+        for (let k = 0; k < kw; k++) {
+          for (let l = 0; l < kh; l++) {
+            arrToConsolve.push(
+              array[
+                chInImage * w * j +
+                  chInImage * i +
+                  c +
+                  chInImage * k +
+                  chInImage * l * kw
+              ]
+            )
+          }
+        }
+
+        const convStepResult = convStep(arrToConsolve, kernel)
+        result[chInImage * w * j + chInImage * i + c] = convStepResult
+      }
+    }
+  }
+
+  return result
+}
+
+const blurredSquirrel = convolve(
+  imagePixels,
+  kernel,
+  originalSquirrel.width,
+  originalSquirrel.height
+)
+```
+
+Мало того что мы заблюрили белочку мы еще и побили рекорд. 5! вложенных циклов `for`
+
+<ImperativeSquirrel />
+
+Вот это и есть императивный подход. У нас есть готовые числа (их еще называют ядром). Мы берем эти числа и выполняем заранее известное преобразования.
+
+А что нам на это скажет нейросеть?
+
+## TODO: continue
 
 ## Почему tensorflow?
 
