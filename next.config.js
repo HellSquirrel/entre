@@ -45,8 +45,15 @@ const nextConfig = {
       },
       {
         test: /\.svg$/i,
-        issuer: /\.[jt]sx?$/,
-        use: ['@svgr/webpack'],
+        issuer: /\.([jt]s|md)x?$/,
+        use: [
+          {
+            loader: '@svgr/webpack',
+            options: {
+              throwIfNamespace: false,
+            },
+          },
+        ],
       },
     ])
     config.plugins.push(

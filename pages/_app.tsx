@@ -42,9 +42,16 @@ const globalStyles = globalCss({
     },
   },
 
+  '.img': {
+    background: '$gray12',
+  },
+
   [`html[data-theme='light']`]: {
     body: {
       background: '$plumA1',
+    },
+    '.img': {
+      background: 'none',
     },
   },
 })
