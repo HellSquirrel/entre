@@ -12,6 +12,7 @@ import ImperativeSquirrel from '../pages/experiments/demos/imperativeSquirrel.ts
 import tf from './assets/tf.png'
 import SquirrelCoords from './assets/squirrelCoords.svg'
 import Squirrel from './assets/squirrel.svg'
+import pca from './assets/pca.png'
 
 # А чего MLного у нас нынче на фронте?
 
@@ -215,7 +216,12 @@ const blurredSquirrel = convolve(
 
 Давайте попробуем это сделать, использовав [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis)
 
-Решаем следующую задачу: сколько фич нам нужно чтобы уверенно отличать белочку от других картинок нарисованных моими кривыми лапками?
+Решаем следующую задачу: дан набор из 800 картинок и белочка. Сколько фич нам нужно чтобы уверенно отличать белочку от других картинок?
+Использовав PCA мы уменьшаем разрешение нашей белочки до 340 (это примерно 0.33 КБ).
+
+Вот так это выглядит. Слева - оригинал, справа - восстановленная из 340 фич белка
+
+<Image {...pca} />
 
 ## ML за 2 минуты:
 
