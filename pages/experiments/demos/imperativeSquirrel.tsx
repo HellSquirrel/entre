@@ -5,8 +5,11 @@ import React, {
   useState,
   useCallback,
 } from 'react'
-import sq from './sq.avif'
+import sq from './sq.jpeg'
 import { styled } from '@styles'
+import { image } from '@tensorflow/tfjs'
+import { debounce } from '../../../utils/debounce'
+import { convolve } from '../../../utils/math'
 
 const KernelEditor = styled('div', {
   width: 'calc(3 * $step)',
@@ -22,67 +25,30 @@ const Input = styled('input', {
   fontSize: '$fontSizes$main',
 })
 
-const convStep = (arr1: number[], kernel): number =>
-  kernel.flat().reduce((acc, v, i) => acc + v * arr1[i], 0)
-
-const convolve = (
-  array: Uint8ClampedArray,
-  kernel: number[][],
-  w: number,
-  h: number,
-  stride = 1,
-  chInImage = 4
-): Uint8ClampedArray => {
-  const result = new Uint8ClampedArray(w * h * chInImage).fill(255)
-  const kh = kernel.length
-  const kw = kernel[0].length
-
-  for (let i = 0; i < w - kw; i += stride) {
-    for (let j = 0; j < h - kh; j += stride) {
-      for (let c = 0; c < chInImage; c++) {
-        const arrToConsolve: number[] = []
-        for (let k = 0; k < kw; k++) {
-          for (let l = 0; l < kh; l++) {
-            arrToConsolve.push(
-              array[
-                chInImage * w * j +
-                  chInImage * i +
-                  c +
-                  chInImage * k +
-                  chInImage * l * kw
-              ]
-            )
-          }
-        }
-
-        const convStepResult = convStep(arrToConsolve, kernel)
-        result[chInImage * w * j + chInImage * i + c] = convStepResult
-      }
-    }
+const postImageData = (imageRef: HTMLImageElement, kernel, worker: Worker) => {
+  try {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const width = imageRef.width
+    const height = imageRef.height
+    canvas.width = width
+    canvas.height = height
+    ctx.drawImage(imageRef, 0, 0)
+    const data = ctx.getImageData(0, 0, imageRef.width, imageRef.height).data
+    worker.postMessage({ data, kernel, width, height })
+    // const convolved = convolve(data, kernel, width, height)
+    // return new ImageData(convolved, width, height)
+  } catch (e) {
+    console.log(e)
   }
-
-  return result
-}
-
-const imgToArray = (imageRef: HTMLImageElement, kernel): ImageData => {
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-  const width = imageRef.width
-  const height = imageRef.height
-  canvas.width = width
-  canvas.height = height
-  ctx.drawImage(imageRef, 0, 0)
-  const data = ctx.getImageData(0, 0, imageRef.width, imageRef.height).data
-
-  const imgArray = new Uint8ClampedArray(data)
-  const convolved = convolve(imgArray, kernel, width, height)
-  return new ImageData(convolved, width, height)
 }
 
 const ImperativeSquirrel = () => {
   const imageRef = useRef(null)
   const canvasRef = useRef(null)
-  const [ignored, forceUpdate] = useReducer(x => x + 1, 0)
+  const imgToProcess = useRef(null)
+  const workerRef = useRef(null)
+  const [_, forceUpdate] = useReducer(x => x + 1, 0)
   const [kernel, setKernel] = useState([
     [1 / 16, 1 / 8, 1 / 16],
     [1 / 8, 1 / 4, 1 / 8],
@@ -99,14 +65,39 @@ const ImperativeSquirrel = () => {
   )
 
   useEffect(() => {
-    const img = new Image()
-    img.src = sq.src
-    img.onload = () => {
-      const data = imgToArray(img, kernel)
-      canvasRef.current.getContext('2d').putImageData(data, 0, 0)
+    console.log(import.meta.url)
+    workerRef.current = new Worker(
+      new URL('../../../utils/worker.ts', import.meta.url)
+    )
+    workerRef.current.onmessage = ({ data: { data, width, height } }) => {
+      canvasRef.current
+        .getContext('2d')
+        .putImageData(new ImageData(data, width, height), 0, 0)
     }
-    forceUpdate()
-  }, [kernel])
+    return () => {
+      workerRef.current.terminate()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!imgToProcess.current) {
+      imgToProcess.current = new Image()
+    }
+  }, [])
+
+  const loadWithNewKernel = useCallback(
+    debounce(() => {
+      requestAnimationFrame(() => {
+        postImageData(imgToProcess.current, kernel, workerRef.current)
+      })
+    }, 500),
+    [kernel]
+  )
+
+  useEffect(() => {
+    imgToProcess.current.src = sq.src
+    imgToProcess.current.onload = loadWithNewKernel
+  }, [loadWithNewKernel])
 
   return (
     <div>
@@ -116,7 +107,7 @@ const ImperativeSquirrel = () => {
         {kernel.flat().map((v, i) => (
           <Input
             type="text"
-            key={v + i}
+            key={i}
             value={v}
             onChange={e => updateKennel(i, e.target.value)}
           />
