@@ -74,7 +74,7 @@ const getProbs = async (
   return predictedClasses
 }
 
-export default () => {
+const LayersModel = () => {
   const imgSqRef = useRef<HTMLImageElement | null>(null)
   const imgCatRef = useRef<HTMLImageElement | null>(null)
   const modelRef = useRef<tf.LayersModel | null>(null)
@@ -157,3 +157,5 @@ export default () => {
     </Predictions>
   )
 }
+
+export default LayersModel
