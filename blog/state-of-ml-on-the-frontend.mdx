@@ -334,6 +334,13 @@ const blurredSquirrel = convolve(
 
 Мало того что мы заблюрили белочку мы еще и побили рекорд. 5! вложенных циклов `for`
 
+<details>
+  Кстати! Если вы попробуете использовать функцию выше на картинках большого
+  размера ваш интерфейс будет лагать. Чинится очень просто – выносим нашу
+  матетатику в отдельный [Web
+  Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
+</details>
+
 <ImperativeSquirrel />
 
 Все очень императивно, правда же? У нас есть готовые числа (их еще называют ядром (и мы теперь знаем что это тензор :)). Мы берем эти числа и выполняем заранее известные преобразования.
@@ -399,9 +406,10 @@ const blurredSquirrel = convolve(
 
 Мой коллега утверждает что tf это как функциональное программирование :)
 
-## TODO Tensorflow tools
+## TODO Tensorflow tools and sources
 
 [tf-vis](https://js.tensorflow.org/api_vis/latest/)
+[XNNPACK](https://github.com/google/XNNPACK)
 
 ## Tensorflow производительность
 

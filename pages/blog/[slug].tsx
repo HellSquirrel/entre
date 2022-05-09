@@ -23,10 +23,13 @@ type Props = {
   slug: string
 }
 
+const Details: FC = ({ children }) => <details>{children}</details>
+
 const components = {
   img: (props: { src: string; alt: string }) => {
     return <Img src={props.src} alt={props.alt} />
   },
+  details: Details,
   pre: Pre,
   a: Link,
 }

@@ -36,8 +36,6 @@ const postImageData = (imageRef: HTMLImageElement, kernel, worker: Worker) => {
     ctx.drawImage(imageRef, 0, 0)
     const data = ctx.getImageData(0, 0, imageRef.width, imageRef.height).data
     worker.postMessage({ data, kernel, width, height })
-    // const convolved = convolve(data, kernel, width, height)
-    // return new ImageData(convolved, width, height)
   } catch (e) {
     console.log(e)
   }
