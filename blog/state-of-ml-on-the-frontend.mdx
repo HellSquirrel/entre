@@ -7,12 +7,14 @@ published: true
 ---
 
 import Image from 'next/image'
-import ImperativeSquirrel from '../pages/experiments/demos/imperativeSquirrel.tsx'
+import ImperativeSquirrel from '../components/imperativeSquirrel.tsx'
+import LayersModel from '../components/LayersModel'
 
 import tf from './assets/tf.png'
 import SquirrelCoords from './assets/squirrelCoords.svg'
 import Squirrel from './assets/squirrel.svg'
 import pca from './assets/pca.png'
+import modelSummary from './assets/modelSummary.png'
 
 # Все что вам нужно знать о цифровых белочках
 
@@ -79,7 +81,7 @@ import pca from './assets/pca.png'
 
 Пожалуй надо уточнить что matrix это двумерный массив.
 
-```js
+```ts
 ;[
   [0, -1, 0, 0],
   [1, 0, 0, 0],
@@ -120,7 +122,7 @@ import pca from './assets/pca.png'
 
 Смотрите как имперетивно:
 
-```js
+```ts
 const createValueGetter = (a, b) => x => a * x + b
 const getValue = createValueGetter(2, 5)
 console.log([1, 2].map(getValue)) // [7, 9]
@@ -132,7 +134,7 @@ console.log([1, 2].map(getValue)) // [7, 9]
 Дальше мы как-то тренируем нашу модель чтобы она умела выдавать нужные результат.
 Смотрите как декларативно:
 
-```js
+```ts
 const inputs = [1, 2, 3, 4]
 const realOutputs = [7, 9, 11, 13] // values.map(getOutput)
 
@@ -153,7 +155,7 @@ console.log(result) // [6.952457161700541, 8.9797075504127, 11.00695793912486, 1
 
 Для этого давайте посмотрим на полную реализацию примера выше
 
-```js
+```ts
 // императивненько
 const createValueGetter = (a, b) => x => a * x + b
 const getOutput = createValueGetter(2, 5)
@@ -214,7 +216,7 @@ TLDR:
 1. Мы определяем "архитектуру ящика". Это набор функций через которые мы будем прогонять наши входные данные.
    В нашем примере это
 
-```js
+```ts
 const layer = (inputs: number[], a: number, b: number): number[] =>
   inputs.map(x => a * x + b)
 ```
@@ -224,7 +226,7 @@ const layer = (inputs: number[], a: number, b: number): number[] =>
 Наша чОрный ящик это вообще-то маленькая нейросеть :)  
 Давайте пока считать что нейросеть композиция функций-слоев:
 
-```js
+```ts
 const networkOutput =
   // ... layer 100
   layer3(layer2(layer1(inputs)))
@@ -243,7 +245,7 @@ const networkOutput =
 
 В нашем случае это
 
-```js
+```ts
 const loss = (outputs: number[], realOutputs: number[]): number =>
   outputs
     .map((y, index) => Math.pow(y - realOutputs[index], 2))
@@ -275,7 +277,7 @@ const loss = (outputs: number[], realOutputs: number[]): number =>
 Я не буду приводить здесь код преобразования пикселей в `Uint8ClampedArray` и рисования красивостей на `canvas`
 Посмотрим только на блюрющую математику
 
-```js
+```ts
 const kernel = [
   [1 / 16, 1 / 8, 1 / 16],
   [1 / 8, 1 / 4, 1 / 8],
@@ -394,13 +396,96 @@ const blurredSquirrel = convolve(
 ## Настало время решить ту неподъемную задачу и наконец-то отличить белку от кота!
 
 Разумеется более общую задачу уже давно решили за нас. Вот этим и воспользуемся.
-Нам нужна крутая нейросеть :) Готовых очень много, но мы возьмем что полегче - [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet)
+Готовых нейросеточек, умеющих решать эту задачу очень много. Мы возьмем ту что полегче - [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet)
 
-Копируем код из readme
+Первым делом нам нужно загрузить готовую модель. Для этого примера я буду использовать [tensorflowjs](https://www.tensorflow.org/js).
+Пока нам не важно что это и как работает. Главное что может модельки грузить :)
 
-```js
-
+```ts
+const loadModel = async (): Promise<tf.LayersModel> => {
+  const model = await tf.loadLayersModel(MODEL_URL)
+  return model
+}
 ```
+
+Отлично! Моделька загружена. Теперь давайте посмотрим что там у нее внутри
+
+```ts
+model.summary()
+```
+
+<Image {...modelSummary} />
+
+Ага! Слои присуствуют, параметры присуствуют и там еще наши старые добрые функции convolve есть.
+Наша модель треноровалась по огромном дата-сете [ImageNet](https://en.wikipedia.org/wiki/ImageNet).
+Она может предсказывать 1000 классов изображений, которые мы заботливо сложили в json. В нашем примере `IMAGENET_CLASSES` это как раз оно.
+
+Чтобы запихнуть белку, кота или кого там нам еще захочется в модель, надо написать хелпер который после небольшого препроцессинга картинки выдаст нам нужные вероятности:
+
+```ts
+const MODEL_URL = '/models/mobilenet/model.json'
+const PREPROCESS_DIVISOR = tf.scalar(255 / 2)
+const MAX_PROB = 0.05
+const WIDTH = 224
+const HEIGHT = 224
+
+const predict = async (input: tf.Tensor, model: tf.LayersModel) => {
+  const preprocessedInput = tf.div(
+    tf.sub(input.asType('float32'), PREPROCESS_DIVISOR),
+    PREPROCESS_DIVISOR
+  )
+  const reshapedInput = preprocessedInput.reshape([
+    -1,
+    ...preprocessedInput.shape,
+  ])
+  return model.predict(reshapedInput)
+}
+
+const getProbs = async (
+  img: HTMLImageElement,
+  model: tf.LayersModel
+): Promise<Predictions> => {
+  // превращаем картинку в тензор
+  const tensor = tf.browser.fromPixels(img)
+  // предсказываем
+  const result = await predict(tensor, model)
+  const predictedClasses = tf.tidy(() => {
+    const data = (result as tf.Tensor).dataSync()
+    return data
+      .reduce((acc, val, idx) => {
+        // нас интересуют только большие вероятности
+        if (val > MAX_PROB) {
+          return [
+            ...acc,
+            {
+              prob: val,
+              // модель натренирована на IMAGE_NET, там 1000 классов
+              cl: IMAGENET_CLASSES[idx][1],
+            },
+          ]
+        }
+
+        return acc
+      }, [])
+      .sort((a, b) => (a.prob > b.prob ? -1 : 1))
+  })
+
+  return predictedClasses
+}
+```
+
+И вот что получается
+
+<LayersModel />
+
+Обратили внимание что мы сплющили белку? Дело в том, что та разновидность MobileNet которую мы используем кушает картинки размером 224 x 224. Поэтому нам нужно было отресайзить животных с искажением их пропорций.
+
+## А что там за слои такие?
+
+Давайте дальше разбираться в нашей модели. Как вообще она учится и что делает?
+Мы можем на это посмотреть :)
+
+## TODO: продолжение следует :)
 
 ## TODO а что это вообще такое?
 

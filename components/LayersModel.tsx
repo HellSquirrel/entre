@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import * as tf from '@tensorflow/tfjs'
 import '@tensorflow/tfjs-backend-webgl'
-import squirrel from '../demos/sq.jpeg'
-import cat from './cat.jpeg'
-import IMAGENET_CLASSES from './tf-classes.json'
+import squirrel from './assets/sq.jpeg'
+import cat from './assets/cat.jpeg'
+import IMAGENET_CLASSES from './assets/tf-classes.json'
+import { styled } from '@styles'
 
-const INPUT_NODE_NAME = 'images'
-const OUTPUT_NODE_NAME = 'module_apply_default/MobilenetV1/Logits/output'
+const Predictions = styled('div', {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+})
+
+const PredictedClass = styled('span', {
+  color: '$colors$sky10',
+})
+
 const MODEL_URL = '/models/mobilenet/model.json'
 const PREPROCESS_DIVISOR = tf.scalar(255 / 2)
 const MAX_PROB = 0.05
@@ -27,6 +35,7 @@ const predict = async (input: tf.Tensor, model: tf.LayersModel) => {
 
 const loadModel = async (): Promise<tf.LayersModel> => {
   const model = await tf.loadLayersModel(MODEL_URL)
+  model.summary()
   return model
 }
 
@@ -40,24 +49,35 @@ const getProbs = async (
   const result = await predict(tensor, model)
   const predictedClasses = tf.tidy(() => {
     const data = (result as tf.Tensor).dataSync()
-    return (data as Float32Array)
-      .reduce((acc, val, idx) => {
-        if (val > MAX_PROB) {
-          return [...acc, { prob: val, cl: IMAGENET_CLASSES[idx][1] }]
-        }
+    return (
+      data
+        // @ts-ignore
+        .reduce((acc, val, idx) => {
+          if (val > MAX_PROB) {
+            return [
+              ...acc,
+              {
+                prob: val,
+                // @ts-ignore
+                cl: IMAGENET_CLASSES[idx][1],
+              },
+            ]
+          }
 
-        return acc
-      }, [])
-      .sort((a, b) => (a.prob > b.prob ? -1 : 1))
+          return acc
+        }, [])
+        // @ts-ignore
+        .sort((a, b) => (a.prob > b.prob ? -1 : 1))
+    )
   })
 
   return predictedClasses
 }
 
 export default () => {
-  const imgSqRef = useRef(null)
-  const imgCatRef = useRef(null)
-  const modelRef = useRef<tf.LayersModel>(null)
+  const imgSqRef = useRef<HTMLImageElement | null>(null)
+  const imgCatRef = useRef<HTMLImageElement | null>(null)
+  const modelRef = useRef<tf.LayersModel | null>(null)
   const [modelLoaded, setModelLoaded] = useState(false)
   const [imgSqClass, setSqClass] = useState<Predictions>([])
   const [imgCatClass, setCatClass] = useState<Predictions>([])
@@ -65,13 +85,13 @@ export default () => {
   useEffect(() => {
     ;(async () => {
       modelRef.current = await loadModel()
-      modelRef.current.summary()
+      // modelRef.current.summary()
       setModelLoaded(true)
     })()
   }, [])
   useEffect(() => {
     const fn = async () => {
-      if (!modelLoaded) return
+      if (!modelLoaded || !imgSqRef.current || !modelRef.current) return
       const imgSqLoaded =
         imgSqRef.current.complete && imgSqRef.current.naturalHeight !== 0
       if (imgSqLoaded) {
@@ -79,8 +99,10 @@ export default () => {
         setSqClass(probs)
       } else {
         imgSqRef.current.onload = async () => {
-          const probs = await getProbs(imgSqRef.current, modelRef.current)
-          setSqClass(probs)
+          if (imgSqRef.current && modelRef.current) {
+            const probs = await getProbs(imgSqRef.current, modelRef.current)
+            setSqClass(probs)
+          }
         }
       }
     }
@@ -90,7 +112,7 @@ export default () => {
 
   useEffect(() => {
     const fn = async () => {
-      if (!modelLoaded) return
+      if (!modelLoaded || !imgCatRef.current || !modelRef.current) return
       const imgCatLoaded =
         imgCatRef.current.complete && imgCatRef.current.naturalHeight !== 0
       if (imgCatLoaded) {
@@ -98,8 +120,10 @@ export default () => {
         setCatClass(probs)
       } else {
         imgCatRef.current.onload = async () => {
-          const probs = await getProbs(imgCatRef.current, modelRef.current)
-          setCatClass(probs)
+          if (imgCatRef.current && modelRef.current) {
+            const probs = await getProbs(imgCatRef.current, modelRef.current)
+            setCatClass(probs)
+          }
         }
       }
     }
@@ -107,25 +131,29 @@ export default () => {
     fn()
   }, [modelLoaded])
   return (
-    <>
-      <img src={squirrel.src} ref={imgSqRef} width={WIDTH} height={HEIGHT} />
+    <Predictions>
       <div>
-        {imgSqClass.map(({ prob, cl }) => (
-          <div key={cl}>
-            {cl} with probability {(prob * 100).toFixed(1)}%
-          </div>
-        ))}
+        <img src={squirrel.src} ref={imgSqRef} width={WIDTH} height={HEIGHT} />
+        <div>
+          {imgSqClass.map(({ prob, cl }) => (
+            <div key={cl}>
+              <PredictedClass>{cl}</PredictedClass> with probability{' '}
+              {(prob * 100).toFixed(1)}%
+            </div>
+          ))}
+        </div>
       </div>
-      <br />
-      <br />
-      <img src={cat.src} ref={imgCatRef} width={WIDTH} height={HEIGHT} />
       <div>
-        {imgCatClass.map(({ prob, cl }) => (
-          <div key={cl}>
-            {cl} with probability {(prob * 100).toFixed(1)}%
-          </div>
-        ))}
+        <img src={cat.src} ref={imgCatRef} width={WIDTH} height={HEIGHT} />
+        <div>
+          {imgCatClass.map(({ prob, cl }) => (
+            <div key={cl}>
+              <PredictedClass>{cl}</PredictedClass> with probability{' '}
+              {(prob * 100).toFixed(1)}%
+            </div>
+          ))}
+        </div>
       </div>
-    </>
+    </Predictions>
   )
 }

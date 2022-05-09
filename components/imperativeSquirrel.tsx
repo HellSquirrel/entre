@@ -5,11 +5,9 @@ import React, {
   useState,
   useCallback,
 } from 'react'
-import sq from './sq.jpeg'
+import sq from './assets/sq.jpeg'
 import { styled } from '@styles'
-import { image } from '@tensorflow/tfjs'
-import { debounce } from '../../../utils/debounce'
-import { convolve } from '../../../utils/math'
+import { debounce } from '../utils/debounce'
 
 const KernelEditor = styled('div', {
   width: 'calc(3 * $step)',
@@ -25,7 +23,17 @@ const Input = styled('input', {
   fontSize: '$fontSizes$main',
 })
 
-const postImageData = (imageRef: HTMLImageElement, kernel, worker: Worker) => {
+const initialKernel = [
+  [1 / 16, 1 / 8, 1 / 16],
+  [1 / 8, 1 / 4, 1 / 8],
+  [1 / 16, 1 / 8, 1 / 16],
+]
+
+const postImageData = (
+  imageRef: HTMLImageElement,
+  kernel: number[][],
+  worker: Worker
+) => {
   try {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
@@ -33,8 +41,8 @@ const postImageData = (imageRef: HTMLImageElement, kernel, worker: Worker) => {
     const height = imageRef.height
     canvas.width = width
     canvas.height = height
-    ctx.drawImage(imageRef, 0, 0)
-    const data = ctx.getImageData(0, 0, imageRef.width, imageRef.height).data
+    ctx?.drawImage(imageRef, 0, 0)
+    const data = ctx?.getImageData(0, 0, imageRef.width, imageRef.height).data
     worker.postMessage({ data, kernel, width, height })
   } catch (e) {
     console.log(e)
@@ -42,16 +50,12 @@ const postImageData = (imageRef: HTMLImageElement, kernel, worker: Worker) => {
 }
 
 const ImperativeSquirrel = () => {
-  const imageRef = useRef(null)
-  const canvasRef = useRef(null)
-  const imgToProcess = useRef(null)
-  const workerRef = useRef(null)
+  const imageRef = useRef<HTMLImageElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const imgToProcess = useRef<HTMLImageElement | null>(null)
+  const workerRef = useRef<Worker | null>(null)
   const [_, forceUpdate] = useReducer(x => x + 1, 0)
-  const [kernel, setKernel] = useState([
-    [1 / 16, 1 / 8, 1 / 16],
-    [1 / 8, 1 / 4, 1 / 8],
-    [1 / 16, 1 / 8, 1 / 16],
-  ])
+  const [kernel, setKernel] = useState(initialKernel)
 
   const updateKennel = useCallback(
     (n, value) => {
@@ -63,17 +67,16 @@ const ImperativeSquirrel = () => {
   )
 
   useEffect(() => {
-    console.log(import.meta.url)
     workerRef.current = new Worker(
-      new URL('../../../utils/worker.ts', import.meta.url)
+      new URL('../utils/worker.ts', import.meta.url)
     )
     workerRef.current.onmessage = ({ data: { data, width, height } }) => {
       canvasRef.current
-        .getContext('2d')
-        .putImageData(new ImageData(data, width, height), 0, 0)
+        ?.getContext('2d')
+        ?.putImageData(new ImageData(data, width, height), 0, 0)
     }
     return () => {
-      workerRef.current.terminate()
+      workerRef.current?.terminate()
     }
   }, [])
 
@@ -86,15 +89,19 @@ const ImperativeSquirrel = () => {
   const loadWithNewKernel = useCallback(
     debounce(() => {
       requestAnimationFrame(() => {
-        postImageData(imgToProcess.current, kernel, workerRef.current)
+        if (imgToProcess.current && workerRef.current) {
+          postImageData(imgToProcess.current, kernel, workerRef.current)
+        }
       })
     }, 500),
     [kernel]
   )
 
   useEffect(() => {
-    imgToProcess.current.src = sq.src
-    imgToProcess.current.onload = loadWithNewKernel
+    if (imgToProcess.current) {
+      imgToProcess.current.src = sq.src
+      imgToProcess.current.onload = loadWithNewKernel
+    }
   }, [loadWithNewKernel])
 
   return (
