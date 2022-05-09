@@ -49,7 +49,7 @@ const postImageData = (
   }
 }
 
-const ImperativeSquirrel = () => {
+export const ImperativeSquirrel = () => {
   const imageRef = useRef<HTMLImageElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const imgToProcess = useRef<HTMLImageElement | null>(null)
@@ -121,5 +121,3 @@ const ImperativeSquirrel = () => {
     </div>
   )
 }
-
-export default ImperativeSquirrel
