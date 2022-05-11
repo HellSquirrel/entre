@@ -8,7 +8,7 @@ const globalStyles = globalCss({
     margin: 0,
     padding: 0,
     background:
-      'radial-gradient(circle at bottom, $pink5 0, $indigo3 50%, transparent)',
+      'linear-gradient(0deg, $mint4, $mint1 30%, $indigo3 50%, $indigo1)',
   },
 
   '#__next': {

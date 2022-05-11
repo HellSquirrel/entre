@@ -54,11 +54,3 @@ export const {
     bp1: '(min-width: 640px)',
   },
 })
-
-// const darkTheme = createTheme({
-//   colors: {
-//     ...grayDark,
-//     ...violetDark,
-//     ...violetDarkA,
-//   },
-// })
