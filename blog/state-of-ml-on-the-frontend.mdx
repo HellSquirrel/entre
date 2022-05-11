@@ -228,7 +228,7 @@ const layer = (inputs: number[], a: number, b: number): number[] =>
 Я не просто так назвала эту функцию слоем (layer).
 
 Наша чОрный ящик можно с натяжкой назвать однослойной нейросетью :)  
-Давайте пока считать что нейросеть это композиция функций-слоев:
+Давайте пока считать что нейросеть это композиция функций-слоев (которая тоже кстати является функцией)):
 
 ```ts
 const networkOutput =
@@ -435,7 +435,6 @@ model.summary()
 ```ts
 const MODEL_URL = '/models/mobilenet/model.json'
 const PREPROCESS_DIVISOR = tf.scalar(255 / 2)
-const MAX_PROB = 0.05
 const WIDTH = 224
 const HEIGHT = 224
 
@@ -459,24 +458,21 @@ const getProbs = async (
   // предсказываем
   const result = await predict(tensor, model)
   const predictedClasses = tf.tidy(() => {
-    const data = (result as tf.Tensor).dataSync()
-    return data
-      .reduce((acc, val, idx) => {
-        // нас интересуют только большие вероятности
-        if (val > MAX_PROB) {
-          return [
-            ...acc,
-            {
-              prob: val,
-              // модель натренирована на IMAGE_NET, там 1000 классов
-              cl: IMAGENET_CLASSES[idx][1],
-            },
-          ]
-        }
-
-        return acc
-      }, [])
-      .sort((a, b) => (a.prob > b.prob ? -1 : 1))
+    // получаем самые вероятные предсказания
+    const { values, indices } = tf.topk(result as tf.Tensor)
+    const valuesData = values.dataSync() as Float32Array
+    const indexData = indices.dataSync()
+    return valuesData.reduce(
+      (acc, val, idx) => [
+        ...acc,
+        {
+          prob: val,
+          // и превращаем циферку соответствующую классу в его название
+          cl: IMAGENET_CLASSES[indexData[idx]][1],
+        },
+      ],
+      []
+    )
   })
 
   return predictedClasses

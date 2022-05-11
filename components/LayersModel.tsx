@@ -6,6 +6,7 @@ import cat from './assets/cat.jpeg'
 import IMAGENET_CLASSES from './assets/tf-classes.json'
 import { styled } from '@styles'
 import { applyColorMap } from 'utils/images'
+import { Tensor } from '@tensorflow/tfjs'
 
 const Predictions = styled('div', {
   display: 'grid',
@@ -36,7 +37,6 @@ const ColorMap = styled('div', {
 
 const MODEL_URL = '/models/mobilenet/model.json'
 const PREPROCESS_DIVISOR = tf.scalar(255 / 2)
-const MAX_PROB = 0.05
 const WIDTH = 224
 const HEIGHT = 224
 
@@ -69,29 +69,24 @@ const getProbs = async (
   const tensor = tf.browser.fromPixels(img)
   const result = await predict(tensor, model)
   const predictedClasses = tf.tidy(() => {
-    const data = (result as tf.Tensor).dataSync()
-    return (
-      data
-        // @ts-ignore
-        .reduce((acc, val, idx) => {
-          if (val > MAX_PROB) {
-            return [
-              ...acc,
-              {
-                prob: val,
-                // @ts-ignore
-                cl: IMAGENET_CLASSES[idx][1],
-              },
-            ]
-          }
-
-          return acc
-        }, [])
-        // @ts-ignore
-        .sort((a, b) => (a.prob > b.prob ? -1 : 1))
+    const { values, indices } = tf.topk(result as tf.Tensor)
+    const valuesData = values.dataSync() as Float32Array
+    const indexData = indices.dataSync()
+    return valuesData.reduce(
+      // @ts-ignore
+      (acc, val, idx) => [
+        ...acc,
+        {
+          prob: val,
+          // @ts-ignore
+          cl: IMAGENET_CLASSES[indexData[idx]][1],
+        },
+      ],
+      []
     )
   })
 
+  // @ts-ignore
   return predictedClasses
 }
 
