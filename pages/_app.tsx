@@ -44,6 +44,9 @@ const globalStyles = globalCss({
 
   '.img': {
     background: '$gray12',
+    display: 'flex',
+    alignSelf: 'center',
+    padding: '$3',
   },
 
   [`html[data-theme='light']`]: {

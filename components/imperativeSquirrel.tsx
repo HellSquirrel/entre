@@ -17,6 +17,15 @@ const KernelEditor = styled('div', {
   gap: '$2',
 })
 
+const Img = styled('img', {
+  maxWidth: '100%',
+  objectFit: 'cover',
+})
+
+const Canvas = styled('canvas', {
+  maxWidth: '100%',
+})
+
 const Input = styled('input', {
   width: '100%',
   height: '$fontSizes$big',
@@ -106,8 +115,8 @@ export const ImperativeSquirrel = () => {
 
   return (
     <div>
-      <img src={sq.src} ref={imageRef} width={sq.width} height={sq.height} />
-      <canvas ref={canvasRef} width={sq.width} height={sq.height} />
+      <Img src={sq.src} ref={imageRef} />
+      <Canvas ref={canvasRef} width={sq.width} height={sq.height} />
       <KernelEditor>
         {kernel.flat().map((v, i) => (
           <Input
