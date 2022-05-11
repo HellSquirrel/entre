@@ -13,7 +13,7 @@ const Predictions = styled('div', {
   gridRowGap: '$3',
 
   '@bp1': {
-    gridAutoColumns: '1fr 1fr',
+    gridTemplateColumns: '1fr 1fr',
   },
 })
 
