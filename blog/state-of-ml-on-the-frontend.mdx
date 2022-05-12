@@ -6,7 +6,7 @@ slug: 'how-to-blur-a-squirrel'
 published: true
 ---
 
-import Image from 'next/image'
+import { Image } from '../components/Image'
 import { ImperativeSquirrel } from '../components/imperativeSquirrel.tsx'
 import { LayersModel } from '../components/LayersModel'
 import { Details } from '../components/Details'
@@ -18,11 +18,26 @@ import Squirrel from './assets/squirrel.svg'
 import pca from './assets/pca.png'
 import modelSummary from './assets/modelSummary.png'
 import squirrelNT from './assets/squirrelNT.png'
+import convolution from './assets/convolution.png'
 import Tensor from './assets/tensor.svg'
 
 # Все что вам нужно знать о цифровых белочках
 
-<Image {...squirrelNT} />
+<Image
+  {...squirrelNT}
+  caption={
+    <>
+      Пример neural style transfer. Оригинальное фото{' '}
+      <a href="https://unsplash.com/@sparrow24?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">
+        Włodzimierz Jaworski
+      </a>{' '}
+      утащено с{' '}
+      <a href="https://unsplash.com/?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">
+        Unsplash
+      </a>
+    </>
+  }
+/>
 
 В этой серии постов мы поговорим о ML-ной математике, а также о замечательных библиотеках, позволяющих эту математику применять.
 Чтобы немножко усложнить квест, я не буду использовать никаких формул и попробую объяснять все на белочках.
@@ -159,7 +174,7 @@ console.log([1, 2].map(getValue)) // [7, 9]
 const inputs = [1, 2, 3, 4]
 const realOutputs = [7, 9, 11, 13] // values.map(getOutput)
 
-// ... some boring implementation of a network
+// ... "скучный" код нашей нейросети
 
 const learnedParams = doTrain()
 const result = layer(inputs, ...learnedParams)
@@ -232,8 +247,8 @@ console.log(result) // [6.952457161700541, 8.9797075504127, 11.00695793912486, 1
 
 TLDR:
 
-1. Мы определяем "архитектуру ящика". Это набор функций через которые мы будем прогонять наши входные данные.
-   В нашем примере это:
+Мы определяем "архитектуру ящика". Это набор функций через которые мы будем прогонять наши входные данные.
+В нашем примере это:
 
 ```ts
 const layer = (inputs: number[], a: number, b: number): number[] =>
@@ -289,7 +304,7 @@ const loss = (outputs: number[], realOutputs: number[]): number =>
 
 ## И для каких случаев этот подбор будет успешным?
 
-Есть прикольная теорема, называется [универсальная теорема аппроксимаци](https://web.archive.org/web/20151010204407/http://deeplearning.cs.cmu.edu/pdfs/Cybenko.pdf)
+Есть прикольная теорема, называется [универсальная теорема аппроксимации](https://ru.wikipedia.org/wiki/%D0%A2%D0%B5%D0%BE%D1%80%D0%B5%D0%BC%D0%B0_%D0%A6%D1%8B%D0%B1%D0%B5%D0%BD%D0%BA%D0%BE)
 Она утверждает что используя определенный набор слоев мы с нужной точностью можем приближать любую непрерывную функцию.
 Т.е если:
 
@@ -379,6 +394,8 @@ const blurredSquirrel = convolve(
 Для блюра белочки мы использовали операцию [convolve](https://en.wikipedia.org/wiki/Convolution). Эта операция берет матрицу заданного размера, выбирает кусочек картинки такого же размера и "сворачивает" их вместе.
 
 Сворачиваем так: перемножаем все значения матрицы на значения соответствующих пикселей. А потом складываем все результаты.
+
+<Image {...convolution} />
 
 Выбирая правильные ядра мы можем по-разному преобразовывать нашу картинку:
 

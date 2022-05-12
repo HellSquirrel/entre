@@ -198,7 +198,9 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
       }
     }
 
-    fn()
+    requestIdleCallback(() => {
+      fn()
+    })
   }, [modelLoaded])
 
   useEffect(() => {
@@ -225,7 +227,9 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
       }
     }
 
-    fn()
+    requestIdleCallback(() => {
+      fn()
+    })
   }, [modelLoaded])
 
   useEffect(() => {
