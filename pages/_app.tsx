@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app'
 import { Layout } from '../components/Layout'
 import { ThemeProvider } from 'next-themes'
 import { globalCss } from '@styles'
+import { useEffect } from 'react'
 
 const globalStyles = globalCss({
   body: {
@@ -60,6 +61,16 @@ const globalStyles = globalCss({
 })
 
 function NextAPP({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    if (typeof window !== undefined && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register(
+          new URL('../utils/sw.ts', import.meta.url)
+        )
+      })
+    }
+  }, [])
+
   globalStyles()
   return (
     <ThemeProvider defaultTheme="dark">

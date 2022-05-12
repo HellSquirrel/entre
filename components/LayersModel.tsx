@@ -6,6 +6,14 @@ import cat from './assets/cat.jpeg'
 import IMAGENET_CLASSES from './assets/tf-classes.json'
 import { styled } from '@styles'
 import { applyColorMap } from 'utils/images'
+import {
+  broadcaster$,
+  ImagesEnum,
+  imageLoads$,
+  loadModel,
+} from '../utils/modelLoader'
+import { filter } from 'rxjs/operators'
+import { combineLatest } from 'rxjs'
 
 const Predictions = styled('div', {
   display: 'grid',
@@ -39,7 +47,6 @@ const ColorMap = styled('div', {
   },
 })
 
-const MODEL_URL = '/models/mobilenet/model.json'
 const PREPROCESS_DIVISOR = tf.scalar(255 / 2)
 const WIDTH = 224
 const HEIGHT = 224
@@ -54,12 +61,6 @@ const processInputImage = (input: tf.Tensor) => {
 
 const predict = async (input: tf.Tensor, model: tf.LayersModel) =>
   model.predict(processInputImage(input))
-
-const loadModel = async (): Promise<tf.LayersModel> => {
-  const model = await tf.loadLayersModel(MODEL_URL)
-  // model.summary()
-  return model
-}
 
 type Predictions = Array<{ prob: number; cl: string }>
 type Props = {
@@ -167,97 +168,103 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
   const imgCatRef = useRef<HTMLImageElement | null>(null)
   const origImageRef = useRef<HTMLImageElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const modelRef = useRef<tf.LayersModel | null>(null)
-  const [modelLoaded, setModelLoaded] = useState(false)
   const [imgSqClass, setSqClass] = useState<Predictions>([])
   const [imgCatClass, setCatClass] = useState<Predictions>([])
 
+  if (typeof window === 'undefined') return null
+
   useEffect(() => {
-    ;(async () => {
-      modelRef.current = await loadModel()
-      setModelLoaded(true)
-    })()
+    loadModel()
   }, [])
 
   useEffect(() => {
-    const fn = async () => {
-      if (!modelLoaded || !imgSqRef.current || !modelRef.current || showHeatMap)
-        return
-      const imgSqLoaded =
-        imgSqRef.current.complete && imgSqRef.current.naturalHeight !== 0
-      if (imgSqLoaded) {
-        const probs = await getProbs(imgSqRef.current, modelRef.current)
+    if (showHeatMap) return
+    const allIsLoaded$ = combineLatest([
+      imageLoads$.pipe(filter(img => img === ImagesEnum.Squirrel)),
+      broadcaster$,
+    ])
+
+    allIsLoaded$.subscribe({
+      next: async ([_, model]) => {
+        const probs = await getProbs(
+          imgSqRef.current as HTMLImageElement,
+          model as tf.LayersModel
+        )
         setSqClass(probs)
-      } else {
-        imgSqRef.current.onload = async () => {
-          if (imgSqRef.current && modelRef.current) {
-            const probs = await getProbs(imgSqRef.current, modelRef.current)
-            setSqClass(probs)
-          }
-        }
-      }
-    }
-
-    requestIdleCallback(() => {
-      fn()
+      },
     })
-  }, [modelLoaded])
+  }, [])
 
   useEffect(() => {
-    const fn = async () => {
-      if (
-        !modelLoaded ||
-        !imgCatRef.current ||
-        !modelRef.current ||
-        showHeatMap
-      )
-        return
-      const imgCatLoaded =
-        imgCatRef.current.complete && imgCatRef.current.naturalHeight !== 0
-      if (imgCatLoaded) {
-        const probs = await getProbs(imgCatRef.current, modelRef.current)
+    if (!showHeatMap) return
+    const allIsLoaded$ = combineLatest([
+      imageLoads$.pipe(filter(img => img === ImagesEnum.Squirrel)),
+      imageLoads$.pipe(filter(img => img === ImagesEnum.Original)),
+      broadcaster$,
+    ])
+
+    allIsLoaded$.subscribe({
+      next: async ([_, __, model]) => {
+        const origImage = tf.browser.fromPixels(
+          origImageRef.current as HTMLImageElement
+        )
+
+        const heatMap = exploreLayer(
+          origImage,
+          model as tf.LayersModel,
+          origImageRef.current?.width as number,
+          origImageRef.current?.height as number
+        )
+
+        tf.browser.toPixels(heatMap, canvasRef.current as HTMLCanvasElement)
+      },
+    })
+  }, [])
+
+  useEffect(() => {
+    if (showHeatMap) return
+    const allIsLoaded$ = combineLatest([
+      imageLoads$.pipe(filter(img => img === ImagesEnum.Cat)),
+      broadcaster$,
+    ])
+
+    allIsLoaded$.subscribe({
+      next: async ([_, model]) => {
+        const probs = await getProbs(
+          imgCatRef.current as HTMLImageElement,
+          model as tf.LayersModel
+        )
         setCatClass(probs)
-      } else {
-        imgCatRef.current.onload = async () => {
-          if (imgCatRef.current && modelRef.current) {
-            const probs = await getProbs(imgCatRef.current, modelRef.current)
-            setCatClass(probs)
-          }
-        }
-      }
-    }
-
-    requestIdleCallback(() => {
-      fn()
+      },
     })
-  }, [modelLoaded])
+  }, [])
 
   useEffect(() => {
-    const fn = async () => {
-      if (
-        !modelLoaded ||
-        !modelRef.current ||
-        !origImageRef.current ||
-        !canvasRef.current ||
-        !showHeatMap
-      )
-        return
-
-      // todo: image could be not loaded at the moment
-      const origImage = tf.browser.fromPixels(origImageRef.current)
-
-      const heatMap = exploreLayer(
-        origImage,
-        modelRef.current,
-        origImageRef.current?.width,
-        origImageRef.current?.height
-      )
-
-      tf.browser.toPixels(heatMap, canvasRef.current)
+    if (imgSqRef.current?.complete) {
+      imageLoads$.next(ImagesEnum.Squirrel)
+    } else {
+      imgSqRef.current?.addEventListener('load', () => {
+        imageLoads$.next(ImagesEnum.Squirrel)
+      })
     }
 
-    fn()
-  }, [modelLoaded])
+    if (imgCatRef.current?.complete) {
+      imageLoads$.next(ImagesEnum.Cat)
+    } else {
+      imgCatRef.current?.addEventListener('load', () => {
+        imageLoads$.next(ImagesEnum.Cat)
+      })
+    }
+
+    if (origImageRef.current?.complete) {
+      imageLoads$.next(ImagesEnum.Original)
+    } else {
+      origImageRef.current?.addEventListener('load', () => {
+        imageLoads$.next(ImagesEnum.Original)
+      })
+    }
+  }, [])
+
   return (
     <>
       {!showHeatMap && (
