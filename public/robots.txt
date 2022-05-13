@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /demos
+
+User-agent: *
+Disallow: /models
+
+User-agent: *
+Disallow: /pages/experiments
+
+# Allow all crawlers
+User-agent: *
+Allow: /

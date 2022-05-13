@@ -24,7 +24,6 @@ export default class Document extends NextDocument {
             rel="stylesheet"
           />
           <link rel="icon" type="image/png" sizes="32x32" href="/dragon.png" />
-          <meta name="robots" content="noindex" />
           <Analytics />
         </Head>
         <body>

@@ -171,10 +171,10 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
   const [imgSqClass, setSqClass] = useState<Predictions>([])
   const [imgCatClass, setCatClass] = useState<Predictions>([])
 
-  if (typeof window === 'undefined') return null
-
   useEffect(() => {
-    loadModel()
+    if (typeof window !== 'undefined') {
+      loadModel()
+    }
   }, [])
 
   useEffect(() => {
@@ -193,7 +193,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
         setSqClass(probs)
       },
     })
-  }, [])
+  }, [showHeatMap])
 
   useEffect(() => {
     if (!showHeatMap) return
@@ -219,7 +219,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
         tf.browser.toPixels(heatMap, canvasRef.current as HTMLCanvasElement)
       },
     })
-  }, [])
+  }, [showHeatMap])
 
   useEffect(() => {
     if (showHeatMap) return
@@ -237,7 +237,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
         setCatClass(probs)
       },
     })
-  }, [])
+  }, [showHeatMap])
 
   useEffect(() => {
     if (imgSqRef.current?.complete) {
