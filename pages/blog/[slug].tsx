@@ -52,7 +52,7 @@ export function getStaticProps(context: GetStaticPropsContext) {
   const currentSlug = context?.params?.slug || ''
   const post =
     // @ts-ignore
-    __POSTS__.find(f => currentSlug.includes(f.slug))
+    __POSTS__.find(f => currentSlug.includes(f.frontmatter.slug))
   return {
     props: {
       frontmatter: post?.frontmatter || {},
@@ -60,6 +60,11 @@ export function getStaticProps(context: GetStaticPropsContext) {
     },
   }
 }
+
+const DateComponent = styled('div', {
+  fontSize: '$small',
+  position: 'absolute',
+})
 
 const Post: FC<Props> = ({ frontmatter, slug }) => {
   const CurrentPage = pages.find(
@@ -85,6 +90,10 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
       </Head>
       {/* @ts-ignore */}
       <MDXProvider components={components}>
+        <DateComponent>
+          {new Date(frontmatter?.date).toLocaleDateString()}
+        </DateComponent>
+        <h1>{frontmatter?.title}</h1>
         <div>
           {/* @ts-ignore */}
           {CurrentPage ? <CurrentPage /> : null}
