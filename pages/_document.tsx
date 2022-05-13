@@ -35,6 +35,7 @@ export default class Document extends NextDocument {
           <Main />
           <NextScript />
           <script
+            defer
             src={`https://www.googletagmanager.com/gtag/js?id=${gTagId}`}
           />
           <script
