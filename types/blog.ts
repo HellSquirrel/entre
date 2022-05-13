@@ -6,6 +6,8 @@ export type Frontmatter = {
   tags: Tag[]
   slug: string
   published?: boolean
+  description?: string
+  image?: string
 }
 
 export type Post = { content: string; frontmatter: Frontmatter; slug: string }

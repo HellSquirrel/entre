@@ -5,6 +5,7 @@ import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
 import { Pre } from '../../components/Pre'
 import { Link } from '../../components/Link'
+import Head from 'next/head'
 
 import * as ImageOptimization from '../../blog/image-optimizations.mdx'
 import * as PerfectLoader from '../../blog/perfect-loader.mdx'
@@ -51,7 +52,7 @@ export function getStaticProps(context: GetStaticPropsContext) {
   const currentSlug = context?.params?.slug || ''
   const post =
     // @ts-ignore
-    __POSTS__.find(f => currentSlug.includes(f.slug)) || (__POSTS__[0] as Post)
+    __POSTS__.find(f => currentSlug.includes(f.slug))
   return {
     props: {
       frontmatter: post?.frontmatter || {},
@@ -67,13 +68,29 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
   )?.default
 
   return (
-    // @ts-ignore
-    <MDXProvider components={components}>
-      <div>
-        {/* @ts-ignore */}
-        {CurrentPage ? <CurrentPage /> : null}
-      </div>
-    </MDXProvider>
+    <>
+      <Head>
+        {!!frontmatter && (
+          <>
+            <meta name="twitter:card" content="summary" />
+            <meta name="twitter:site" content="@pgurtovaya" />
+            <meta name="twitter:title" content={frontmatter.title} />
+            <meta
+              name="twitter:description"
+              content={frontmatter?.description || frontmatter.title}
+            />
+            <meta name="twitter:image" content={frontmatter.image} />
+          </>
+        )}
+      </Head>
+      {/* @ts-ignore */}
+      <MDXProvider components={components}>
+        <div>
+          {/* @ts-ignore */}
+          {CurrentPage ? <CurrentPage /> : null}
+        </div>
+      </MDXProvider>
+    </>
   )
 }
 
