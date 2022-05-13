@@ -1,17 +1,19 @@
 import Script from 'next/script'
 
+const gTagId = 'G-7WLMRYD21T'
+
 const scriptContent = `
-window.dataLayer = window.dataLayer || [];
+  window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-L85H14PY3B');`
+  gtag('config', '${gTagId}');`
 
 export const Analytics = () => (
   <>
     <Script
       strategy="afterInteractive"
-      src="https://www.googletagmanager.com/gtag/js?id=G-L85H14PY3B"
+      src={`https://www.googletagmanager.com/gtag/js?id=${gTagId}`}
     />
     <Script
       id="gtag-init"
