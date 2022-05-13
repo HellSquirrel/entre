@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { GetStaticPropsContext } from 'next'
-import { Post, Frontmatter } from '../../types/blog'
+import { Frontmatter } from '../../types/blog'
 import { MDXProvider } from '@mdx-js/react'
 import { styled } from '@styles'
 import { Pre } from '../../components/Pre'

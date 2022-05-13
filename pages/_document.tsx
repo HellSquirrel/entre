@@ -1,7 +1,14 @@
 import React from 'react'
 import NextDocument, { Html, Head, Main, NextScript } from 'next/document'
 import { getCssText } from '@styles'
-import { Analytics } from 'components/Analytics'
+
+const gTagId = 'G-7WLMRYD21T'
+
+const scriptContent = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${gTagId}');`
 
 export default class Document extends NextDocument {
   render() {
@@ -11,7 +18,6 @@ export default class Document extends NextDocument {
           id="stitches"
           dangerouslySetInnerHTML={{ __html: getCssText() }}
         />
-
         <Head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link
@@ -24,11 +30,19 @@ export default class Document extends NextDocument {
             rel="stylesheet"
           />
           <link rel="icon" type="image/png" sizes="32x32" href="/dragon.png" />
-          <Analytics />
         </Head>
         <body>
           <Main />
           <NextScript />
+          <script
+            src={`https://www.googletagmanager.com/gtag/js?id=${gTagId}`}
+          />
+          <script
+            id="gtag-init"
+            dangerouslySetInnerHTML={{
+              __html: scriptContent,
+            }}
+          />
         </body>
       </Html>
     )
