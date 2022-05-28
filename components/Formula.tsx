@@ -9,6 +9,7 @@ type Props = {
 export const Formula: FC<Props> = ({ content }) => {
   const html = katex.renderToString(content, {
     throwOnError: false,
+    // @ts-ignore
     inlineMode: true,
   })
   return <div dangerouslySetInnerHTML={{ __html: html }} />

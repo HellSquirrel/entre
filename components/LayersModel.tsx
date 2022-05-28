@@ -26,7 +26,7 @@ const Predictions = styled('div', {
 })
 
 const PredictedClass = styled('span', {
-  color: '$colors$sky10',
+  color: '$colors$sky9',
 })
 
 const Canvas = styled('canvas', {
