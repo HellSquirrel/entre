@@ -20,6 +20,7 @@
     "@tensorflow-models/mobilenet": "^2.1.0",
     "@tensorflow/tfjs": "^3.13.0",
     "@tensorflow/tfjs-vis": "^1.5.1",
+    "@types/katex": "^0.14.0",
     "glob": "^7.2.0",
     "gray-matter": "^4.0.3",
     "hast-util-to-string": "1.0.4",
