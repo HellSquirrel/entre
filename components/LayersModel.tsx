@@ -34,7 +34,6 @@ const getProbs = async (
   model: tf.LayersModel
 ): Promise<Predictions> => {
   const tensor = tf.browser.fromPixels(img)
-  console.log('getting probs', model)
   const result = await predict(tensor, model)
   const predictedClasses = tf.tidy(() => {
     const { values, indices } = tf.topk(result as tf.Tensor)
@@ -149,7 +148,6 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
 
     allIsLoaded$.subscribe({
       next: async ([_, model]) => {
-        console.log('all loaded', model)
         const probs = await getProbs(
           imgSqRef.current as HTMLImageElement,
           model as tf.LayersModel
