@@ -9,10 +9,17 @@ import Head from 'next/head'
 
 import * as ImageOptimization from '../../blog/image-optimizations.mdx'
 import * as PerfectLoader from '../../blog/perfect-loader.mdx'
-import * as StateOfML from '../../blog/state-of-ml-on-the-frontend.mdx'
+import * as MLOnClient from '../../blog/state-of-ml-on-the-frontend.mdx'
 import * as BestSecondLanguage from '../../blog/perfect-loader.mdx'
+import * as MLOnClient2 from '../../blog/state-of-ml-on-the-frontend-2.mdx'
 
-const pages = [ImageOptimization, PerfectLoader, StateOfML, BestSecondLanguage]
+const pages = [
+  ImageOptimization,
+  PerfectLoader,
+  MLOnClient,
+  MLOnClient2,
+  BestSecondLanguage,
+]
 
 const Img = styled('img', {
   maxWidth: '$max',

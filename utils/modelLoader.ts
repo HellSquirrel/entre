@@ -1,29 +1,67 @@
-import { Subject, from } from 'rxjs'
-import { tap, map } from 'rxjs/operators'
+import { Subject, filter, map } from 'rxjs'
 import * as tf from '@tensorflow/tfjs'
+import { LayersModel } from '@tensorflow/tfjs'
 
-const MODEL_URL = '/models/mobilenet/model.json'
+export enum Status {
+  Created,
+  Loading,
+  Loaded,
+  Failed,
+}
 
-export const broadcaster$ = new Subject<tf.LayersModel>()
+type ModelAndStatus = {
+  model: tf.LayersModel | null
+  url: string
+  status: Status
+}
+
+export const broadcaster$ = new Subject<ModelAndStatus>()
+
+const cache: Record<string, ModelAndStatus> = {}
+
 export let loadedModel: tf.LayersModel | null = null
-let modelIsLoading = false
 
-export const loadModel = async (): Promise<tf.LayersModel | null> => {
-  if (typeof window !== 'undefined') {
-    if (loadedModel) {
-      broadcaster$.next(loadedModel)
-      return null
-    }
-    if (!loadedModel && !modelIsLoading) {
-      modelIsLoading = true
-      const model = await tf.loadLayersModel(MODEL_URL)
-      loadedModel = model
-      modelIsLoading = false
-      broadcaster$.next(loadedModel)
-    }
+const logModelInfo = (model: LayersModel) => {
+  model.summary()
+  const totalParams = model.countParams()
+  const lastLayer = model.layers.slice(-1)[0]
+  const prevLayer = model.layers.slice(-2)[0]
+  const lastOutput = lastLayer.outputShape[1]
+  const prevOutput = prevLayer.outputShape[1]
+  const totalOnLastLayer = prevLayer.countParams()
+  console.log('totalParams=', totalParams)
+  console.log(
+    `on the last layer = ${lastOutput} * ${prevOutput} + ${lastOutput}`
+  )
+}
 
-    // model.summary()
+export const loadModel = async (
+  modelUrl: string
+): Promise<tf.LayersModel | null> => {
+  if (typeof window === 'undefined') return null
+  const currentModel = cache[modelUrl]
+  if (currentModel && currentModel.status == Status.Loaded) {
+    broadcaster$.next(currentModel)
   }
+
+  if (!currentModel) {
+    broadcaster$.next({
+      model: null,
+      url: modelUrl,
+      status: Status.Loading,
+    })
+
+    const model = await tf.loadLayersModel(modelUrl)
+
+    broadcaster$.next({
+      model: model,
+      url: modelUrl,
+      status: Status.Loaded,
+    })
+
+    logModelInfo(model)
+  }
+
   return null
 }
 
@@ -34,3 +72,14 @@ export enum ImagesEnum {
 }
 
 export const imageLoads$ = new Subject<ImagesEnum>()
+
+export const creteModelBroadcaster$ = (modelUrl: string) =>
+  broadcaster$
+    .pipe(
+      filter(
+        modelAndStatus =>
+          modelAndStatus.url === modelUrl &&
+          modelAndStatus.status === Status.Loaded
+      )
+    )
+    .pipe(map(modelAndStatus => modelAndStatus.model))

@@ -1,5 +1,5 @@
-import { LayersModel } from '../../../components/LayersModel'
+import { LayersModel } from '../../../components/TenLayersModel'
 
-const LayersExample = () => <LayersModel showHeatMap />
+const LayersExample = () => <LayersModel />
 
 export default LayersExample

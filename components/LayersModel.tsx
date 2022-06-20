@@ -4,63 +4,25 @@ import '@tensorflow/tfjs-backend-webgl'
 import squirrel from './assets/sq.jpeg'
 import cat from './assets/cat.jpeg'
 import IMAGENET_CLASSES from './assets/tf-classes.json'
-import { styled } from '@styles'
 import { applyColorMap } from 'utils/images'
 import {
-  broadcaster$,
   ImagesEnum,
   imageLoads$,
   loadModel,
+  creteModelBroadcaster$,
 } from '../utils/modelLoader'
 import { filter } from 'rxjs/operators'
 import { combineLatest } from 'rxjs'
+import { predict } from 'utils/models'
+import { PredictedClass, Predictions } from './Predictions'
+import { processInputImage } from 'utils/models'
 
-const Predictions = styled('div', {
-  display: 'grid',
-  gridTemplateColumns: '1fr',
-  gridRowGap: '$3',
+const MODEL_URL = '/models/mobilenet/model.json'
 
-  '@bp1': {
-    gridTemplateColumns: '1fr 1fr',
-  },
-})
+const broadcaster$ = creteModelBroadcaster$(MODEL_URL)
 
-const PredictedClass = styled('span', {
-  color: '$colors$sky9',
-})
-
-const Canvas = styled('canvas', {
-  opacity: 0.4,
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-})
-
-const ColorMap = styled('div', {
-  maxWidth: '100%',
-  position: 'relative',
-
-  '& img': {
-    maxWidth: '100%',
-  },
-})
-
-const PREPROCESS_DIVISOR = tf.scalar(255 / 2)
 const WIDTH = 224
 const HEIGHT = 224
-
-const processInputImage = (input: tf.Tensor) => {
-  const preprocessedInput = tf.div(
-    tf.sub(input.asType('float32'), PREPROCESS_DIVISOR),
-    PREPROCESS_DIVISOR
-  )
-  return preprocessedInput.reshape([-1, ...preprocessedInput.shape])
-}
-
-const predict = async (input: tf.Tensor, model: tf.LayersModel) =>
-  model.predict(processInputImage(input))
 
 type Predictions = Array<{ prob: number; cl: string }>
 type Props = {
@@ -72,6 +34,7 @@ const getProbs = async (
   model: tf.LayersModel
 ): Promise<Predictions> => {
   const tensor = tf.browser.fromPixels(img)
+  console.log('getting probs', model)
   const result = await predict(tensor, model)
   const predictedClasses = tf.tidy(() => {
     const { values, indices } = tf.topk(result as tf.Tensor)
@@ -173,7 +136,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      loadModel()
+      loadModel(MODEL_URL)
     }
   }, [])
 
@@ -186,6 +149,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
 
     allIsLoaded$.subscribe({
       next: async ([_, model]) => {
+        console.log('all loaded', model)
         const probs = await getProbs(
           imgSqRef.current as HTMLImageElement,
           model as tf.LayersModel
