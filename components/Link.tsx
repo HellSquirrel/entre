@@ -3,7 +3,7 @@ import NextLink, { LinkProps } from 'next/link'
 import { styled } from '@styles'
 
 const StyledLink = styled('a', {
-  color: '$violet12',
+  color: '$pink11',
   textDecoration: 'underline',
   transition: 'color 150ms',
   cursor: 'pointer',
@@ -14,14 +14,14 @@ const StyledLink = styled('a', {
   textDecorationColor: 'rgba(0, 0, 0, 0)',
 
   '&:hover': {
-    color: '$plum12',
+    color: '$pink12',
     textDecorationColor: 'inherit',
   },
 
   [`html[data-theme='light'] &`]: {
-    color: '$plum7',
+    color: '$pink8',
     '&:hover': {
-      color: '$plum10',
+      color: '$pink10',
     },
   },
 })

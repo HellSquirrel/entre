@@ -54,6 +54,11 @@ const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <StyledList>
     {posts
       .filter(p => !skipUnpublished || p.frontmatter.published)
+      .sort(
+        (p1, p2) =>
+          // @ts-ignore - We can subtract dates
+          new Date(p2.frontmatter.date) - new Date(p1.frontmatter.date)
+      )
       .map(({ frontmatter: { title, date, tags, slug } }) => (
         <StyledPost key={title}>
           <StyledDate>{new Date(date).toLocaleDateString()}</StyledDate>
