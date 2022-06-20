@@ -1,5 +1,5 @@
-import { LayersModel } from '../../../components/TenLayersModel'
+import { TenLayersModel } from '../../../components/TenLayersModel'
 
-const LayersExample = () => <LayersModel />
+const LayersExample = () => <TenLayersModel />
 
 export default LayersExample
