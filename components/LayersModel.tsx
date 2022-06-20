@@ -16,6 +16,25 @@ import { combineLatest } from 'rxjs'
 import { predict } from 'utils/models'
 import { PredictedClass, Predictions } from './Predictions'
 import { processInputImage } from 'utils/models'
+import { styled } from '@styles'
+
+const ColorMap = styled('div', {
+  maxWidth: '100%',
+  position: 'relative',
+
+  '& img': {
+    maxWidth: '100%',
+  },
+})
+
+const Canvas = styled('canvas', {
+  opacity: 0.4,
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+})
 
 const MODEL_URL = '/models/mobilenet/model.json'
 
