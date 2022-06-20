@@ -28,7 +28,6 @@ const logModelInfo = (model: LayersModel) => {
   const prevLayer = model.layers.slice(-2)[0]
   const lastOutput = lastLayer.outputShape[1]
   const prevOutput = prevLayer.outputShape[1]
-  const totalOnLastLayer = prevLayer.countParams()
   console.log('totalParams=', totalParams)
   console.log(
     `on the last layer = ${lastOutput} * ${prevOutput} + ${lastOutput}`
