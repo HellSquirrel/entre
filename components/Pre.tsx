@@ -1,4 +1,4 @@
-import { styled, theme } from '@styles'
+import { styled } from '@styles'
 
 export const Pre = styled('pre', {
   $$background: '$colors$grey10',
@@ -27,7 +27,7 @@ export const Pre = styled('pre', {
   borderRadius: '$3',
   padding: '$2',
   overflow: 'auto',
-  fontSize: '$2',
+  fontSize: '$secondary',
   lineHeight: '23px',
   whiteSpace: 'pre',
   position: 'relative',
