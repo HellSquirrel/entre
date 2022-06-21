@@ -22,15 +22,16 @@ const cache: Record<string, ModelAndStatus> = {}
 export let loadedModel: tf.LayersModel | null = null
 
 const logModelInfo = (model: LayersModel) => {
-  // model.summary()
+  model.summary()
   const totalParams = model.countParams()
   const lastLayer = model.layers.slice(-1)[0]
   const prevLayer = model.layers.slice(-2)[0]
   const lastOutput = lastLayer.outputShape[1]
   const prevOutput = prevLayer.outputShape[1]
+  const totalOnLastLayer = prevLayer.countParams()
   console.log('totalParams=', totalParams)
   console.log(
-    `on the last layer = ${lastOutput} * ${prevOutput} + ${lastOutput}`
+    `on the last layer = ${lastOutput} * ${prevOutput} + ${lastOutput} == ${totalOnLastLayer}`
   )
 }
 
@@ -44,21 +45,23 @@ export const loadModel = async (
   }
 
   if (!currentModel) {
-    broadcaster$.next({
-      model: null,
-      url: modelUrl,
-      status: Status.Loading,
-    })
+    setTimeout(async () => {
+      broadcaster$.next({
+        model: null,
+        url: modelUrl,
+        status: Status.Loading,
+      })
 
-    const model = await tf.loadLayersModel(modelUrl)
+      const model = await tf.loadLayersModel(modelUrl)
 
-    broadcaster$.next({
-      model: model,
-      url: modelUrl,
-      status: Status.Loaded,
-    })
+      broadcaster$.next({
+        model: model,
+        url: modelUrl,
+        status: Status.Loaded,
+      })
 
-    logModelInfo(model)
+      logModelInfo(model)
+    }, 1000)
   }
 
   return null
