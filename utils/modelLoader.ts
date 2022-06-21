@@ -22,7 +22,7 @@ const cache: Record<string, ModelAndStatus> = {}
 export let loadedModel: tf.LayersModel | null = null
 
 const logModelInfo = (model: LayersModel) => {
-  model.summary()
+  // model.summary()
   const totalParams = model.countParams()
   const lastLayer = model.layers.slice(-1)[0]
   const prevLayer = model.layers.slice(-2)[0]

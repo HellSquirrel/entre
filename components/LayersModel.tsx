@@ -151,6 +151,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [imgSqClass, setSqClass] = useState<Predictions>([])
   const [imgCatClass, setCatClass] = useState<Predictions>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -167,6 +168,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
 
     allIsLoaded$.subscribe({
       next: async ([_, model]) => {
+        setLoading(false)
         const probs = await getProbs(
           imgSqRef.current as HTMLImageElement,
           model as tf.LayersModel
@@ -186,6 +188,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
 
     allIsLoaded$.subscribe({
       next: async ([_, __, model]) => {
+        setLoading(false)
         const origImage = tf.browser.fromPixels(
           origImageRef.current as HTMLImageElement
         )
@@ -216,6 +219,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
           model as tf.LayersModel
         )
         setCatClass(probs)
+        setLoading(false)
       },
     })
   }, [showHeatMap])
@@ -249,7 +253,7 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
   return (
     <>
       {!showHeatMap && (
-        <Predictions>
+        <Predictions loading={loading}>
           <div>
             <img
               src={squirrel.src}

@@ -59,6 +59,7 @@ export const TenLayersModel: FC = () => {
   const origImageRef = useRef<HTMLImageElement | null>(null)
   const [imgSqClass, setSqClass] = useState<Predictions>([])
   const [imgCatClass, setCatClass] = useState<Predictions>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -128,7 +129,7 @@ export const TenLayersModel: FC = () => {
 
   return (
     <>
-      <Predictions>
+      <Predictions loading={false}>
         <div>
           <img
             src={squirrel.src}
