@@ -666,7 +666,7 @@ const m1Output = m1.apply(input)
 // считаем как output интересующего нас слоя влияет на вероятность получить нужный класс
 const gradValues = tf.mean(gradFn(m1Output as tf.Tensor), [0, 1, 2])
 
-// применяем градиенты к второй модели
+// применяем градиенты
 const m2ScaledOutput = (m1Output as tf.Tensor).mul(gradValues)
 
 // на основе градиентов строим тепловую карту
