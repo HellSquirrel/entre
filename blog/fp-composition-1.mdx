@@ -39,7 +39,7 @@ import Redux from './assets/fp/redux.svg'
 
 Давайте на примере. Пусть у нас есть свинка.
 
-<Pig className="img" />
+<Pig className="img" style={{ maxWidth: 400, margin: 'auto' }} />
 
 <Details title="Свинка?">
   Есть замечательная
@@ -51,7 +51,7 @@ import Redux from './assets/fp/redux.svg'
 
 Повернем свинку.
 
-<RotatedPig className="img" />
+<RotatedPig className="img" style={{ maxWidth: 400, margin: 'auto' }} />
 
 А теперь проделаем это несколько раз.
 
@@ -91,6 +91,8 @@ const decrement = (state, action) => {
 Чтобы наша композиция хороша работала, нам нужно чтобы выполнялись несколько законов теории категорий:
 Во-первых в нашей категории должен существовать тождественный морфизм (identity) который отображает объект сам в себя.
 
+<Formula content="\mathrm {id} _{A} A = A" />
+
 <Details title="Угадайте что это в категории со свинками">
   Поворот на 360°, 2 * 360°, 3 * 360° и т.д.
 
@@ -104,6 +106,17 @@ const decrement = (state, action) => {
 
 <Formula content="h\circ (g\circ f)=(h\circ g)\circ f" />
 
+<Details title="Демонстрирую на свинках">
+Давайте проверим что для свинок это выполняется:
+Если мы повернем свинку на 90 градусов, потом на 30, а потом на 60, то получится свинка вверх тормашками.
+
+<Formula content="(90\circ 30)\circ 60" />
+
+То же самое получится если мы сначала повернем свинку на 30, потом на 60, потом на 90.
+
+<Formula content="90\circ (30\circ 60)" />
+
+</Details>
 В-третьих наш тождественный морфизм не должен влиять на получившийся результат:
 
 <Formula content="f\circ \mathrm {id} _{A}=\mathrm {id} _{B}\circ f=f" />
