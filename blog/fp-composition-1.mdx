@@ -62,17 +62,17 @@ import Redux from './assets/fp/redux.svg'
 Думаете что крутящиеся поросята на очень помогут в разработке? Окей, давайте по-другому. Вот у нас есть Redux.
 Redux предполагает что у нас есть глобальный стор, состояние которого мы можем менять при помощи функций редьюсеров. Вот так:
 
-```
+```js
 const increment = (state, action) => {
   if (action.type === 'INCREMENT') {
-    return state + 3;
+    return state + 3
   }
   return state
 }
 
 const decrement = (state, action) => {
   if (action.type === 'DECREMENT') {
-    return state - 3;
+    return state - 3
   }
   return state
 }
