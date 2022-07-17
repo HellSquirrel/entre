@@ -114,7 +114,7 @@ import Redux from './assets/fp/redux.svg'
 
 Тождественный морфизм специфичен для каждого объекта в категории. Чтобы это явно обозначить, мы добавляем объект на который действует морфизм в качестве индекса.
 
-<Formula content="\mathrm {id} _{pig} pig = pig" />
+<Formula content="\mathrm {id} _{pig}: pig \to pig" />
 
 <Details title="Угадайте что является тождественным морфизмом в категории со свинками">
   Поворот на 360°, 2 * 360°, 3 * 360° и т.д.
@@ -131,8 +131,10 @@ import Redux from './assets/fp/redux.svg'
 
 В нашем примере все четыре условия выполняются. Мы получили хрюшекатегорию :)
 
+## Еще один пример (откровенно говоря притянутый за уши :)
+
 Думаете что крутящиеся поросята на очень помогут в разработке? Окей, давайте по-другому.
-Каждый мечтает сделать свой redux. Давайте попробуем
+Каждый мечтает сделать свой маленький redux. Давайте попробуем
 
 ```js
 const increment = state => state + 3
@@ -144,9 +146,60 @@ const identity = state => state
 
 Получаем категорию, где объекты это значения state, морфизм – oдна из функций выше. Композиция определяется функцией compose.
 
-`compose = (...fns) => fns.reduce((f, g) => state => f(g(state)))`
-
 <Redux className="img" />
+
+```js
+const compose = (...fns) => fns.reduce((f, g) => x => f(g(x)), identity)
+```
+
+Теперь давайте добавим оптимизацию. Мы не хотим трогать state если результат не изменился.
+Поэтому для вот такой последовательности
+increment -> increment -> increment -> decrement -> decrement -> decrement
+Мы вообще не хотим ничего вызывать.
+
+Воспользуемся тем что: identity не афектит и ассоциативностью композиции
+
+```js
+const compact = fns => {
+  const prev = []
+  let i = 0
+  for (const f of fns) {
+    i++
+    if (f === identity) {
+      // identity не афектит
+      return compact(prev.concat(fns.slice(i)))
+    }
+    const prevElement = prev[prev.length - 1]
+    // мы можем композить в любом месте. Не обязательно вначале или в конце массива
+    if (
+      (prevElement === decrement && f === increment) ||
+      (prevElement === increment && f === decrement)
+    ) {
+      prev.pop()
+      prev.push(identity)
+      return compact(prev.concat(fns.slice(i)))
+    } else {
+      prev.push(f)
+    }
+  }
+
+  return prev
+}
+
+const compose = (...fns) =>
+  compact(fns).reduce((f, g) => x => f(g(x)), identity)
+
+const runCounter = compose(
+  increment,
+  increment,
+  increment,
+  decrement,
+  decrement,
+  decrement
+)
+
+console.log(runCounter(10))
+```
 
 <Details title="Изоморфизм">
   Возможно, позже мы с вами обсудим что такое изоморфизм и поймем как заменить
