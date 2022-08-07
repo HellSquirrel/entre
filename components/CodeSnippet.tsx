@@ -8,6 +8,7 @@ refractor.register(graphql)
 
 type Props = {
   code: string
+  lang: string
 }
 
 export const CodeSnippet: FC<Props> = ({ code, lang }) => {

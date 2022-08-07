@@ -1,5 +1,5 @@
 ---
-title: 'Магия декларативности в cхемы. Часть 1: Парсим GraphQL запросы'
+title: 'Магия декларативности в cхемы. Часть 2: Выполняем GraphQL запросы'
 date: '2022-07-16T05:55:58.570Z'
 tags: ['GraphQL', 'Compilers']
 slug: declarative-schema-parsing-1
@@ -15,7 +15,7 @@ import invalidQuery from '../components/graphql/invalidQuery.graphql'
 import parseRaw from '!raw-loader!../components/graphql/parse.ts'
 import { gql } from '@apollo/client'
 
-# Фронты рассуждают об идеальном бекенде. Их ли это дело.
+# Как
 
 Когда начинается новый проект или пилится новый микросервис, стоит остановиться и подумать о том как мы организовываем взаимодействие напиливаемого с остальным миром.
 Давайте порассуждаем как должен выглядеть хороший бекенд и как определить что он правильно подходит под нашу задачу.
