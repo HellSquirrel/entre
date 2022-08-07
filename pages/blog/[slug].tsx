@@ -15,6 +15,7 @@ import * as MLOnClient2 from '../../blog/state-of-ml-on-the-frontend-2.mdx'
 import * as FpComposition from '../../blog/fp-composition-1.mdx'
 import * as GraphQLTooling1 from '../../blog/graphql-tooling-1.mdx'
 import * as GraphQLTooling2 from '../../blog/graphql-tooling-2.mdx'
+import * as GraphQLTooling3 from '../../blog/graphql-tooling-2.mdx'
 
 const pages = [
   ImageOptimization,
@@ -25,6 +26,7 @@ const pages = [
   FpComposition,
   GraphQLTooling1,
   GraphQLTooling2,
+  GraphQLTooling3,
 ]
 
 const Img = styled('img', {

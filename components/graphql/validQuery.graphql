@@ -1,6 +1,7 @@
 query GetAllPages {
-  allPages {
+  allTypes {
     id
-    text
+    name
+    description
   }
 }

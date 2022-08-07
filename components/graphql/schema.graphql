@@ -1,29 +1,28 @@
-type AlgebraicDataType = {
-    id: ID!
-    name: String!
-    description: String!
-    parametersCount: Int!
-    constructors: [TypeConstructor!]!
-    isAliasFor: AlgebraicDataType
+type Query {
+  allTypes: [AlgebraicDataType!]!
+  allPages: [Page!]!
+  algebraicDataType(id: ID!): AlgebraicDataType
+  page(id: ID): Page
 }
-
-type TypeConstructor = {
-    id: ID!
-    name: String!
-    description: String!
-    parametersCount: Int!
-}
-
 
 type Page {
-    id: ID!
-    AlgebraicDataType: AlgebraicDataType!
-    text: String!
+  id: ID!
+  AlgebraicDataType: AlgebraicDataType!
+  text: String!
 }
 
+type AlgebraicDataType {
+  id: ID!
+  name: String!
+  description: String!
+  parametersCount: Int!
+  constructors: [TypeConstructor!]!
+  isAliasFor: AlgebraicDataType
+}
 
-type Query {
-  allTypes: [Type!]!
-  allPages: [Page!]!
-  type(id: ID!): Type
+type TypeConstructor {
+  id: ID!
+  name: String!
+  description: String!
+  parametersCount: Int!
 }
