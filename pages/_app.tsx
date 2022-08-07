@@ -60,7 +60,7 @@ const globalStyles = globalCss({
   },
 })
 
-function NextAPP({ Component, pageProps }: AppProps) {
+function NextAPP({ Component, pageProps }: AppProps & { Component: any }) {
   useEffect(() => {
     if (typeof window !== undefined && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -72,6 +72,7 @@ function NextAPP({ Component, pageProps }: AppProps) {
   }, [])
 
   globalStyles()
+
   return (
     <ThemeProvider defaultTheme="dark">
       <Layout>
