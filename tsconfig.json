@@ -20,6 +20,12 @@
       "@components": ["./components"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "blog/images.mdx"],
+  "include": [
+    "next-env.d.ts",
+    "custom-types.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "blog/images.mdx"
+  ],
   "exclude": ["node_modules", "pages/experiments"]
 }

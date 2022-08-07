@@ -58,7 +58,6 @@ const nextConfig = {
 
       {
         test: /\.graphql$/i,
-        issuer: /\.([jt]s|md)x?$/,
         use: [
           {
             loader: 'raw-loader',
