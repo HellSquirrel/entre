@@ -9,6 +9,7 @@
     "imgproxy": "docker run -p 7000:7000 -it darthsim/imgproxy"
   },
   "dependencies": {
+    "@apollo/client": "^3.6.9",
     "@auth0/nextjs-auth0": "^1.7.0",
     "@mdx-js/loader": "^2.0.0",
     "@mdx-js/react": "^2.1.0",
@@ -22,7 +23,10 @@
     "@tensorflow/tfjs-vis": "^1.5.1",
     "@types/katex": "^0.14.0",
     "glob": "^7.2.0",
+    "graphql": "^16.5.0",
+    "graphql-voyager": "^1.0.0-rc.31",
     "gray-matter": "^4.0.3",
+    "hast-util-to-html": "^8.0.3",
     "hast-util-to-string": "1.0.4",
     "i": "^0.3.7",
     "katex": "^0.15.6",
@@ -44,9 +48,12 @@
     "@types/glob": "^7.2.0",
     "@types/node": "17.0.17",
     "@types/react": "17.0.39",
+    "@types/refractor": "^3.0.2",
     "add": "^2.0.6",
     "eslint": "8.9.0",
     "eslint-config-next": "12.0.10",
+    "file-loader": "^6.2.0",
+    "raw-loader": "^4.0.2",
     "typescript": "4.5.5",
     "yarn": "^1.22.18"
   }

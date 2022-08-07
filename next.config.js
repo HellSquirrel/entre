@@ -24,7 +24,7 @@ const nextConfig = {
   pageExtensions: ['tsx'],
 
   webpack(config, options) {
-    config.module.rules = config.module.rules.concat([
+    ;(config.module.rules = config.module.rules.concat([
       {
         test: /\.mdx?$/,
         use: [
@@ -55,12 +55,24 @@ const nextConfig = {
           },
         ],
       },
-    ])
-    config.plugins.push(
-      new options.webpack.DefinePlugin({
-        __POSTS__: JSON.stringify(getPosts(path.resolve(__dirname, './blog'))),
-      })
-    )
+
+      {
+        test: /\.graphql$/i,
+        issuer: /\.([jt]s|md)x?$/,
+        use: [
+          {
+            loader: 'raw-loader',
+          },
+        ],
+      },
+    ])),
+      config.plugins.push(
+        new options.webpack.DefinePlugin({
+          __POSTS__: JSON.stringify(
+            getPosts(path.resolve(__dirname, './blog'))
+          ),
+        })
+      )
 
     return config
   },

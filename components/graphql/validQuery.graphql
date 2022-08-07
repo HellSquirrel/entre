@@ -1,0 +1,6 @@
+query GetAllPages {
+  allPages {
+    id
+    text
+  }
+}
