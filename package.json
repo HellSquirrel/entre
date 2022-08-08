@@ -25,7 +25,6 @@
     "@types/katex": "^0.14.0",
     "glob": "^7.2.0",
     "graphql": "^16.5.0",
-    "graphql-voyager": "^1.0.0-rc.31",
     "gray-matter": "^4.0.3",
     "hast-util-to-html": "^8.0.3",
     "hast-util-to-string": "1.0.4",
@@ -54,6 +53,7 @@
     "eslint": "8.9.0",
     "eslint-config-next": "12.0.10",
     "file-loader": "^6.2.0",
+    "graphiql": "^1.11.2",
     "raw-loader": "^4.0.2",
     "typescript": "4.5.5",
     "yarn": "^1.22.18"

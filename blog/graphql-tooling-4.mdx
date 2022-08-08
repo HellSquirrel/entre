@@ -1,0 +1,193 @@
+---
+title: 'Магия декларативности и cхемы. Часть 3: Кодогенерация'
+date: '2022-08-07T08:55:58.570Z'
+tags: ['GraphQL', 'Compilers']
+slug: declarative-schema-parsing-4
+published: true
+description: 'Разбираем graphql на винтики'
+---
+
+import { Details } from '../components/Details'
+import { CodeSnippet } from '../components/CodeSnippet'
+import schema from '../components/graphql/schema.graphql'
+import { gql } from '@apollo/client'
+import validQuery from '../components/graphql/validQuery.graphql'
+import getIntrospectionCode from '!raw-loader!../components/graphql/getIntrospection'
+import { getIntrospection } from '../components/graphql/getIntrospection'
+import { Image } from '../components/Image'
+import voyager from './assets/voyager.png'
+import graphqlError from './assets/graphqlError.png'
+import GraphiQLCode from '!raw-loader!../components/graphql/GraphiQL'
+import { DocView } from '../components/graphql/graphiql'
+
+import ValidationCode from '!raw-loader!../components/graphql/validate'
+import { validateQueries } from '../components/graphql/validate'
+
+## Магия кодогенерации
+
+Как мы используем graphql на клиенте? Обычно нам нужно сделать какой-то запрос, получить данные и отобразить их в интефейсе.
+Если мы используем TypeScript нам бы хотелось чтобы он заранее знал про структуру наших данных. Представим себе что мы пишем вот такой компонент
+
+```tsx
+import { FC } from 'react'
+
+type Props = {
+  name: string
+  description: string
+}
+
+const AlgebraicDataTypeView: FC<Props> = ({ name, description }) => (
+  <>
+    <h3>{name}</h3>
+    <p> {description} </p>
+  </>
+)
+```
+
+Видите избыточность?
+
+У нас уже есть нужный типа в схеме
+
+```graphql
+type AlgebraicDataType {
+  id: ID!
+  name: String!
+  description: String!
+  parametersCount: Int!
+  constructors: [TypeConstructor!]!
+  isAliasFor: AlgebraicDataType
+}
+```
+
+Зачем нам повторяться? Было бы неплохо сгенерировать типы из схемы. И тут нам на помощь приходит [`graphql-codegen`](https://www.graphql-code-generator.com/)
+
+```yml
+overwrite: true
+schema:
+  - http://localhost:8080/graphql/introspection
+  - './graphql/clientSchema.graphql'
+documents: './graphql/**/*.graphql'
+config:
+  strictScalars: true
+  scalars:
+    ISO8601Date: string
+    ISO8601DateTime: string
+generates:
+  ./generated/apollo-heplers.tsx:
+    plugins:
+      - typescript-apollo-client-helpers
+  ./generated/graphql.tsx:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+      - 'typescript-react-apollo'
+  ./graphql.schema.json:
+    plugins:
+      - 'introspection'
+hooks:
+  afterAllFileWrite:
+    - eslint --fix
+```
+
+## тесты
+
+```ts
+import React from 'react'
+
+import { InMemoryCache } from '@apollo/client'
+import { MockedProvider } from '@apollo/client/testing'
+import { addTypenameToDocument } from '@apollo/client/utilities'
+import { addMocksToSchema } from '@graphql-tools/mock'
+import { buildASTSchema, execute } from 'graphql'
+import { generateDefaultKey, typePolicies } from '../apollo/apolloCache'
+import schemaDoc from '../../../server/db/schema.gql'
+
+export const createMockProviderAndCache = () => {
+  const cache = new InMemoryCache({
+    addTypename: true,
+    typePolicies,
+
+    dataIdFromObject: generateDefaultKey(['token', 'slug', 'id']),
+  })
+
+  const ApolloMockedProvider = ({ children, ...rest }) => (
+    <MockedProvider {...rest} addTypename={true} cache={cache}>
+      {children}
+    </MockedProvider>
+  )
+
+  return { cache, ApolloMockedProvider }
+}
+
+const mocks = {
+  String: (() => {
+    let counter = 1
+    return () => {
+      counter++
+      return `Just a string-${counter}`
+    }
+  })(),
+}
+
+const schema = buildASTSchema(schemaDoc)
+const schemaWithMocks = addMocksToSchema({ schema, mocks })
+
+export const getMockResponse = async (
+  query,
+  variables = {},
+  schemaWithMocksToBuildResponse = schemaWithMocks
+) =>
+  execute({
+    schema: schemaWithMocksToBuildResponse,
+    document: addTypenameToDocument(query),
+    variableValues: variables,
+  })
+
+export const mockQueryResult = async (
+  query,
+  variables = {},
+  schemaWithMocksToBuildQuery = schemaWithMocks
+) => ({
+  request: {
+    query: query,
+  },
+  result: await getMockResponse(query, variables, schemaWithMocksToBuildQuery),
+})
+```
+
+## Примеры тестов
+
+```ts
+test('getMockResponse', async () => {
+  const response = await getMockResponse(testQuery)
+  expect(response.data.collection).toBeDefined()
+  expect(response.data.collection.fromUser.token).toBeDefined()
+})
+
+test('creates mocked apollo provider', async () => {
+  const { ApolloMockedProvider } = createMockProviderAndCache()
+  const mocks = [await mockQueryResult(testQuery)]
+  const wrapper = ({ children }) => (
+    <ApolloMockedProvider mocks={mocks}>{children}</ApolloMockedProvider>
+  )
+
+  const { result } = renderHook(() => useQuery(testQuery), { wrapper })
+  await act(() => new Promise(r => setTimeout(r, 0)))
+
+  expect(result.current.data.collection).toBeDefined()
+  expect(result.current.data.collection.fromUser.token).toBeDefined()
+})
+```
+
+## How to extend schema
+
+Можно использовать несколько схем вместо одной. Флоу: вы берете схему из бека, пишете дополняшку и шарите дополняшку
+
+## Danger на дельту
+
+На CI можно использовать [вот такую штуку](https://github.com/xuorig/graphql-schema_comparator)
+
+## Apollo Studio
+
+1. мониторинг
+2. ошибки на дельту
