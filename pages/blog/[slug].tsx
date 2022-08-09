@@ -16,6 +16,7 @@ import * as FpComposition from '../../blog/fp-composition-1.mdx'
 import * as GraphQLTooling1 from '../../blog/graphql-tooling-1.mdx'
 import * as GraphQLTooling2 from '../../blog/graphql-tooling-2.mdx'
 import * as GraphQLTooling3 from '../../blog/graphql-tooling-3.mdx'
+import * as GraphQLTooling4 from '../../blog/graphql-tooling-4.mdx'
 
 const pages = [
   ImageOptimization,
@@ -27,6 +28,7 @@ const pages = [
   GraphQLTooling1,
   GraphQLTooling2,
   GraphQLTooling3,
+  GraphQLTooling4,
 ]
 
 const Img = styled('img', {

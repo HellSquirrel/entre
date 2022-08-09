@@ -7,7 +7,7 @@ type Query {
 
 type Page {
   id: ID!
-  AlgebraicDataType: AlgebraicDataType!
+  algebraicDataType: AlgebraicDataType!
   text: String!
 }
 

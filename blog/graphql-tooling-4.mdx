@@ -1,6 +1,6 @@
 ---
-title: 'Магия декларативности и cхемы. Часть 3: Кодогенерация'
-date: '2022-08-07T08:55:58.570Z'
+title: 'Магия декларативности и cхемы. Часть 4: Кодогенерация'
+date: '2022-08-07T09:55:58.570Z'
 tags: ['GraphQL', 'Compilers']
 slug: declarative-schema-parsing-4
 published: true
@@ -12,41 +12,86 @@ import { CodeSnippet } from '../components/CodeSnippet'
 import schema from '../components/graphql/schema.graphql'
 import { gql } from '@apollo/client'
 import validQuery from '../components/graphql/validQuery.graphql'
-import getIntrospectionCode from '!raw-loader!../components/graphql/getIntrospection'
-import { getIntrospection } from '../components/graphql/getIntrospection'
-import { Image } from '../components/Image'
-import voyager from './assets/voyager.png'
-import graphqlError from './assets/graphqlError.png'
-import GraphiQLCode from '!raw-loader!../components/graphql/GraphiQL'
-import { DocView } from '../components/graphql/graphiql'
+import maybePageCode from '!raw-loader!../components/graphql/MaybePageExample.tsx'
 
-import ValidationCode from '!raw-loader!../components/graphql/validate'
-import { validateQueries } from '../components/graphql/validate'
+<Details title="Напоминалка про пример">
+  Вы уже добралить до четвертого поста и наверняка помните, что мы пишем wiki
+  для любителей функционального программирования. Каждая страничка посвящена алгебраическому типу.
 
-## Магия кодогенерации
+У нас уже есть готовый запрос
 
-Как мы используем graphql на клиенте? Обычно нам нужно сделать какой-то запрос, получить данные и отобразить их в интефейсе.
-Если мы используем TypeScript нам бы хотелось чтобы он заранее знал про структуру наших данных. Представим себе что мы пишем вот такой компонент
+<CodeSnippet code={validQuery} lang="graphql" />
 
-```tsx
-import { FC } from 'react'
+И схема
 
-type Props = {
-  name: string
-  description: string
-}
+  <CodeSnippet code={schema} lang="graphql" />
+</Details>
 
-const AlgebraicDataTypeView: FC<Props> = ({ name, description }) => (
-  <>
-    <h3>{name}</h3>
-    <p> {description} </p>
-  </>
-)
+## Пусть кто-нибудь напишет код за нас
+
+Как мы используем GraphQL на клиенте? Обычно нам нужно сделать какой-то запрос, получить данные и показать их в интерфейсе.
+Давайте напишем компонент отображающий алгебраический тип данных. Конечно же будем использовать TypeScript
+
+<CodeSnippet code={maybePageCode} lang="tsx" />
+
+Читателям предлагается найти косяк в примере выше :)
+
+<Details title="А косяк-то вот в чем:">
+  В нашем запросы мы забыли поле parametersСount, но радостно используем его
+  внутри компонента.
+  Удивительно что TypeScript позволяет нам это делать. Почему так?
+  Давайте посмотрим на тип `useQuery`
+
+```ts
+export declare function useQuery<TData = any, TVariables = OperationVariables>(
+  query: DocumentNode | TypedDocumentNode<TData, TVariables>,
+  options?: QueryHookOptions<TData, TVariables>
+): QueryResult<TData, TVariables>
 ```
 
-Видите избыточность?
+Дефолтное значение типа `TData` – `any`. Значит мы можем делать все что хотим 💥
 
-У нас уже есть нужный типа в схеме
+</Details>
+
+Исправить проблемку легко. Просто параметризуем `useQuery` hook нужным значением
+
+```tsx
+type PageData = {
+  algebraicDataType: {
+    name: string
+    id: string
+    description: string
+  }
+}
+const { data, loading } = useQuery<PageData>(PageQuery)
+```
+
+И так для каждого запроса... Скууучно 🥱
+А еще избыточно. У нас уже есть запрос. Линтер уже убедился что наш запрос валиден, используя схему.
+
+Все нужные уже содержится в AlgebraicDataType типе внутри схемы
+
+Все что нам нужно это автоматически сгенерировать тип ответа. Как это делается?
+Давайте установим [`graphql-codegen`](https://www.graphql-code-generator.com/) немного с ним поэкспериментируем, а потом разберемся как нам использовать этот инструмент для улучшения DX.
+
+`yarn add -D @graphql-codegen/cli @graphql-codegen/typescript`
+
+Говорим ему init и нам покажут удобный wizard где можно сгенерировать файл конфига, добавить нужные скрипты в package.json и выбрать нужные нам опции генерации.
+
+`yarn graphql-codegen init`
+
+Чуть-чуть подредактируем конфиг для наших экспериментов. Он будет выглядеть примерно так
+
+```yml
+overwrite: true
+schema: 'graphql/schema.graphql'
+generates:
+  generated.tsx:
+    plugins:
+      - typescript
+```
+
+Такой сетап сделает очень простую штуку. Он смапит все наши типы на типы из Typescript
 
 ```graphql
 type AlgebraicDataType {
@@ -59,7 +104,70 @@ type AlgebraicDataType {
 }
 ```
 
-Зачем нам повторяться? Было бы неплохо сгенерировать типы из схемы. И тут нам на помощь приходит [`graphql-codegen`](https://www.graphql-code-generator.com/)
+```tsx
+export type AlgebraicDataType = {
+  __typename?: 'AlgebraicDataType'
+  constructors: Array<TypeConstructor>
+  description: Scalars['String']
+  id: Scalars['ID']
+  isAliasFor?: Maybe<AlgebraicDataType>
+  name: Scalars['String']
+  parametersCount: Scalars['Int']
+}
+```
+
+<Details title="Scalars?">
+ export type Scalars = {
+  ID: string;
+  String: string;
+  Boolean: boolean;
+  Int: number;
+  Float: number;
+};
+
+Это тип в котором перечислены все скалярные типы из нашей схеме.
+
+</Details>
+
+Пока не очень то и полезно. Проблему выше такая кодогенерация решить не поможет.
+Нам нужен еще один плагин. Он пройдется по всем нашим GraphQL запросам и сгенерирует нам типы _ответов_.
+
+Собственно вот [он – @graphql-codegen/typescript-operations](https://www.graphql-code-generator.com/plugins/typescript/typescript-operations)
+
+Устанавливаем его `yarn add -D @graphql-codegen/typescript-operations`
+Чуть-чуть правим конфиги и вжух 🪄
+
+```yml
+overwrite: true
+schema: 'graphql/schema.graphql'
+documents: './graphql/**/*.graphql'
+generates:
+  generated.tsx:
+    plugins:
+      - typescript
+      - typescript-operations
+```
+
+Получим тип для нашего запроса
+
+```tsx
+export type GetTypeQuery = {
+  __typename?: 'Query'
+  algebraicDataType?: {
+    __typename?: 'AlgebraicDataType'
+    name: string
+    id: string
+    description: string
+  } | null
+}
+```
+
+Вся мощь кодгена скрыта в его расширяемости. Вы можете добавлять новые плагины и выбирать из сущействующих.
+Я опишу несколько чтобы вы прониклись:
+
+- Если вы используете apollo вам сгенерируют все хуки для походов на сервер
+
+- Если вы используете продвинутые фишки apollo вам сгенерируют типы для ваших `typePolicies` (Если вы не знаете что это такое, ничего страшного :))
 
 ```yml
 overwrite: true

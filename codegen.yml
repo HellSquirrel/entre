@@ -1,0 +1,12 @@
+overwrite: true
+schema: 'components/graphql/schema.graphql'
+documents:
+  [
+    'components/graphql/validQuery.graphql',
+    'components/graphql/MaybePageExample.tsx',
+  ]
+generates:
+  generated.tsx:
+    plugins:
+      - typescript
+      - typescript-operations
