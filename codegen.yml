@@ -1,10 +1,7 @@
 overwrite: true
 schema: 'components/graphql/schema.graphql'
 documents:
-  [
-    'components/graphql/validQuery.graphql',
-    'components/graphql/MaybePageExample.tsx',
-  ]
+  ['components/graphql/validQuery.graphql', 'components/graphql/MaybePage.tsx']
 generates:
   generated.tsx:
     plugins:

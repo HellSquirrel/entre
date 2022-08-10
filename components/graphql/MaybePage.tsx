@@ -1,8 +1,8 @@
 import { FC } from 'react'
 import { useQuery, gql } from '@apollo/client'
 
-const PageQuery = gql`
-  query GetType {
+export const MaybePageQuery = gql`
+  query MaybePageQuery {
     algebraicDataType(id: 1) {
       name
       id
@@ -12,7 +12,7 @@ const PageQuery = gql`
 `
 
 export const MaybePage: FC = () => {
-  const { data, loading } = useQuery(PageQuery)
+  const { data, loading } = useQuery(MaybePageQuery)
   return (
     <>
       {loading || data === undefined ? (

@@ -1,5 +1,5 @@
 ---
-title: 'Магия декларативности и cхемы. Часть 4: Кодогенерация, тесты и все-все-все'
+title: 'Магия декларативности и cхемы. Часть 4: Кодогенерация'
 date: '2022-08-07T09:55:58.570Z'
 tags: ['GraphQL', 'Compilers']
 slug: declarative-schema-parsing-4
@@ -12,7 +12,7 @@ import { CodeSnippet } from '../components/CodeSnippet'
 import schema from '../components/graphql/schema.graphql'
 import { gql } from '@apollo/client'
 import validQuery from '../components/graphql/validQuery.graphql'
-import maybePageCode from '!raw-loader!../components/graphql/MaybePageExample.tsx'
+import maybePageCode from '!raw-loader!../components/graphql/MaybePage.tsx'
 
 <Details title="Напоминалка про пример">
   Вы уже добралить до четвертого поста и наверняка помните, что мы пишем wiki
@@ -139,6 +139,9 @@ export type AlgebraicDataType = {
 Устанавливаем его `yarn add -D @graphql-codegen/typescript-operations`
 Чуть-чуть правим конфиги и вжух 🪄
 
+Мы добавили поле documents. Это путь (или пути) к файлам где codegen будет искать ваши запросы.
+При этом запрос не обязан лежать отдельно. Если вы укажете путь к .ts или .js файлу, codegen найдет там запрос и сгенерирует для него типы.
+
 ```yml
 overwrite: true
 schema: 'graphql/schema.graphql'
@@ -178,7 +181,7 @@ export type GetTypeQuery = {
 
 ```yml
   hooks:
-  afterAllFileWrite: - eslint --fix
+    afterAllFileWrite: - eslint --fix
 ```
 
 </Details>
@@ -190,3 +193,7 @@ export type GetTypeQuery = {
 Вы же будете делать что-то типа `import { GetTypeQuery } from './generated.tsx'`.
 
 Я не знаю хорошего плагина для сборщика который бесшовно сможет интегрировать graphql-codegen в вашу сборку. Если вы знаете такой - делитесь.
+
+## А есть что-то еще?
+
+Разумеется! В следующем посте мы поговорим о тестах
