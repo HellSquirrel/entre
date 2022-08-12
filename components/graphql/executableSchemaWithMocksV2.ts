@@ -11,7 +11,7 @@ const schemaWithMocks = addMocksToSchema({
   mocks: {
     AlgebraicDataType: () => ({
       name: 'Maybe',
-      description: 'Either or Nothing!',
+      description: 'Just or Nothing!',
       parametersCount: 1,
     }),
   },
