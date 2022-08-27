@@ -50,6 +50,8 @@ const StyledTag = styled('li', {
 
 const skipUnpublished = process.env.NODE_ENV === 'production'
 
+console.log(new Intl.NumberFormat().resolvedOptions().locale)
+
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <StyledList>
     {posts
@@ -61,7 +63,7 @@ const ListOfAllPosts: FC<Props> = ({ posts }) => (
       )
       .map(({ frontmatter: { title, date, tags, slug } }) => (
         <StyledPost key={title}>
-          <StyledDate>{new Date(date).toLocaleDateString()}</StyledDate>
+          <StyledDate>{new Date(date).toLocaleDateString('en-US')}</StyledDate>
           {/* @ts-ignore */}
           <StyledLink href={`/blog/${slug}`}>{title}</StyledLink>
           <StyledTags>

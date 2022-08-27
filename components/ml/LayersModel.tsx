@@ -144,7 +144,7 @@ const exploreLayer = (
   })
 }
 
-export const LayersModel: FC<Props> = ({ showHeatMap }) => {
+const LayersModel: FC<Props> = ({ showHeatMap }) => {
   const imgSqRef = useRef<HTMLImageElement | null>(null)
   const imgCatRef = useRef<HTMLImageElement | null>(null)
   const origImageRef = useRef<HTMLImageElement | null>(null)
@@ -292,3 +292,5 @@ export const LayersModel: FC<Props> = ({ showHeatMap }) => {
     </>
   )
 }
+
+export default LayersModel

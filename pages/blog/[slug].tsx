@@ -113,7 +113,7 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
       {/* @ts-ignore */}
       <MDXProvider components={components}>
         <DateComponent>
-          {new Date(frontmatter?.date).toLocaleDateString()}
+          {new Date(frontmatter?.date).toLocaleDateString('en-US')}
         </DateComponent>
         <h1>{frontmatter?.title}</h1>
         <div>

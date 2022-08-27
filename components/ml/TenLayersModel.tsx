@@ -53,7 +53,7 @@ const getProbs = async (
   return predictedClasses
 }
 
-export const TenLayersModel: FC = () => {
+const TenLayersModel: FC = () => {
   const imgSqRef = useRef<HTMLImageElement | null>(null)
   const imgCatRef = useRef<HTMLImageElement | null>(null)
   const origImageRef = useRef<HTMLImageElement | null>(null)
@@ -161,3 +161,5 @@ export const TenLayersModel: FC = () => {
     </>
   )
 }
+
+export default TenLayersModel

@@ -20,6 +20,10 @@ const getPosts = fromPath => {
 }
 
 const nextConfig = {
+  i18n: {
+    locales: ['ru-RU'],
+    defaultLocale: 'ru-RU',
+  },
   reactStrictMode: true,
   pageExtensions: ['tsx'],
 
