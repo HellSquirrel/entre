@@ -60,9 +60,10 @@ export function getStaticPaths() {
   // @ts-ignore
   const paths = __POSTS__.map(p => ({
     params: {
-      slug: `/blog/${p.frontmatter.slug}`,
+      slug: `${p.frontmatter.slug}`,
     },
   }))
+
   return {
     paths,
     fallback: true,
