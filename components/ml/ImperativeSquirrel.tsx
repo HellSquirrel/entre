@@ -5,9 +5,9 @@ import React, {
   useState,
   useCallback,
 } from 'react'
-import sq from './assets/sq.jpeg'
+import sq from '../assets/sq.jpeg'
 import { styled } from '@styles'
-import { debounce } from '../utils/debounce'
+import { debounce } from '../../utils/debounce'
 
 const KernelEditor = styled('div', {
   width: 'calc(3 * $step)',
@@ -77,7 +77,7 @@ export const ImperativeSquirrel = () => {
 
   useEffect(() => {
     workerRef.current = new Worker(
-      new URL('../utils/worker.ts', import.meta.url)
+      new URL('../../utils/worker.ts', import.meta.url)
     )
     workerRef.current.onmessage = ({ data: { data, width, height } }) => {
       canvasRef.current

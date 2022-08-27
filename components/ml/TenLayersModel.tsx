@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, FC } from 'react'
 import * as tf from '@tensorflow/tfjs'
 import '@tensorflow/tfjs-backend-webgl'
-import squirrel from './assets/sq.jpeg'
-import cat from './assets/cat.jpeg'
+import squirrel from '../assets/sq.jpeg'
+import cat from '../assets/cat.jpeg'
 import {
   creteModelBroadcaster$,
   ImagesEnum,
   imageLoads$,
   loadModel,
-} from '../utils/modelLoader'
+} from '../../utils/modelLoader'
 import { filter } from 'rxjs/operators'
 import { combineLatest } from 'rxjs'
-import { predict } from '../utils/models'
-import { PredictedClass, Predictions } from './Predictions'
+import { predict } from '../../utils/models'
+import { PredictedClass, Predictions } from '../Predictions'
 
 const MODEL_URL = '/models/ten-classes/model.json'
 

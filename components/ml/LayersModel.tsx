@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState, FC } from 'react'
 import * as tf from '@tensorflow/tfjs'
 import '@tensorflow/tfjs-backend-webgl'
-import squirrel from './assets/sq.jpeg'
-import cat from './assets/cat.jpeg'
-import IMAGENET_CLASSES from './assets/tf-classes.json'
+import squirrel from '../assets/sq.jpeg'
+import cat from '../assets/cat.jpeg'
+import IMAGENET_CLASSES from '../assets/tf-classes.json'
 import { applyColorMap } from 'utils/images'
 import {
   ImagesEnum,
   imageLoads$,
   loadModel,
   creteModelBroadcaster$,
-} from '../utils/modelLoader'
+} from '../../utils/modelLoader'
 import { filter } from 'rxjs/operators'
 import { combineLatest } from 'rxjs'
 import { predict } from 'utils/models'
-import { PredictedClass, Predictions } from './Predictions'
+import { PredictedClass, Predictions } from '../Predictions'
 import { processInputImage } from 'utils/models'
 import { styled } from '@styles'
 
