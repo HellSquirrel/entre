@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextApiRequest, NextApiResponse } from 'next'
 
-export default (req: NextRequest) => {
-  return NextResponse.json({
+export default (req: NextApiRequest, res: NextApiResponse) => {
+  return res.json({
     name: `Hello, from ${req.url} I'm now an Edge Function!`,
   })
 }
