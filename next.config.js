@@ -6,6 +6,36 @@ const glob = require('glob')
 const matter = require('gray-matter')
 const highlight = require('./lib/highlighter.js')
 
+class SymlinkPlugin {
+  constructor(isServer) {
+    this.isServer = isServer
+  }
+
+  apply(compiler) {
+    compiler.hooks.afterEmit.tapPromise('SymlinkPlugin', async compiler => {
+      if (this.isServer) {
+        const from = path.join(compiler.options.output.path, '../static')
+        const to = path.join(compiler.options.output.path, 'static')
+
+        try {
+          await fs.promises.access(from)
+          console.log(`${from} already exists`)
+          return
+        } catch (error) {
+          if (error.code === 'ENOENT') {
+            // No link exists
+          } else {
+            throw error
+          }
+        }
+
+        await fs.promises.symlink(to, from, 'junction')
+        console.log(`created symlink ${from} -> ${to}`)
+      }
+    })
+  }
+}
+
 const getPosts = fromPath => {
   const paths = glob.sync(`${path.join(fromPath)}/**/*.mdx`)
 
@@ -73,9 +103,9 @@ const nextConfig = {
         })
       )
 
-    config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm'
     config.experiments.asyncWebAssembly = true
-    config.experiments.syncWebAssembly = true
+
+    config.plugins.push(new SymlinkPlugin(options.isServer))
 
     return config
   },
