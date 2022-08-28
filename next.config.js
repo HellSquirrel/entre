@@ -20,12 +20,8 @@ const getPosts = fromPath => {
 }
 
 const nextConfig = {
-  i18n: {
-    locales: ['ru-RU'],
-    defaultLocale: 'ru-RU',
-  },
   reactStrictMode: true,
-  pageExtensions: ['tsx'],
+  pageExtensions: ['tsx', 'ts'],
 
   webpack(config, options) {
     ;(config.module.rules = config.module.rules.concat([
@@ -76,6 +72,9 @@ const nextConfig = {
           ),
         })
       )
+
+    config.experiments.asyncWebAssembly = true
+    config.experiments.syncWebAssembly = true
 
     return config
   },

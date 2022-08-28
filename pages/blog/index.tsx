@@ -50,8 +50,6 @@ const StyledTag = styled('li', {
 
 const skipUnpublished = process.env.NODE_ENV === 'production'
 
-console.log(new Intl.NumberFormat().resolvedOptions().locale)
-
 const ListOfAllPosts: FC<Props> = ({ posts }) => (
   <StyledList>
     {posts
