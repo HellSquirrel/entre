@@ -1,0 +1,15 @@
+{
+  "name": "entre-graph",
+  "collaborators": [
+    "Polina Gurtovaya <zloymult@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "entre_graph_bg.wasm",
+    "entre_graph.js",
+    "entre_graph.d.ts"
+  ],
+  "module": "entre_graph.js",
+  "types": "entre_graph.d.ts",
+  "sideEffects": false
+}
