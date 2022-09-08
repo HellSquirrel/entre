@@ -157,8 +157,7 @@ const compose = (...fns) => fns.reduce((f, g) => x => f(g(x)), identity)
 increment -> increment -> increment -> decrement -> decrement -> decrement
 мы вообще не хотим ничего вызывать.
 
-Воспользуемся тем, что identity не афектит и ассоциативностью композиции
-<!-- про что вообще эта строка, я не понимаю -->
+Воспользуемся тем, что identity не меняет результат (4.) и ассоциативностью композиции (2.)
 
 ```js
 const compact = fns => {
