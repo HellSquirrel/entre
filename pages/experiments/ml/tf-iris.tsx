@@ -71,7 +71,7 @@ const doTraining = async () => {
   })
 
   const testVal = model.predict(tf.tensor([5.1, 3.5, 1.4, 0.2], [1, 4]))
-  console.log('prediction is!', testVal.dataSync())
+  // console.log('prediction is!', testVal.dataSync())
 }
 
 // const trainModel = async

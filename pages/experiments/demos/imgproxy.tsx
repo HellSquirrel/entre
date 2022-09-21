@@ -34,14 +34,7 @@ function entryTime(seq: string, text: string): number {
 }
 
 const seq = [...'423692'].map(char => digitToCoords(char, '923857614'))
-console.log(entryTimeForSquence(seq, [0, 0]))
-console.log(
-  allEntries()
-    .map(pos => entryTimeForSquence(seq, pos))
-    .sort()
-)
 
-console.log(entryTime('423692', '923857614'))
 // const min = console.log(allEntries())
 // console.log(keyToCoords('123456789', '3'))
 // console.log(getDistance([0, 0], [1, 2]))

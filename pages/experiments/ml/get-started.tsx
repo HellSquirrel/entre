@@ -32,7 +32,6 @@ const Planner: NextPage = () => {
     ;(async () => {
       const model = await runModel()
       const res1 = await model.predict(tf.tensor(data))
-      console.log(res1)
       const result = res1
         .transpose([0, 2, 3, 1])
         .slice(0, 1)

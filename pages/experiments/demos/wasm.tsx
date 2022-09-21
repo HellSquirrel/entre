@@ -8,7 +8,6 @@ const Wasm = () => {
       await init()
       const shapes = fractal_square_points(5)
       const ctx = ref.current?.getContext('2d')
-      console.log(shapes)
       // @ts-ignore
       //   ctx?.strokeStyle = 'red'
       shapes.forEach(({ points: [p1, p2, p3, p4] }) => {
