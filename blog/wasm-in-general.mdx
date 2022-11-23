@@ -11,7 +11,7 @@ import { Image } from '../components/Image'
 import { Details } from '../components/Details'
 
 import sourceAndTarget from './assets/wasm/sourceAndTarget.png'
-import archtecture from './assets/wasm/archtecture.png'
+import archtecture from './assets/wasm/architecture.png'
 
 ## WebAssembly для всех-всех-всех
 
@@ -118,14 +118,14 @@ GC (Garbage Collector) – сборщик мусора. Если вы когда
 Именно поэтому мы не можем положить на стек динамическую структуру данных.
 Смотрите:
 
-```JS
+```js
 const a = [1, 2, 3] // 3 (число элементов в массиве) * 8 (размер числа в байтах) = 24 байта
 ```
 
 Можно положить `a` на стек? Она весит 24 байта (это, кстати не правда :)
 Не можем потому что:
 
-```JS
+```js
 a.push('Прощайте 8 байт')
 ```
 

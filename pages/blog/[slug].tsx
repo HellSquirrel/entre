@@ -19,6 +19,7 @@ import * as GraphQLTooling3 from '../../blog/graphql-tooling-3.mdx'
 import * as GraphQLTooling4 from '../../blog/graphql-tooling-4.mdx'
 import * as GraphQLTooling5 from '../../blog/graphql-tooling-5.mdx'
 import * as GraphQLTooling6 from '../../blog/graphql-tooling-6.mdx'
+import * as WasmInGeneral from '../../blog/wasm-in-general.mdx'
 
 const pages = [
   ImageOptimization,
@@ -33,6 +34,7 @@ const pages = [
   GraphQLTooling4,
   GraphQLTooling5,
   GraphQLTooling6,
+  WasmInGeneral,
 ]
 
 const Img = styled('img', {
