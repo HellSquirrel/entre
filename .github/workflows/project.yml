@@ -1,5 +1,7 @@
 name: Add PR to project
-on: delete
+on:
+  pull_request:
+    types: [opened, reopened]
 jobs:
   track_pr:
     runs-on: ubuntu-latest
