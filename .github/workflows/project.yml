@@ -1,8 +1,5 @@
 name: Add PR to project
-on:
-  pull_request:
-    types:
-      - ready_for_review
+on: delete
 jobs:
   track_pr:
     runs-on: ubuntu-latest
