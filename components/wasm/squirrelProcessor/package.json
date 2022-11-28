@@ -1,0 +1,15 @@
+{
+  "name": "squirrel-processor",
+  "collaborators": [
+    "Polina Gurtovaya <zloymult@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "squirrel_processor_bg.wasm",
+    "squirrel_processor.js",
+    "squirrel_processor.d.ts"
+  ],
+  "module": "squirrel_processor.js",
+  "types": "squirrel_processor.d.ts",
+  "sideEffects": false
+}
