@@ -39,6 +39,7 @@
     "react-dom": "^18",
     "refractor": "3.3.1",
     "rxjs": "^7.5.5",
+    "squirrel-processor": "0.1.0",
     "unist-util-visit": "2.0.3",
     "workbox-cacheable-response": "^6.5.3",
     "workbox-expiration": "^6.5.3",
