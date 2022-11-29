@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import init from '../../../components/wasm/squirrelProcessor/squirrel_processor'
-import { BlurredSquirrel } from '../../../components/wasm/BluredSquirrelWasm'
+import { BlurredSquirrel } from '../../../components/wasm/BlurredSquirrel'
 
 const Wasm = () => {
   return (
