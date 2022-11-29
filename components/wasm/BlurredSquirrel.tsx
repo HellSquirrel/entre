@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react'
 import sq from '../assets/sq.jpeg'
 import { styled } from '@styles'
 import { convolve } from 'utils/math'
-import init, { blur_image } from 'squirrel-processor/squirrel_processor'
+import init, { blur_image } from './squirrel-processor/squirrel_processor'
 
 const sqWidth = sq.width / 2
 const sqHeight = sq.height / 2
