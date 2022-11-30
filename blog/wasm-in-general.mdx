@@ -13,6 +13,7 @@ import { Details } from '../components/Details'
 import sourceAndTarget from './assets/wasm/sourceAndTarget.png'
 import archtecture from './assets/wasm/architecture.png'
 import { BlurredSquirrel } from '../components/wasm/BlurredSquirrel'
+import { BlurredSquirrelNative } from '../components/wasm/BlurredSquirrelNative'
 
 ## WebAssembly для всех-всех-всех
 
@@ -335,71 +336,145 @@ pub fn blur_image(array: &[u8], image_width: u32, image_height: u32) -> Vec<u8> 
 
 ## Подключаем Wasm в браузер
 
-Wasm-pack сгенерирует для вас всю необходимую обвязку чтобы спокойно вызывать ваши wasm-модули в нужном окружении.
+`Wasm-pack` создаст для вас всю необходимую обвязку чтобы спокойно вызывать wasm-модули в нужном окружении.
 Но давайте потренируемся делать все сами.
-Wasm-pack сгенерировал для нас файл с расширением `.wasm` и `js обвязку` для него.
-Давайте уберем обвязку и попробуем загрузить наш модуль сами.
+`Wasm-pack` сгенерировал для нас файл с расширением `.wasm`.
+Давайте его загрузим:
 
 ```js
-const wasmModule = await WebAssembly.instantiateStreaming(
-  fetch('/wasm/squirrel_processor_bg.wasm'),
-  {
-    imports: {},
-  }
-)
+const loadModule = async () => {
+  const wasmModule = await WebAssembly.instantiateStreaming(
+    fetch('/wasm/squirrel_processor_bg.wasm'),
+    {
+      imports: {},
+    }
+  )
 
-const { blur_image, memory } = wasmModule.instance.exports
+  return wasmModule.instance.exports
+}
+
+const {
+  __wbindgen_add_to_stack_pointer: movePointer,
+  blur_image,
+  __wbindgen_malloc: malloc,
+  memory,
+} = await loadModule()
 ```
 
 Функция `instantiateStreaming` позволяет нам загружать и одновременно выполнять наш модуль
-Как только все загрузится и выполнится у нас появляется функция `blur_image` которой мы и будем блюрить белочку.
+Как только все загрузится и выполнится у нас появляется функция `blur_image` которой мы и будем блюрить белочку, а еще мы получим доступ к памяти нашего модуля `memory`
+и пару странных функций с нижними подчеркиваиями.
 
 ## Отправляем белочек в модули
 
-Осталось только понять как именно нам запихнуть нашу белочку в модуль.
-Для этого у нас есть две замечательные браузерные апишки
+Осталось только понять как именно нам запихнуть нашу белочку в функцию `blur_image`.
+И тут начинаются сложности:
+WebAssembly работает с линейной памятью, типа "белка" не поддерживается и даже в роадмапе его нет :(
+В эту память мы можем записывать только числа. Так что попробуем преобразовать нашу белку в нужный формат.
+
+Для этого нам пригодятся две замечательные браузерные апишки:
 
 Первая – `canvas`. Тут все просто: берем картинку, грузим, рисуем ее на `canvas`, превращаем `canvas` в `Uint8ClampedArray` и закидываем получившееся в наш модуль.
-Но так как мы любим экспериментировать с новыми браузерными апишками, мы лучше используем другой способ.
+Но так как мы любим экспериментировать и пробовать новые технологии, мы добавим еще и загрузку файлов.
 Загрузим файлик, используя [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API)
 
 ```js
-const [openFileHandle] = await window.showOpenFilePicker()
-const file = await openFileHandle.getFile()
-const contents = await file.arrayBuffer()
+const translateSquirrel = async () => {
+  const [openFileHandle] = await window.showOpenFilePicker({
+          types: [
+            {
+              accept: {
+                'image/*': ['.png', '.jpg'],
+              },
+            },
+          ],
+        })
+  const file = await openFileHandle.getFile()
+  const bitmap = await createImageBitmap(file)
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
+  const ctx = canvas.getContext('2d')
+  ctx!.drawImage(bitmap, 0, 0)
+  const imageData = new Uint8Array(
+    ctx!.getImageData(0, 0, bitmap.width, bitmap.height).data
+  )
+  return imageData
+}
 ```
 
-Теперь запишем нашу белочку в память модуля:
+Воу-воу, полегче. Что тут происходит?
 
-```js
-// TODO: add js example
-```
-
-Как-то все неудобно, да? Более того, такой процесс еще и достаточно медленный. Насколько проще было бы закинуть файл прямо в Wasm-модуль и пусть он там разбирается что и как.
-Кстати, вы можете это сделать используя (`wasm-pack`) (TODO: убедиться что правда можете), но под капотом Wasm-pack сделает все то же самое.
-Дело в том, что Wasm умеет работать только с примитивными типами данных. Перемещение данных или функций в и из модуля потратит нам время и ресурсы.
-Постепенно этот процесс становится намного проще благодаря [Reference-types](https://github.com/WebAssembly/reference-types/blob/master/proposals/reference-types/Overview.md)
-
-TODO: рассказать про Reference types
-
-<Details title="BigInt64">
-  Когда-то даже подружить большие целые числа с Wasm было проблемой. Но потом
-  нужный proposal заимплементили в V8, подробности можно почитать [вот
-  тут](https://v8.dev/features/wasm-bigint)
-</Details>
+- Запрашиваем у пользователя файл (`showOpenFilePicker`). Получаем в ответ специальный объект.
+- Из этого объекта получаем сам файл (`getFile`)
+- Создаем из файла картинку (`createImageBitmap`)
+- Рисуем ее на `OffscreenCanvas`. `OffscreenCanvas` – такой магический `canvas` который можно закидывать на `WebWorker`.
+- Получаем массив нужного нам формата
 
 ## Возвращаем белочек из модулей
 
-TODO: добавить пример
-Теперь мы готовы блюрить белочку!
+Дальше нам понадобятся страшные функции с подчеркиваниями, которые мы притащили из `wasm` модуля.
+Обе эти функции нужны для работы с памятью.
+Одна работает с указателем на стек, а вторая выделяет память в куче.
+Мы не можем просто закинуть наш массив в функцию, Wasm не умеет в массивы!
+Поэтому нам надо: выделить память в куче, скопировать туда наш массив, передать указатель на эту память в функцию.
+Если вы думаете что блюрящая функция что-то нам вернет, то вы ошибаетесь :)
+Она запишет в память получившийся результат. И наша задача его оттуда вытащить.
+
+Я покажу вам как :) (это примерно то же что делает `wasm-bindgen`)
 
 ```js
-// TODO: add blur example with canvas drawing
+const retptr = movePointer(-16) // подвинули указатель на стеке на 16 байт
+const length = imageData.length
+
+const imagePtr = malloc(length) // выделили память в куче
+const buff = new Uint8Array(memory.buffer) // получили доступ к памяти
+buff.set(imageData, imagePtr) // записали белку
+
+blur_image(retptr, imagePtr, length, bitmap.width, bitmap.height) // заблюрили
+
+const int32View = new Int32Array(memory.buffer) // получили доступ к памяти (ага, снова)
+const readStart = int32View[retptr / 4] // получили указатель на начало результата
+const readLength = int32View[retptr / 4 + 1] // получили длину результата
+
+const result = new Uint8Array(memory.buffer)
+  .subarray(readStart, readStart + readLength)
+  .slice() // вжух!
 ```
 
-## Замеряем результат
+<Details title="А почему мы все время создаем новый массив?">
+  Внимательный читатель обратил внимание, что мы несколько раз создаем новый
+  массив, чтобы читать память. Дело в том, что когда мы работаем с памятью
+  внутри Wasm модуля, свойство этой памяти `buffer` может измениться (например
+  потому что он вырос) и обращаться к нему по старой ссылке уже не получится.
+</Details>
 
-TODO: сравнить результаты блюра с и без Wasm. Объяснить что сравнение не честное, так как завязано на множество разных апишек
+Осталось только нарисовать белку.
+Это мы уже умеем :)
+
+```js
+const blurredImage = ctx!.createImageData(bitmap.width, bitmap.height)
+blurredImage!.data.set(result)
+canvas.getContext('2d')?.putImageData(blurredImage, 0, 0)
+```
+
+Вот что у нас получилось:
+
+<BlurredSquirrelNative />
+
+<Details title="Хорошо бы освободить память">
+  Вообще, нам нужно обязательно освободить память руками. Для этого wasm-модуль
+  экспортирует еще одну страшную функцию с подчеркиванием `__wbindgen_free`.
+</Details>
+
+## Память это сложно.
+
+Не беспокойтесь. Вам точно не придется писать этот код руками. Ваши инструменты сделают все за вас.
+Я просто хотела обратить ваше внимание на то как данные проходят через границу с Wasm модулем.
+Мы рассмотрели очень простой пример, где получилось легко преобразовать наши данные в числа. Но что произойдет если нам, например, понадобится
+закинуть внутрь нашего модуля граф... или объект. Не совсем понятно как это мапить на линейную Wasm память.
+
+До недавнего времени для этого существовал `workaround` - просто сохранить вашу сущность в каком-нибудь словаре и [передавать Wasm-модулю ключ из словаря вместо этой сущности](https://github.com/WebAssembly/interface-types/issues/18#issuecomment-430605795).
+Но недавно в Chromium завезли [WebAssembly Reference Types](https://github.com/WebAssembly/reference-types/blob/master/proposals/reference-types/Overview.md), и теперь не придется писать лишний код и хранить все в словарях.
+Вы сможете передавать прям настоящую ссылку на свою сущность в Wasm модуль.
 
 ## Беличий ускоритель
 
