@@ -3,6 +3,7 @@ import React, { useEffect, useCallback, useRef } from 'react'
 export const BlurredSquirrelNative = () => {
   const wasmRef = useRef<WebAssembly.Exports | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasOriginalRef = useRef<HTMLCanvasElement | null>(null)
 
   useEffect(() => {
     const loadModule = async () => {
@@ -44,6 +45,10 @@ export const BlurredSquirrelNative = () => {
       const imageData = new Uint8Array(
         ctx!.getImageData(0, 0, bitmap.width, bitmap.height).data
       )
+
+      canvasOriginalRef.current!.width = bitmap.width
+      canvasOriginalRef.current!.height = bitmap.height
+      canvasOriginalRef.current!.getContext('2d')!.drawImage(bitmap, 0, 0)
 
       const {
         __wbindgen_add_to_stack_pointer: movePointer,
@@ -90,6 +95,7 @@ export const BlurredSquirrelNative = () => {
       <div>
         <button onClick={handleClick}>Select image to blur</button>
       </div>
+      <canvas ref={canvasOriginalRef} />
       <canvas ref={canvasRef} />
     </div>
   )

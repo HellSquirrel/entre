@@ -48,6 +48,7 @@ type Props = {
 }
 
 const Details: FC = ({ children }) => <details>{children}</details>
+const Header2: FC = ({ children }) => <h2 id={String(children)}>{children}</h2>
 
 const components = {
   img: (props: { src: string; alt: string }) => {
@@ -56,6 +57,7 @@ const components = {
   details: Details,
   pre: Pre,
   a: Link,
+  h2: Header2,
 }
 
 export function getStaticPaths() {
