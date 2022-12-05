@@ -9890,6 +9890,11 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
+squirrel-processor@0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/squirrel-processor/-/squirrel-processor-0.2.0.tgz#6f3a7e0fb269cf14da2da50f7a6e4ce28cfabc68"
+  integrity sha512-rS1H7cXf391YbX1y0Ns5orGsblIhYZyJ4QZsZ8xCqc6T7ntv9J21G96yY5kyexJeZnnJMSig5uKWxqokvC4qMA==
+
 ssri@^9.0.0:
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/ssri/-/ssri-9.0.0.tgz#70ad90e339eb910f1a7ff1dcf4afc268326c4547"

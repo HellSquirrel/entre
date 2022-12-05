@@ -19,6 +19,7 @@ import * as GraphQLTooling3 from '../../blog/graphql-tooling-3.mdx'
 import * as GraphQLTooling4 from '../../blog/graphql-tooling-4.mdx'
 import * as GraphQLTooling5 from '../../blog/graphql-tooling-5.mdx'
 import * as GraphQLTooling6 from '../../blog/graphql-tooling-6.mdx'
+import * as WasmInGeneral from '../../blog/wasm-in-general.mdx'
 
 const pages = [
   ImageOptimization,
@@ -33,6 +34,7 @@ const pages = [
   GraphQLTooling4,
   GraphQLTooling5,
   GraphQLTooling6,
+  WasmInGeneral,
 ]
 
 const Img = styled('img', {
@@ -46,6 +48,7 @@ type Props = {
 }
 
 const Details: FC = ({ children }) => <details>{children}</details>
+const Header2: FC = ({ children }) => <h2 id={String(children)}>{children}</h2>
 
 const components = {
   img: (props: { src: string; alt: string }) => {
@@ -54,6 +57,7 @@ const components = {
   details: Details,
   pre: Pre,
   a: Link,
+  h2: Header2,
 }
 
 export function getStaticPaths() {
