@@ -19,9 +19,16 @@ const getPosts = fromPath => {
   })
 }
 
+const i18n = {
+  locales: ['en', 'ru'],
+  defaultLocale: 'ru',
+}
+
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['tsx', 'ts'],
+
+  i18n,
 
   webpack(config, options) {
     ;(config.module.rules = config.module.rules.concat([

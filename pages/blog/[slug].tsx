@@ -65,6 +65,7 @@ export function getStaticPaths() {
   const paths = __POSTS__.map(p => ({
     params: {
       slug: `${p.frontmatter.slug}`,
+      locale: 'ru',
     },
   }))
 
