@@ -30,6 +30,7 @@ export default class Document extends NextDocument {
             rel="stylesheet"
           />
           <link rel="icon" type="image/png" sizes="32x32" href="/dragon.png" />
+          <link rel="alternate" hrefLang="en" href="/en" />
         </Head>
         <body>
           <Main />
