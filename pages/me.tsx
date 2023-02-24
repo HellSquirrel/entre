@@ -35,7 +35,7 @@ const MeEn = () => {
       <p>
         I want to share my knowledge, so I have a lot of presentations,
         articles, and podcasts. Maybe someday I'll stop being lazy and add a big
-        list here. For now, here's a link to my
+        list here. For now, here's a link to my{' '}
         <Link href="https://speakerdeck.com/hellsquirrel">Speaker Deck</Link>
       </p>
     </div>
