@@ -42,9 +42,11 @@ const MeEn = () => {
   )
 }
 
-export default () => (
-  <LocaleProvider>
-    <MeEn />
-    <MeRu />
-  </LocaleProvider>
-)
+export default function Me() {
+  return (
+    <LocaleProvider>
+      <MeEn />
+      <MeRu />
+    </LocaleProvider>
+  )
+}
