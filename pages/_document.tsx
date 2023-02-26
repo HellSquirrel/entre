@@ -13,7 +13,7 @@ const scriptContent = `
 export default class Document extends NextDocument {
   render() {
     return (
-      <Html lang="ru">
+      <Html lang={this.props.locale}>
         <style
           id="stitches"
           dangerouslySetInnerHTML={{ __html: getCssText() }}

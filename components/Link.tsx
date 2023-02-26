@@ -2,7 +2,7 @@ import React from 'react'
 import NextLink, { LinkProps } from 'next/link'
 import { styled } from '@styles'
 
-const StyledLink = styled('span', {
+const StyledLink = styled(NextLink, {
   color: '$violet11',
   textDecoration: 'underline',
   transition: 'color 150ms',
@@ -28,7 +28,7 @@ const StyledLink = styled('span', {
 
 // @ts-ignore
 export const Link = ({ children, href, ...rest }: LinkProps) => (
-  <NextLink href={href} passHref>
-    <StyledLink {...rest}>{children}</StyledLink>
-  </NextLink>
+  <StyledLink href={href} passHref {...rest}>
+    {children}
+  </StyledLink>
 )
