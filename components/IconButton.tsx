@@ -17,7 +17,7 @@ const Button = styled('button', {
   userSelect: 'none',
   border: 'none',
   background: 'none',
-  transition: 'opcity 300ms',
+  transition: 'opacity 300ms',
 
   ['& svg']: {
     width: '$icon',

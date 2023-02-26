@@ -3,6 +3,7 @@ import { ThemeToggler } from './ThemeToggler'
 import { styled } from '@styles'
 import { Back } from './Back'
 import { useRouter } from 'next/router'
+import { LangSwitcher } from './LangSwitcher'
 
 const Nav = styled('nav', {
   display: 'flex',
@@ -13,13 +14,23 @@ const Nav = styled('nav', {
   width: '100%',
 })
 
+const StyledToolbar = styled('div', {
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  flex: '0 0 auto',
+})
+
 export const Navigation = () => {
   const router = useRouter()
-  const isPost = router.route === '/blog/[slug]'
+  const isBlogOrRoot = router.route === '/blog' || router.route === '/'
   return (
     <Nav>
-      {isPost ? <Back /> : <div />}
-      <ThemeToggler />
+      {isBlogOrRoot ? <div /> : <Back />}
+      <StyledToolbar>
+        <LangSwitcher />
+        <ThemeToggler />
+      </StyledToolbar>
     </Nav>
   )
 }
