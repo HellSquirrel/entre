@@ -3,6 +3,25 @@ import { Layout } from '../components/Layout'
 import { ThemeProvider } from 'next-themes'
 import { globalCss } from '@styles'
 import { useEffect } from 'react'
+import { createContext, FC } from 'react'
+import { useRouter } from 'next/router'
+
+const LocaleContext = createContext('ru')
+
+type Locale = 'en' | 'ru'
+
+type Props = {
+  locale: Locale
+}
+
+const LocaleContextProvider: FC<Props> = ({ children, locale }) => {
+  const { locale: routerLocale } = useRouter()
+  return (
+    <LocaleContext.Provider value={routerLocale || locale || 'ru'}>
+      {children}
+    </LocaleContext.Provider>
+  )
+}
 
 const globalStyles = globalCss({
   body: {
@@ -60,7 +79,11 @@ const globalStyles = globalCss({
   },
 })
 
-function NextAPP({ Component, pageProps }: AppProps & { Component: any }) {
+function NextAPP({
+  Component,
+  pageProps,
+  router,
+}: AppProps & { Component: any }) {
   useEffect(() => {
     if (typeof window !== undefined && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -75,9 +98,11 @@ function NextAPP({ Component, pageProps }: AppProps & { Component: any }) {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
+      <LocaleContextProvider locale={router.locale as Locale}>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </LocaleContextProvider>
     </ThemeProvider>
   )
 }
