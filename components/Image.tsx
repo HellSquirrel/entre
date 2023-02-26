@@ -1,4 +1,4 @@
-import NextImage, { ImageProps } from 'next/image'
+import NextImage, { ImageProps } from 'next/legacy/image'
 import { styled } from '@styles'
 
 const Caption = styled('figcaption', {
@@ -12,7 +12,7 @@ type Props = {
 export const Image = ({ caption, ...rest }: Props) => {
   return (
     <figure>
-      <NextImage {...rest} />
+      <NextImage {...rest} alt="" />
       {caption && <Caption>{caption}</Caption>}
     </figure>
   )
