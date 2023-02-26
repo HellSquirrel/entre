@@ -33,4 +33,5 @@ export const LangSwitcher: FC<Props> = ({ className }) => {
       {nextLocale}
     </StyledLink>
   )
+  return null
 }
