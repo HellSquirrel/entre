@@ -22,7 +22,6 @@ import * as GraphQLTooling6 from '@blog/graphql-tooling-6.mdx'
 import * as WasmInGeneral from '@blog/wasm-in-general.mdx'
 import * as ExternalHowToWriteTests from '@blog/how-to-write-test-with-jest.mdx'
 
-
 const pages = [
   ImageOptimization,
   PerfectLoader,
@@ -65,13 +64,13 @@ const components = {
 
 export function getStaticPaths() {
   // @ts-ignore
-  const paths = __POSTS__.map(p => ({
+  const paths = (__POSTS__ as Post[]).filter(p => p.frontmatter.external !== true).
+  map(p => ({
     params: {
       slug: `${p.frontmatter.slug}`,
       locale: 'ru',
     },
-    // @ts-ignore
-  })).filter(p => p.frontmatter.external !== true)
+  }))
 
   return {
     paths,
