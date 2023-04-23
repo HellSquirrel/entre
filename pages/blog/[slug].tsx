@@ -66,13 +66,13 @@ const components = {
 
 export function getStaticPaths() {
   // @ts-ignore
-  const paths = __POSTS__.map(p => ({
+  const paths = (__POSTS__ as Post[]).filter(p => p.frontmatter.external !== true).
+  map(p => ({
     params: {
       slug: `${p.frontmatter.slug}`,
       locale: 'ru',
     },
-    // @ts-ignore
-  })).filter(p => p.frontmatter.external !== true)
+  }))
 
   return {
     paths,
