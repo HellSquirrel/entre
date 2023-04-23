@@ -59,11 +59,14 @@ const ListOfAllPosts: FC<Props> = ({ posts }) => (
           // @ts-ignore - We can subtract dates
           new Date(p2.frontmatter.date) - new Date(p1.frontmatter.date)
       )
-      .map(({ frontmatter: { title, date, tags, slug } }) => (
+      .map(({ frontmatter: { title, date, tags, slug, external } }) => (
         <StyledPost key={title}>
           <StyledDate>{new Date(date).toLocaleDateString('en-US')}</StyledDate>
           {/* @ts-ignore */}
-          <StyledLink href={`/blog/${slug}`}>{title}</StyledLink>
+          <StyledLink
+            href={external ? slug : `/blog/${slug}`}>
+            {title}
+          </StyledLink>
           <StyledTags>
             {tags.map(t => (
               <StyledTag key={t}>{t}</StyledTag>

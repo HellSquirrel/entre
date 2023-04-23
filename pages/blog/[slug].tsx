@@ -7,20 +7,21 @@ import { Pre } from '../../components/Pre'
 import { Link } from '../../components/Link'
 import Head from 'next/head'
 
-import * as ImageOptimization from '../../blog/image-optimizations.mdx'
-import * as PerfectLoader from '../../blog/perfect-loader.mdx'
-import * as MLOnClient from '../../blog/state-of-ml-on-the-frontend.mdx'
-import * as BestSecondLanguage from '../../blog/perfect-loader.mdx'
-import * as MLOnClient2 from '../../blog/state-of-ml-on-the-frontend-2.mdx'
-import * as FpComposition from '../../blog/fp-composition-1.mdx'
-import * as GraphQLTooling1 from '../../blog/graphql-tooling-1.mdx'
-import * as GraphQLTooling2 from '../../blog/graphql-tooling-2.mdx'
-import * as GraphQLTooling3 from '../../blog/graphql-tooling-3.mdx'
-import * as GraphQLTooling4 from '../../blog/graphql-tooling-4.mdx'
-import * as GraphQLTooling5 from '../../blog/graphql-tooling-5.mdx'
-import * as GraphQLTooling6 from '../../blog/graphql-tooling-6.mdx'
-import * as WasmInGeneral from '../../blog/wasm-in-general.mdx'
-import * as Threads from '../../blog/threads.mdx'
+import * as ImageOptimization from '@blog/image-optimizations.mdx'
+import * as PerfectLoader from '@blog/perfect-loader.mdx'
+import * as MLOnClient from '@blog/state-of-ml-on-the-frontend.mdx'
+import * as BestSecondLanguage from '@blog/perfect-loader.mdx'
+import * as MLOnClient2 from '@blog/state-of-ml-on-the-frontend-2.mdx'
+import * as FpComposition from '@blog/fp-composition-1.mdx'
+import * as GraphQLTooling1 from '@blog/graphql-tooling-1.mdx'
+import * as GraphQLTooling2 from '@blog/graphql-tooling-2.mdx'
+import * as GraphQLTooling3 from '@blog/graphql-tooling-3.mdx'
+import * as GraphQLTooling4 from '@blog/graphql-tooling-4.mdx'
+import * as GraphQLTooling5 from '@blog/graphql-tooling-5.mdx'
+import * as GraphQLTooling6 from '@blog/graphql-tooling-6.mdx'
+import * as WasmInGeneral from '@blog/wasm-in-general.mdx'
+import * as ExternalHowToWriteTests from '@blog/how-to-write-test-with-jest.mdx'
+import * as Threads from '@blog/threads.mdx'
 
 const pages = [
   ImageOptimization,
@@ -36,6 +37,7 @@ const pages = [
   GraphQLTooling5,
   GraphQLTooling6,
   WasmInGeneral,
+  ExternalHowToWriteTests,
   Threads,
 ]
 
@@ -69,7 +71,8 @@ export function getStaticPaths() {
       slug: `${p.frontmatter.slug}`,
       locale: 'ru',
     },
-  }))
+    // @ts-ignore
+  })).filter(p => p.frontmatter.external !== true)
 
   return {
     paths,
