@@ -21,6 +21,7 @@ import * as GraphQLTooling5 from '@blog/graphql-tooling-5.mdx'
 import * as GraphQLTooling6 from '@blog/graphql-tooling-6.mdx'
 import * as WasmInGeneral from '@blog/wasm-in-general.mdx'
 import * as ExternalHowToWriteTests from '@blog/how-to-write-test-with-jest.mdx'
+import * as ExternalTrivialMemoryModel from '@blog/trivial-memory-model.mdx'
 
 const pages = [
   ImageOptimization,
@@ -37,6 +38,7 @@ const pages = [
   GraphQLTooling6,
   WasmInGeneral,
   ExternalHowToWriteTests,
+  ExternalTrivialMemoryModel
 ]
 
 const Img = styled('img', {
