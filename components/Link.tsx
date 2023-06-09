@@ -2,7 +2,7 @@ import React from 'react'
 import NextLink, { LinkProps } from 'next/link'
 import { styled } from '@styles'
 
-const StyledLink = styled('a', {
+const StyledLink = styled('span', {
   color: '$violet11',
   textDecoration: 'underline',
   transition: 'color 150ms',

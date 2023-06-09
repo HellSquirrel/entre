@@ -12,7 +12,7 @@ type Props = {
 export const Image = ({ caption, ...rest }: Props) => {
   return (
     <figure>
-      <NextImage {...rest} />
+      <NextImage {...rest} alt="" />
       {caption && <Caption>{caption}</Caption>}
     </figure>
   )

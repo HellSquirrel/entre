@@ -68,5 +68,8 @@
     "raw-loader": "^4.0.2",
     "typescript": "4.5.5",
     "yarn": "^1.22.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
