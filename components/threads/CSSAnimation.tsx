@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { blockThread } from './utils'
-import Squirrel from './squirrel.svg'
+import Squirrel from './assets/sq.svg'
 import { styled, keyframes } from '@styles'
 
 const frames = keyframes({
