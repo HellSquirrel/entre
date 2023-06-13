@@ -22,6 +22,7 @@ import * as GraphQLTooling6 from '@blog/graphql-tooling-6.mdx'
 import * as WasmInGeneral from '@blog/wasm-in-general.mdx'
 import * as ExternalHowToWriteTests from '@blog/how-to-write-test-with-jest.mdx'
 import * as ExternalTrivialMemoryModel from '@blog/trivial-memory-model.mdx'
+import * as Threads from '@blog/threads.mdx'
 
 const pages = [
   ImageOptimization,
@@ -38,6 +39,7 @@ const pages = [
   GraphQLTooling6,
   WasmInGeneral,
   ExternalHowToWriteTests,
+  Threads,
   ExternalTrivialMemoryModel
 ]
 
