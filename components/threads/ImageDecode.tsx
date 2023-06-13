@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { blockThread } from './utils'
 import { styled } from '@styles'
 
 const StyledBlock = styled('div', {

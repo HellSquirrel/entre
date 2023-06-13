@@ -75,9 +75,7 @@ export const ThreadDemo = () => {
         value={blockOption}
         onChange={e => setBlockOption(e.target.value)}>
         <option value="just-block">Just block</option>
-        <option value="cssAnimation">
-          Block + CSS animation
-        </option>
+        <option value="cssAnimation">Block + CSS animation</option>
 
         <option value="cssAnimationSVG">
           Block + CSS transform animation (div + SVG)
