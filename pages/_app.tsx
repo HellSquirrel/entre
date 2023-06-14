@@ -95,7 +95,6 @@ function NextAPP({
   }, [])
 
   globalStyles()
-
   return (
     <ThemeProvider defaultTheme="dark">
       <LocaleContextProvider locale={router.locale as Locale}>

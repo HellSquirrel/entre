@@ -20,8 +20,9 @@ const getPosts = fromPath => {
 }
 
 const i18n = {
-  locales: ['en', 'ru'],
+  locales: ['ru', 'en'],
   defaultLocale: 'ru',
+  localeDetection: false,
 }
 
 const nextConfig = {

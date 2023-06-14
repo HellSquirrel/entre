@@ -12,6 +12,8 @@ const scriptContent = `
 
 export default class Document extends NextDocument {
   render() {
+    console.log('doc locale!', this.props.locale)
+
     return (
       <Html lang={this.props.locale}>
         <style
