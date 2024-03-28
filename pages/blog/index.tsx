@@ -1,8 +1,10 @@
-import { FC } from 'react'
+import { FC, useContext } from 'react'
 import { GetStaticProps } from 'next'
 import { Link } from '../../components/Link'
 import { Post } from '../../types/blog'
 import { styled } from '@styles'
+import { useRouter } from 'next/router'
+import { LocaleProvider } from '@components/LocaleProvider'
 
 export const getStaticProps: GetStaticProps = () => {
   return {
@@ -49,32 +51,59 @@ const StyledTag = styled('li', {
 })
 
 const skipUnpublished = process.env.NODE_ENV === 'production'
+const checkLocale = (locales: string[] | undefined, currentLocale?: string) => {
+  if (currentLocale === 'en') {
+    return locales?.includes('en')
+  }
 
-const ListOfAllPosts: FC<Props> = ({ posts }) => (
-  <StyledList>
-    {posts
-      .filter(p => !skipUnpublished || p.frontmatter.published)
-      .sort(
-        (p1, p2) =>
-          // @ts-ignore - We can subtract dates
-          new Date(p2.frontmatter.date) - new Date(p1.frontmatter.date)
-      )
-      .map(({ frontmatter: { title, date, tags, slug, external } }) => (
-        <StyledPost key={title}>
-          <StyledDate>{new Date(date).toLocaleDateString('en-US')}</StyledDate>
-          {/* @ts-ignore */}
-          <StyledLink
-            href={external ? slug : `/blog/${slug}`}>
-            {title}
-          </StyledLink>
-          <StyledTags>
-            {tags.map(t => (
-              <StyledTag key={t}>{t}</StyledTag>
-            ))}
-          </StyledTags>
-        </StyledPost>
-      ))}
-  </StyledList>
-)
+  if (currentLocale === 'ru') {
+    return locales ? locales.includes('ru') : true
+  }
+
+  return true
+}
+
+const ListOfAllPosts: FC<Props> = ({ posts }) => {
+  const { locale } = useRouter()
+  const postsToShow = posts
+    .filter(p => !skipUnpublished || p.frontmatter.published)
+    .filter(p => checkLocale(p.frontmatter.locales, locale))
+    .sort(
+      // @ts-ignore - We can subtract dates
+      (p1, p2) => new Date(p2.frontmatter.date) - new Date(p1.frontmatter.date)
+    )
+
+  if (!postsToShow.length) {
+    return (
+      <LocaleProvider>
+        <>There is nothing to show ... yet!</>
+        <>Тут пока ничего нет :( </>
+      </LocaleProvider>
+    )
+  }
+
+  return (
+    <StyledList>
+      {postsToShow.map(
+        ({ frontmatter: { title, date, tags, slug, external } }) => (
+          <StyledPost key={title}>
+            <StyledDate>
+              {new Date(date).toLocaleDateString('en-US')}
+            </StyledDate>
+            {/* @ts-ignore */}
+            <StyledLink href={external ? slug : `/blog/${slug}`}>
+              {title}
+            </StyledLink>
+            <StyledTags>
+              {tags.map(t => (
+                <StyledTag key={t}>{t}</StyledTag>
+              ))}
+            </StyledTags>
+          </StyledPost>
+        )
+      )}
+    </StyledList>
+  )
+}
 
 export default ListOfAllPosts

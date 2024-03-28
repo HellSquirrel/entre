@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { useRouter } from 'next/router'
 import { styled } from '@styles'
-import { Link } from './Link'
 
 type Props = {
   className?: string
