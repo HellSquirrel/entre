@@ -23,6 +23,8 @@ import * as WasmInGeneral from '@blog/wasm-in-general.mdx'
 import * as ExternalHowToWriteTests from '@blog/how-to-write-test-with-jest.mdx'
 import * as ExternalTrivialMemoryModel from '@blog/trivial-memory-model.mdx'
 import * as Threads from '@blog/threads.mdx'
+import * as HowToGit from '@blog/how-to-git.mdx'
+import * as ExpressiveReact from '@blog/expressive-react-server.mdx'
 
 const pages = [
   ImageOptimization,
@@ -40,7 +42,9 @@ const pages = [
   WasmInGeneral,
   ExternalHowToWriteTests,
   Threads,
-  ExternalTrivialMemoryModel
+  ExternalTrivialMemoryModel,
+  HowToGit,
+  ExpressiveReact,
 ]
 
 const Img = styled('img', {
