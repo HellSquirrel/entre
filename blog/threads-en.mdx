@@ -1,0 +1,286 @@
+---
+title: 'Threads: The Basics and Not So Basics 🤔'
+date: '2023-02-25T15:47:18.387Z'
+tags: ['browser', 'threads', 'wasm', 'javascript']
+slug: 'threads-en'
+locales: ['en']
+published: true
+---
+
+import { Details } from '../components/Details'
+import { ThreadDemo } from '../components/threads/CSSAnimation'
+import { ImageDecodeDemo } from '../components/threads/ImageDecode'
+import { CodeSnippet } from '../components/CodeSnippet'
+import utilSnippet from '!raw-loader!../components/threads/utils'
+import tree from './assets/threads/tree.png'
+import threadDecode from './assets/threads/decode.png'
+import threadDecodeCanvas from './assets/threads/decodeCanvas.png'
+import wasmExec from './assets/threads/wasmExec.png'
+import v8 from './assets/threads/v8.png'
+import worker from './assets/threads/worker.png'
+import { LoadWasm } from '../components/threads/LoadWasm'
+import { WorkerDemo } from '../components/threads/Worker'
+import { Image } from '../components/Image'
+import workerOut from './assets/threads/workerOut.png'
+
+"How many threads can a JavaScript program run in?" – a common interview question. The correct answer is 🤷‍♀️. Answering "one" is less correct. If you encounter such a question, always clarify where and with what the mentioned program is being run.
+
+Where did this "single" thread come from? When discussing performance, the single-threaded model of JavaScript execution is often mentioned, and concerns arise about not blocking the main thread. In this article, we'll take a closer look at the main thread.
+
+# Where Do Threads Start?
+
+The CPU (also known as the processor) executes instructions. Depending on the processor's architecture, the order and number of simultaneously executed instructions may vary. You can endlessly read about this on Wikipedia, starting [here](https://en.wikipedia.org/wiki/Instruction_pipelining).
+
+<Details title="SIMD">
+  Processors also have extensions that allow processing multiple values with a single instruction. This is called SIMD (Single Instruction Multiple Data). Your processor likely supports this. The extension provides an additional register to store multiple values and special instructions to work with this register.
+</Details>
+
+Programs need to execute their code, and for that, they need a processor. There are many programs, but not many processor cores. The operating system gives each program a bit of time (the term "program" is inaccurate, we will define it later) creating the illusion of simultaneous execution of multiple programs. The OS sets a timer for a certain amount of time, called a quantum. The program's code is loaded onto the processor, which starts executing the instructions sequentially. After some time, the timer triggers an interrupt. The interrupt handler saves the current program's context (set of registers), loads another program's context, and sets the timer again. Thus, the simultaneous execution of many programs is merely an illusion. In reality, the processor switches between programs quickly. If a program needs to wait (I/O), an interrupt is also generated. To decide which processor should work next, the OS uses a scheduler.
+
+<Details title="What Does Simultaneous Mean?">
+  There are two terms: *Concurrency* – multiple tasks can overlap in time. This does not mean they are always executed simultaneously. *Parallelism* – true parallel execution, such as on different processor cores.
+</Details>
+
+# Fixing the Terminology
+
+Your program can create one or more _processes_. Processes execute independently and have unique IDs (PIDs). Each process has its own _address space_ and _state_. The process state includes what is currently stored in the processor's registers. Additionally, the operating system may provide the process with some objects, such as files and sockets. The operating system also ensures that the address spaces of different processes do not overlap.
+
+<Details title="What About the Browser?">
+  The first thing you will find when searching for "Chromium Architecture" is that Chrome is a multi-process application. Each tab is its own process.
+</Details>
+
+Code within a process can run in multiple _threads_. System threads share the process's address space. At least one thread is always running in a process. Each thread within a process has its own stack, but processes share the heap. Running your code in multiple threads can be beneficial. Parallel execution is often faster than single-threaded execution.
+
+<Details title="What Are Stack and Heap?">
+  Check out [this article in Doka](https://doka.guide/tools/trivial-memory-model/) where I explain how memory works. The model described in the article differs from the one used in your OS, but it is sufficient for general understanding.
+</Details>
+
+Processes are related and form a hierarchy. Some processes can create other processes. Threads do not have this capability.
+
+<Details title="How to View It?">
+  You can find a process's ancestor by looking at its ppid attribute. This works on macOS and Linux. In Linux, you can also use the `pstree` command. In macOS, you can check the activity monitor and enable tree view.
+</Details>
+
+Processes can communicate using signals or shared resources. For example, you can write code to the same file from different IDEs :)
+
+Operating systems have special APIs to help you create threads. These threads are sometimes called physical threads. When you write a program in some language, additional code needs to be executed during its run – the runtime. Language runtimes can either map their threads to operating system threads (1:1) or create their own threads (_green threads_). These threads can run in multiple operating system threads (M runtime threads: N OS threads).
+
+<Details title="What Does the Scheduler Schedule?">
+  Of course, schedulers in different operating systems work differently. [But in general, they are more likely to schedule threads than processes](https://stackoverflow.com/a/15601235/10716985).
+</Details>
+
+# Threads in the Browser
+
+Information for this section is mainly taken from [here](https://chromium.googlesource.com/chromium)
+
+JavaScript is a language for writing programs. These programs are executed by some environment. In Chrome and NodeJS, the JS engine is V8, and rendering is handled by Blink. We will talk about the main thread in the context of V8, Chromium, and Blink.
+
+Here's how it works:
+In the browser, there are multiple _processes_, each process has several threads.
+
+- Main thread – the main thread
+- IO thread (not the I/O you think of)
+- Compositor thread
+- A pool of threads for various tasks (task pool)
+- GPU thread for drawing active tab content and browser UI on the screen
+
+Rendering preparation happens in a separate `render` process. This process contains one main thread (main thread), a pool of auxiliary threads, and a thread responsible for layer composition. Many Blink optimizations rely on this multi-threaded model (main thread always being single). This does not mean you cannot create additional threads. `WebWorkers` and `ServiceWorkers` run in their own threads. Blink can use threads from the pool to decode images or process sound. The main thread and other threads within the rendering process are mapped 1:1 to physical OS threads. The same applies to `WebWorkers` and `ServiceWorkers`.
+
+<Details title="Which Process Do WebWorkers and ServiceWorkers Live In?">
+  WebWorker runs inside the rendering process of your tab. ServiceWorker lives in a separate process.
+</Details>
+
+<Image {...tree} caption="Processes and threads in Chrome" />
+
+What exactly runs in the main thread is determined by schedulers parsing multiple queues. Various tasks are collected in these queues. You can see how tasks are organized, [for example here](https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/platform/task_type.h;l=5?q=blink%20tasktype&ss=chromium)
+
+<Details title="What Does the Specification Say About This?">
+  Almost nothing. The only place mentioning threads is [here](https://262.ecma-international.org/13.0/#sec-agents)
+</Details>
+
+<Details title="It's Very Safe and Therefore Complicated">
+  The browser must ensure that malicious code from one page does not spoil others or affect the performance of its neighbors. Sandboxing a site is not only difficult but also resource-intensive. Add to this the existence of iframes and browser extensions. Therefore, sometimes the rendering process can be reused for multiple tabs of the same site.
+</Details>
+
+Besides processes responsible for rendering tabs, there are two other important processes:
+- Browser process - responsible for rendering the browser UI
+- GPU process - responsible for drawing everything in the browser, including tabs.
+
+# Rendering Process
+
+This section is a mix of insights from the remarkable video [Life of a pixel](https://www.youtube.com/watch?v=K2QHdgAKP-s) _by_ Steve Kobes (The video is quite old, but it excellently demonstrates where to look in the source code to understand how everything works. Moreover, the main ideas have not changed) and excerpts from the blog [RenderingNG](https://developer.chrome.com/articles/renderingng-architecture/).
+
+What exactly does the rendering process do? – Practically everything :)
+
+Let's look at a typical rendering pipeline.
+So, we start with a piece of HTML text. It needs to:
+
+**Parse**
+**Grow a tree from it (DOM)**
+
+Next up is CSS. (In fact, this can be done in parallel)
+From the CSS text, we need to extract rules, break them down into selectors and properties.
+Now, we need to walk through the DOM and understand which set of rules applies to it.
+As a result, a real forest of **property trees** emerges.
+
+After this, we need to place all the little elements on the page. This is called **layout**.
+In the process of placing elements on the page, another tree needs to grow (fragment tree).
+Do not confuse this tree with _DOM_.
+During the construction of the fragment tree, some nodes might simply disappear. For example, if a node has a `display: none` property.
+In the process of building and restructuring, the layout algorithm does not start from the beginning.
+The results of the previous execution of the algorithm are cached.
+
+After building the "skeleton" of the page, it's time to add beautiful pixels.
+If something is animated or the page is redrawn, before painting, the browser checks the cache to determine which structures and textures are no longer valid. This step is called **pre-paint**.
+
+If the user scrolls something, the scroll margins need to be updated. This stage is **scroll**
+
+Next comes **paint** where a list of commands is built with which the content on the page will be drawn.
+At the **commit** stage, the structures ready for painting move to another thread - `compositor`.
+
+The compositor will divide everything into separate layers - **Layerize**. Each layer can be rasterized separately. For efficient operation, layers should be allocated in such a way that their changes do not depend on each other.
+Next is **Raster and decode** - we need to turn the pictures and structures from previous steps into a set of commands for regions (cells). Slicing into cells is useful to avoid redrawing the entire page content.
+
+**Activate + Aggregate** - assemble all this together into a set of commands for the GPU.
+**Draw** - send commands to the GPU which will draw the pixels on your screen.
+
+Hurrah, everything is drawn! Now you can change what was created using JavaScript.
+Sources of updates can be not only JS but also various animations and user actions.
+
+To avoid running the entire pipeline, magical functions are used which determine for each
+element at the necessary stage whether it needs to be recalculated or redrawn.
+Steps of the rendering pipeline and JavaScript can be performed in parallel. For example, animations may occur in the Composite thread while the main thread is busy with calculations.
+
+
+## Let's see how it works
+
+First, let's write a terrible function for finding numbers divisible by 7:
+
+<CodeSnippet code={utilSnippet} lang="ts" />
+
+We will use this function to severely block the main thread. You can observe the blocking effects visually, but it's better to look at the Chrome DevTools under the Performance tab.
+Try to observe and predict what will happen for each type of animation when we block the main thread.
+After that, try scrolling the page while it's blocked. Why do you think it still scrolls?
+
+<ThreadDemo />
+
+The second example shows how additional threads are used. Let's try loading several images with profiling enabled.
+Notice in which thread the image decoding occurs.
+
+<ImageDecodeDemo />
+
+Pay attention to `ThreadPoolForegroundWorker` in the _Performance_ tab.
+
+Now, let's see what happens when the browser draws pictures.
+
+<Image {...threadDecode} caption="Image decoding in a separate thread" />
+
+Try clicking the "draw on canvas" button with the profiler enabled. The image decoding has moved to the main thread.
+
+<Image
+  {...threadDecodeCanvas}
+  caption="Image decoding in the main thread"
+/>
+
+Okay, what about our beloved WebAssembly and JS? In my article about [blurring squirrels](/wasm-in-general), there's a relevant example.
+
+<LoadWasm />
+
+Attempting to blur a squirrel using Wasm will block the main thread.
+
+<Image {...wasmExec} caption="Main thread is blocked" />
+
+If you look closely at how Wasm and JS are compiled, you'll notice that not everything runs in the main thread.
+Remember, we use Just-in-time compilation, i.e., we compile and execute simultaneously.
+
+<Image {...v8} caption="Compilation in V8" />
+
+While V8 (the JavaScript engine in Chromium) compiles code in the main thread, another part of the engine handles its parallel optimization.
+
+## But what if we want to run things in parallel?
+
+Sure thing. We have a wonderful mechanism [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)
+Each new Worker creates a new thread (system thread), throws an engine instance into it, and carefully executes your code.
+A Worker thread is created in the rendering process of your tab, however, it cannot interact with the DOM and has no access to the memory structures of other threads. This is what makes using WebWorkers safe but somewhat slow.
+What if you want to pass data to your Worker for processing? You can use the `postMessage` mechanism.
+
+Let's practice!
+
+<WorkerDemo />
+
+The code for the last demo is very simple.
+
+```ts
+// main thread
+const array = new Float32Array(1000 ** 100000).fill(Math.random())
+const worker = new Worker(new URL('./workerScript.ts', import.meta.url))
+worker.onmessage = e => {
+  if (e.data === 'ready') {
+    console.log('worker is ready')
+    worker.postMessage(array)
+    console.log(array)
+
+    // transferable!
+    worker.postMessage(array, [array.buffer])
+    console.log(array)
+  } else {
+    setSum(e.data)
+  }
+}
+
+// worker thread
+
+postMessage('ready')
+
+onmessage = function (event) {
+  const data = event.data
+  const result = data.reduce((acc: number, item: number) => acc + item, 0)
+  postMessage(result)
+}
+
+export {}
+```
+
+This works well. Calculating the sum in the worker does not block the main thread.
+
+Let's see what happens in DevTools:
+
+<Image {...worker} caption="Serialization on Web Workers" />
+
+When passing values between threads, the object must be serialized and deserialized. In Chrome, this is done using the structured clone and it is not very fast.
+We send the array to the worker twice. The second time we use the transferable option. The console output will be as follows:
+
+<Image {...workerOut} caption="Transferable vs Non-transferable" />
+
+If we pass an object through a Worker using the transferable option, the data of the object disappears in the main thread.
+However, the most efficient way to transfer data between threads is to use shared memory.
+Bad news - you cannot use it :( By default, using SharedArray buffer is disabled due to the vulnerability to Spectre.
+However, you can enable SharedArrayBuffer, for cross-origin-isolated pages. For this, you will need to add two additional headers to the response of your page content:
+
+```tsx
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Opener-Policy: same-origin
+```
+
+After this, you won't be able to use `SharedArrayBuffer`, but you will be able to load cross-origin content.
+
+<Details title="More precisely, you can, but not all of it">
+  You will need the magic of headers. You can read more about it in
+  [this guide](https://web.dev/cross-origin-isolation-guide/)
+</Details>
+
+
+## Garbage Collector
+
+Another task performed in the main thread is garbage collection. In Chrome, garbage is collected by a stop-the-world garbage collector, meaning that garbage collection blocks the main thread.
+However, garbage is collected in parts, and the collection is shared between the main thread and several auxiliary threads.
+If you suddenly increase the volume of data stored in the heap, a major garbage collection (major GC) will hit the main thread, which can cause a fairly long blockage.
+
+## So, can you block the main thread for a long time?
+
+You shouldn't :) But now you know that even if you block the main thread, you won't block everything (remember the flying circles from the examples above). I don't advocate for premature optimizations and suggest
+not being afraid to write blocking code. Write it and measure the actual effect (just don’t forget to set the necessary x4 slowdown in DevTools).
+If during your measurements you find performance issues – analyze your algorithm. It can likely be sped up by a factor of 100500.
+And if speeding it up doesn’t work – take a cue from the browser! Break your code into a sequence of tasks and feed them to the main thread little by little.
+If you really want to, you can even implement your own task scheduler. Then, you can take another cue from the browser and distribute these tasks across different threads.
+After that, you can consider the achievement "I have mastered threads" unlocked.

@@ -25,6 +25,7 @@ import * as ExternalTrivialMemoryModel from '@blog/trivial-memory-model.mdx'
 import * as Threads from '@blog/threads.mdx'
 import * as HowToGit from '@blog/how-to-git.mdx'
 import * as ExpressiveReact from '@blog/expressive-react-server.mdx'
+import * as ThreadsEn from '@blog/threads-en.mdx'
 
 const pages = [
   ImageOptimization,
@@ -45,6 +46,7 @@ const pages = [
   ExternalTrivialMemoryModel,
   HowToGit,
   ExpressiveReact,
+  ThreadsEn,
 ]
 
 const Img = styled('img', {
