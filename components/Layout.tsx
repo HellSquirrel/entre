@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React from 'react'
 import { styled } from '@styles'
 import { Navigation } from './Navigation'
 import { Footer } from './Footer'
@@ -10,7 +10,7 @@ const Main = styled('main', {
   width: '100%',
 })
 
-export const Layout: FC = ({ children }) => {
+export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Navigation />

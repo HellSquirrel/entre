@@ -17,6 +17,7 @@ export const PredictedClass = styled('span', {
 })
 
 type Props = {
+  children: React.ReactNode
   loading?: boolean
 }
 

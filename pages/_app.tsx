@@ -1,3 +1,4 @@
+
 import type { AppProps } from 'next/app'
 import { Layout } from '../components/Layout'
 import { ThemeProvider } from 'next-themes'
@@ -11,6 +12,7 @@ const LocaleContext = createContext('ru')
 type Locale = 'en' | 'ru'
 
 type Props = {
+  children: React.ReactNode
   locale: Locale
 }
 

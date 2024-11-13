@@ -67,6 +67,7 @@ export const ImperativeSquirrel = () => {
   const [kernel, setKernel] = useState(initialKernel)
 
   const updateKennel = useCallback(
+    // @ts-ignore
     (n, value) => {
       const newKernel = kernel.map(row => [...row])
       newKernel[Math.floor(n / 3)][n % 3] = value

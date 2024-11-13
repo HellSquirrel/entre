@@ -59,8 +59,12 @@ type Props = {
   slug: string
 }
 
-const Details: FC = ({ children }) => <details>{children}</details>
-const Header2: FC = ({ children }) => <h2 id={String(children)}>{children}</h2>
+type CommonProps = {
+  children: React.ReactNode
+}
+
+const Details = ({ children }: CommonProps) => <details>{children}</details>
+const Header2 = ({ children }: CommonProps) => <h2 id={String(children)}>{children}</h2>
 
 const components = {
   img: (props: { src: string; alt: string }) => {

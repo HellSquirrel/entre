@@ -33,6 +33,7 @@ type Props = {
   onClick?: () => void
   href?: string
   className?: string
+  children: React.ReactNode
 }
 
 export const IconButton: FC<Props> = ({ children, onClick, href, className }) =>

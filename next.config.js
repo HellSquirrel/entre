@@ -26,6 +26,7 @@ const i18n = {
 }
 
 const nextConfig = {
+
   reactStrictMode: true,
   pageExtensions: ['tsx', 'ts'],
 
