@@ -1,0 +1,120 @@
+---
+title: 'It turns out pet projects are manageable'
+date: '2025-08-12T22:19:56.855Z'
+tags: ['philosophy', 'penguins']
+slug: 'draw-your-plans-in-2d'
+locales: ['en']
+published: true
+---
+
+import { Image } from '../components/Image'
+import Plot from './assets/draw-your-plans-2d/plot.svg'
+
+# Do you have a pet project?
+I do, and I don't like the fact that I've abandoned most of them before finishing.
+My current pet project helps me collect interesting materials and organize them by relevance. This is very useful, and I don't want it to remain unfinished.
+
+# How do you collect your ideas?
+In my case, I needed a commitment. A simple `todo.md` file committed to my repo worked quite well.
+It's a good start, but it has its limitations and, honestly, it's not very creative.
+So I decided to switch to Jupyter notebooks. First, they allow for ad-hoc calculations; second, they support Markdown.
+I created a list of milestones like this:
+
+```markdown
+### Oh-my-reading-list next steps
+- Switch post embeddings model
+- Implement data fetcher for MDN blog
+- Implement data fetcher for developer.chrome.com blog
+- Implement data fetcher for web.dev
+- Implement data fetcher for Evil Martians blog
+- Update rec model to never ever suggest vibecoding articles
+- Add implement quick summary for the articles
+```
+
+When I have a spare hour, what should I pick? I stared at the list, thinking deeply, and _after an hour_ finally selected the best item...
+
+Try two: I ordered the list once and tried to go step-by-step. I picked the first task, worked on it for an hour, but didn't finish. After a few days, I'd forgotten all the context and had to start over.
+And again, and again...
+
+Clearly, I need to reorder my tasks. I decided to assign two extra numbers to each task:
+1. coolness - how cool my project becomes after implementing this task (in sunglasses)
+2. complexity - how complex this task is (in penguins)
+
+Unlike real-life projects, it's totally fine to convert penguins to hours here, since I'm not interacting with other people :)
+So, one hour equals 5 penguins. What should I pick next? The answer is simple: estimate your spare hours for the next week and solve the
+[knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem).
+
+```javascript
+const readingList = [
+    { title: "Implement data fetcher for developer.chrome.com blog", coolness:
+5, complexity: 1 },
+    { title: "Implement data fetcher for web.dev", coolness: 5, complexity: 1 },
+    { title: "Implement data fetcher for MDN blog", coolness: 5, complexity: 1 },
+    { title: "Implement data fetcher for Evil Martians blog", coolness: 5, complexity: 1 },
+    { title: "Update rec model to never ever suggest vibecoding articles", coolness: 10, complexity: 25 },
+    { title: "Add implement quick summary for the articles", coolness: 3, complexity: 10 },
+    { title: "Switch post embeddings model", coolness: 10, complexity: 25 }
+];
+
+const spareHours = 3;
+
+const knapsack = (items, capacity) => {
+    const n = items.length;
+    const dp = Array.from({ length: n + 1 }, () => Array(capacity + 1).fill(0));
+
+    for (let i = 1; i <= n; i++) {
+        for (let w = 0; w <= capacity; w++) {
+            if (items[i - 1].complexity <= w) {
+                dp[i][w] = Math.max(dp[i - 1][w], dp[i - 1][w - items[i - 1].complexity] + items[i - 1].coolness);
+            } else {
+                dp[i][w] = dp[i - 1][w];
+            }
+        }
+    }
+
+    const result = [];
+    let w = capacity;
+    for (let i = n; i > 0 && w > 0; i--) {
+        if (dp[i][w] !== dp[i - 1][w]) {
+            result.push(items[i - 1]);
+            w -= items[i - 1].complexity;
+        }
+    }
+    return result.reverse();
+};
+
+const selectedTasks = knapsack(readingList, spareHours * 5);
+console.log("Selected tasks for the week:", selectedTasks);
+```
+
+The output will be:
+
+```javascript
+Selected tasks for the week:
+[
+    {title: 'Implement data fetcher for developer.chrome.com blog', coolness: 5, complexity: 1},
+    {title: 'Implement data fetcher for web.dev', coolness: 5, complexity: 1},
+    {title: 'Implement data fetcher for MDN blog', coolness: 5, complexity: 1},
+    {title: 'Implement data fetcher for Evil Martians blog', coolness: 5, complexity: 1},
+    {title: 'Add implement quick summary for the articles', coolness: 3, complexity: 10}
+]
+```
+
+Alternatively I can sort the tasks by efficiency and pick the most efficient ones:
+
+```javascript
+const sortedTasks = readingList.sort((a, b) => (b.coolness / b.complexity) - (a.coolness / a.complexity));
+console.log("Selected tasks one by one:", sortedTasks);
+```
+
+I can also visualize the tasks in 2D space. This helps me to find the most effective tasks and understand the overall design of my project.
+The steeper the curve the better!
+
+<Plot alt="The graph of tasks shows normal trend" style={{
+    maxWidth: '100%',
+    height: 'auto',
+    aspectRatio: 728.39952 / 440.39952
+}}/>
+
+# Conclusion
+Sometimes adding a bit of data in unexpected places turns out to be useful, however be aware. I spent an hour writing this post. Guess how many tasks for my pet project I've finished? ;)
