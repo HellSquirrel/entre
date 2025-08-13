@@ -12,13 +12,14 @@ import Plot from './assets/draw-your-plans-2d/plot.svg'
 
 # Do you have a pet project?
 I do, and I don't like the fact that I've abandoned most of them before finishing.
-My current pet project helps me collect interesting materials and organize them by relevance. This is very useful, and I don't want it to remain unfinished.
+My current pet project helps me collect interesting materials and organize them by relevance. It's a mix of a Telegram bot where I can post interesting links, a web crawler that gathers links automatically, and a simple ML model that acts as the recommendation engine.
+This project has already saved me a lot of time, and I don't like the idea of leaving it unfinished.
 
 # How do you collect your ideas?
-In my case, I needed a commitment. A simple `todo.md` file committed to my repo worked quite well.
-It's a good start, but it has its limitations and, honestly, it's not very creative.
-So I decided to switch to Jupyter notebooks. First, they allow for ad-hoc calculations; second, they support Markdown.
-I created a list of milestones like this:
+In my case, I needed a commitment. A simple todo.md file committed to my repo worked pretty well.
+It was a good start, but it had its limits and, honestly, wasn't all that creative.
+So I switched to Jupyter notebooks. First, they let me do quick ad-hoc calculations; second, they support Markdown.
+I put together a list of milestones like this:
 
 ```markdown
 ### Oh-my-reading-list next steps
@@ -28,17 +29,17 @@ I created a list of milestones like this:
 - Implement data fetcher for web.dev
 - Implement data fetcher for Evil Martians blog
 - Update rec model to never ever suggest vibecoding articles
-- Add implement quick summary for the articles
+- Add quick summary of the post
 ```
 
 When I have a spare hour, what should I pick? I stared at the list, thinking deeply, and _after an hour_ finally selected the best item...
 
-Try two: I ordered the list once and tried to go step-by-step. I picked the first task, worked on it for an hour, but didn't finish. After a few days, I'd forgotten all the context and had to start over.
+Try two: I ordered the list once and went step-by-step. I picked the first task, worked on it for an hour, but didn't finish. A few days later, I'd forgotten all the context and had to start over.
 And again, and again...
 
-Clearly, I need to reorder my tasks. I decided to assign two extra numbers to each task:
-1. coolness - how cool my project becomes after implementing this task (in sunglasses)
-2. complexity - how complex this task is (in penguins)
+Clearly, I needed to reorder my tasks. I decided to assign two extra numbers to each task:
+1. "coolness" - how cool my project becomes after implementing this task (in sunglasses)
+2. "complexity" - how complex this task is (in penguins)
 
 Unlike real-life projects, it's totally fine to convert penguins to hours here, since I'm not interacting with other people :)
 So, one hour equals 5 penguins. What should I pick next? The answer is simple: estimate your spare hours for the next week and solve the
@@ -100,7 +101,7 @@ Selected tasks for the week:
 ]
 ```
 
-Alternatively I can sort the tasks by efficiency and pick the most efficient ones:
+Alternatively, I can sort the tasks by efficiency and just pick the most efficient ones:
 
 ```javascript
 const sortedTasks = readingList.sort((a, b) => (b.coolness / b.complexity) - (a.coolness / a.complexity));
