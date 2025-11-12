@@ -5,6 +5,7 @@ import { GitHubLogoIcon, TwitterLogoIcon } from '@radix-ui/react-icons'
 import Dragon from './dragon.svg'
 import Link from 'next/link'
 import { LocaleProvider } from './LocaleProvider'
+import RSS from './rss.svg'
 
 const FooterEl = styled('footer', {
   padding: '$sizes$step $3',
@@ -42,18 +43,22 @@ const Right = styled('div', {
   maxWidth: 'calc(5 * $step)',
 })
 
+const StyledRSS = styled(RSS, {
+  position: 'relative',
+});
+
 const Socials = styled('ul', {
   listStyle: 'none',
   padding: 0,
-  margin: 0,
+  margin: "0 0 0 10px",
   display: 'flex',
   alignItems: 'center',
 })
 
-const Twitter = styled(IconButton, {
+const Icon = styled(IconButton, {
   position: 'relative',
-  left: '-10px',
   top: '1px',
+  padding: '6px',
 })
 
 const Author = styled('div', {
@@ -78,13 +83,13 @@ const FooterRu: FC = () => {
           <Socials>
             <li>
               {/* @ts-ignore */}
-              <IconButton href="https://github.com/hellsquirrel">
+              <Icon href="https://github.com/hellsquirrel">
                 <GitHubLogoIcon />
-              </IconButton>
+              </Icon>
               {/* @ts-ignore */}
-              <Twitter href="https://twitter.com/pgurtovaya">
+              <Icon href="https://twitter.com/pgurtovaya">
                 <TwitterLogoIcon />
-              </Twitter>
+              </Icon>
             </li>
           </Socials>
         </Author>
@@ -110,13 +115,21 @@ export const FooterEn: FC = () => {
           <Socials>
             <li>
               {/* @ts-ignore */}
-              <IconButton href="https://github.com/hellsquirrel">
+              <Icon href="https://github.com/hellsquirrel">
                 <GitHubLogoIcon />
-              </IconButton>
+              </Icon>
+              </li>
+            <li>
               {/* @ts-ignore */}
-              <Twitter href="https://twitter.com/pgurtovaya">
+              <Icon href="https://twitter.com/pgurtovaya">
                 <TwitterLogoIcon />
-              </Twitter>
+              </Icon>
+            </li>
+            <li>
+              {/* @ts-ignore */}
+              <Icon href="https://hellsquirrel.dev/rss.xml">
+                <StyledRSS />
+              </Icon>
             </li>
           </Socials>
         </Author>
