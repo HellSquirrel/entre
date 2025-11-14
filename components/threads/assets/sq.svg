@@ -1,7 +1,7 @@
 <svg height="100%" stroke-miterlimit="10"
     style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" version="1.1"
     viewBox="0 0 512 512" width="100%" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"
-    xmlns:vectornator="http://vectornator.io" xmlns:xlink="http://www.w3.org/1999/xlink">
+    >
     <g id="Layer-1">
         <path
             d="M150.119 91.0703C150.119 90.3862 149.774 89.0473 149.774 89.0473C149.774 89.0473 150.204 91.0886 150.466 92.0976C150.969 94.0291 151.309 95.5885 151.794 97.479C153.31 103.395 156.191 108.257 158.55 114.003C159.487 116.283 160.971 118.633 162.246 120.756C163.669 123.126 164.237 126.17 165.623 128.501C168.529 133.387 171.109 138.55 174.394 143.346C176.726 146.751 178.016 149.536 179.792 153.116C180.461 154.466 181.815 155.961 181.815 157.505"
