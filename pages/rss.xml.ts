@@ -2,7 +2,7 @@ import { GetServerSideProps } from 'next'
 import { Post } from '../types/blog'
 
 function generateRSSFeed(posts: Post[]) {
-  const siteUrl = 'https://hellsquirrel.dev' // Replace with your actual domain
+  const siteUrl = 'https://hellsquirrel.dev'
   const rssDate = new Date().toUTCString()
 
   return `<?xml version="1.0" encoding="UTF-8"?>
