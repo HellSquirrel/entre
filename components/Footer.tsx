@@ -127,7 +127,7 @@ export const FooterEn: FC = () => {
             </li>
             <li>
               {/* @ts-ignore */}
-              <Icon href="/rss.xml">
+              <Icon href="/rss">
                 <StyledRSS />
               </Icon>
             </li>
