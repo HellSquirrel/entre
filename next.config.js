@@ -15,6 +15,7 @@ const getPosts = fromPath => {
 
     return {
       frontmatter: data,
+      slug: data.slug || path.basename(filePath, '.mdx'),
     }
   })
 }
@@ -95,6 +96,12 @@ const nextConfig = {
 
     return config
   },
+  rewrites: () => [
+    {
+      source: '/rss.xml',
+      destination: '/rss',
+    },
+  ],
   redirects: () => [
     {
       source: '/',
