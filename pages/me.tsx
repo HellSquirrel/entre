@@ -6,13 +6,12 @@ const MeRu = () => {
     <div>
       <h1>Немного об авторе</h1>
       <p>
-        Всем приветик 👋 Меня зовут Полина, я изобретаю всякое фронтяшное,
-        редачу <Link href="https://doka.guide/">Доку</Link> и участвую во всяких
-        GDE активностях. Там внизу есть ссылочки на мои соцсети и github 👇
+        Всем привет 👋 Меня зовут Полина, я со-ведущая <a href="https://web-standards.ru/podcast/">подкаста веб-стандарты</a> и Google developer expert. Я крафчу всякое фронтяшное и
+        участвую в GDE активностях. Bнизу есть ссылки на мои соцсети и github.
       </p>
 
       <p>
-        Я хочу шарить свои знания, поэтому у меня есть куча докладов, статей и
+        Я хочу шарить свои знания, поэтому у меня есть несколько докладов, статей и
         подкастов. Наверное, я когда-нибудь перестану лениться и добавлю сюда
         большой список. Пока вот ссылочка на мой{' '}
         <Link href="https://speakerdeck.com/hellsquirrel">Speaker Deck</Link>
@@ -26,10 +25,7 @@ const MeEn = () => {
     <div>
       <h1>Here's a little bit about the author.</h1>
       <p>
-        Hey all 👋 I'm Polina, and I create all kinds of frontend magic. I'm
-        also a contributor to Doka (https://doka.guide/) and take part in
-        various GDE activities. Check out my social media and GitHub links at
-        the bottom 👇
+        Hey all, I'm Polina, and I create all kinds of frontend magic. I'm also a regular co-host of the <a href="https://web-standards.ru/podcast/">web-standards podcast</a> and take part in various GDE activities. Check out my social media and GitHub links at the bottom.
       </p>
 
       <p>
