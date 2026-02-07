@@ -2,12 +2,12 @@
 
 const fs = require('fs')
 const path = require('path')
-const glob = require('glob')
+const { globSync } = require('glob')
 const matter = require('gray-matter')
 const highlight = require('./lib/highlighter.js')
 
 const getPosts = fromPath => {
-  const paths = glob.sync(`${path.join(fromPath)}/**/*.mdx`)
+  const paths = globSync(`${path.join(fromPath)}/**/*.mdx`)
 
   return paths.map(filePath => {
     const source = fs.readFileSync(path.join(filePath), 'utf8')

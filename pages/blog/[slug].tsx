@@ -66,7 +66,9 @@ type CommonProps = {
 }
 
 const Details = ({ children }: CommonProps) => <details>{children}</details>
-const Header2 = ({ children }: CommonProps) => <h2 id={String(children)}>{children}</h2>
+const Header2 = ({ children }: CommonProps) => (
+  <h2 id={String(children)}>{children}</h2>
+)
 
 const components = {
   img: (props: { src: string; alt: string }) => {
@@ -80,13 +82,14 @@ const components = {
 
 export function getStaticPaths() {
   // @ts-ignore
-  const paths = (__POSTS__ as Post[]).filter(p => p.frontmatter.external !== true).
-  map(p => ({
-    params: {
-      slug: `${p.frontmatter.slug}`,
-      locale: 'ru',
-    },
-  }))
+  const paths = (__POSTS__ as Post[])
+    .filter(p => p.frontmatter.external !== true)
+    .map(p => ({
+      params: {
+        slug: `${p.frontmatter.slug}`,
+        locale: 'ru',
+      },
+    }))
 
   return {
     paths,
@@ -94,11 +97,24 @@ export function getStaticPaths() {
   }
 }
 
+// @ts-ignore
+const findTheBestMatch = (posts: Post[],currentSlug: string) => {
+  const bestMatch = posts.reduce((acc, f: { frontmatter: Frontmatter }) => {
+    if (f.frontmatter.slug === currentSlug) {
+      return f;
+    } else if (currentSlug.includes(f.frontmatter.slug) && !acc) {
+      return f;
+    }
+    return acc
+  }, null)
+  return bestMatch
+}
+
 export function getStaticProps(context: GetStaticPropsContext) {
   const currentSlug = context?.params?.slug || ''
   const post =
     // @ts-ignore
-    __POSTS__.find(f => currentSlug.includes(f.frontmatter.slug))
+    findTheBestMatch(__POSTS__, currentSlug)
   return {
     props: {
       frontmatter: post?.frontmatter || {},
@@ -115,7 +131,7 @@ const DateComponent = styled('div', {
 const Post: FC<Props> = ({ frontmatter, slug }) => {
   const CurrentPage = pages.find(
     // @ts-ignore
-    p => p?.frontmatter?.slug === slug
+    p => p?.frontmatter?.slug === slug,
   )?.default
 
   return (

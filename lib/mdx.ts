@@ -1,12 +1,12 @@
 import fs from 'fs'
 import path from 'path'
-import glob from 'glob'
+import { globSync } from 'glob'
 import matter from 'gray-matter'
 import { Post } from 'types/blog'
 
 // the front matter and content of all mdx files based on `docsPaths`
 export const getPosts = (fromPath: string): Post[] => {
-  const paths = glob.sync(`${path.join(fromPath)}/**/*.mdx`)
+  const paths = globSync(`${path.join(fromPath)}/**/*.mdx`)
 
   return paths.map((filePath: string) => {
     const source = fs.readFileSync(path.join(filePath), 'utf8')
