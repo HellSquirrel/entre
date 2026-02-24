@@ -101,12 +101,19 @@ const ResultValue = styled('div', {
 
 const SuggestionNote = styled('div', {
   marginTop: '$2',
-  fontSize: '$small',
+  fontSize: '$main',
   color: '$green11',
   background: '$green2',
   border: '1px solid $green6',
   borderRadius: '4px',
   padding: '8px $2',
+})
+
+const FieldSuggestion = styled('div', {
+  fontSize: '$small',
+  color: '$green11',
+  marginTop: '2px',
+  minHeight: '16px',
 })
 
 type Fields = { x: string; c: string; a: string; v: string; s: string; p: string }
@@ -131,7 +138,7 @@ const constraints: Record<keyof Fields, { min?: number; max?: number; step?: num
 
 const fmt = (n: number, round = false) => {
   if (!isFinite(n) || isNaN(n)) return '—'
-  return round ? String(Math.round(n)) : parseFloat(n.toFixed(4)).toString()
+  return round ? '🤖'.repeat(Math.ceil(n)) : parseFloat(n.toFixed(4)).toString()
 }
 
 const parse = (v: string) => (v.trim() === '' ? null : parseFloat(v))
@@ -216,10 +223,12 @@ export const ThroughputCalculator = () => {
                 type="number"
                 value={fields[k]}
                 onChange={set(k)}
-                placeholder={isSuggested ? fmt(hint.value, k === 'p') : ''}
                 suggested={isSuggested}
                 {...constraints[k]}
               />
+              <FieldSuggestion>
+                {isSuggested && `→ ${fmt(hint.value, k === 'p')}`}
+              </FieldSuggestion>
             </FieldWrapper>
           )
         })}

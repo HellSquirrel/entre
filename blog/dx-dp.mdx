@@ -30,7 +30,7 @@ There will always be something to optimize. The real question is where to start.
 
 Pick something that matters for your specific project. And make sure you are actually optimizing, not just following rules.
 
-Pick your metric first. For example:
+Pick your metric first. The right one depends on context - and it is not always obvious:
 
 - You finish all sprint tasks in two days. Are you productive? From your manager's perspective, maybe you are just underloaded.
 - You have three issues: two small and one critical. You fix the two small ones. The board looks better. The release is still blocked. Were you productive - or just busy?
@@ -39,30 +39,27 @@ Pick your metric first. For example:
 
 Your goal is to handle tasks and ensure that every output is correct and secure.
 
-You have subprocesses - your AI assistants. Models like Claude Opus or Gemini Pro can handle real tasks. Not perfectly. Not independently. But meaningfully.
+You have subprocesses - AI agentic tools. Think Claude Code, Cursor, or Copilot Workspace. You give them a goal, they plan, run commands, read files, write code, and iterate. They can handle real tasks. Not perfectly. Not independently. But meaningfully.
 
-Lets assume token usage is not your main concern.
+Each agent action burns tokens - reading files, generating plans, writing code. With multiple agents running in parallel, that adds up fast. For now, let's set that aside and assume token cost is not your main constraint.
 
 Now let's apply a bit of parallel computing theory.
 
-Tasks constantly arrive. You delegate some of them to AI assistants. After they finish, you verify the result and sometimes iterate on the prompt.
+Tasks constantly arrive. You delegate some of them to agents. After they finish, you verify the result and sometimes go back and forth with the agent until the problem is actually solved.
 
 <Details title="Why you should always verify the results?">
 Automated tools are limited. The less domain expertise you have, the easier it is to trust them blindly.
 
-As an expert, you will notice flaws and subtle issues. That is why you need to iterate with your AI assistant.
+A quick real story. I had finished a refactor and needed to update tests. I knew the tests should fail after the change and asked my agent to update them. It did. But its internal reasoning said: "I see there is an issue in the code, but the user asked to update the test, so I will implement a mock." It was the wrong mock :)
 
-A quick real story. I had finished a refactor and needed to update tests. I knew the tests should fail after the change and asked my assistant to update them. It did. But its internal reasoning said: “I see there is an issue in the code, but the user asked to update the test, so I will implement a mock.”
-
-It was the wrong mock :)
-
+As an expert, you will notice flaws and subtle issues. That is why you need to iterate with your agent.
 </Details>
 
 In this system:
 
 1. You block all tasks. When they are ready, you approve, reject, or ask for another iteration.
 2. Some tasks are non-delegatable. For example, reviewing architecture or, occasionally, checking cat memes.
-3. Sometimes you write code faster than your assistant - especially when you know the codebase well.
+3. Sometimes you write code faster than an agent would - especially when you know the codebase well.
 
 <Details title="A simplified capacity model">
 This is a simplified capacity model inspired by bottleneck analysis in multi-stage systems ([related to classical queueing theory](https://en.wikipedia.org/wiki/Queueing_theory)). Real workflows are messier, but the bottleneck intuition still applies.
@@ -78,45 +75,28 @@ Let's define:
 
 You also have non-delegatable work. Let's say it consumes a fraction s of your time. For example, 5 out of 10 minutes - 50 percent.
 
-So your remaining budget for delegated work is:
+So your remaining budget for delegated work is <Formula inline content="B = 1 - s" />.
 
-<Formula content="B = 1 - s" />
+Every delegated task costs you <Formula inline content="a + v + c" />.
 
-Every delegated task costs you:
+So your personal [throughput](https://en.wikipedia.org/wiki/Network_throughput) is <Formula inline content="\frac{1 - s}{a + v + c}" />.
 
-<Formula content="a + v + c" />
+Agents generate results in parallel. If one result takes x time, then p agents produce <Formula inline content="\frac{p}{x}" />.
 
-So your personal throughput is:
-
-<Formula content="\frac{1 - s}{a + v + c}" />
-
-Agents generate results in parallel. If one result takes x time, then p agents produce:
-
-<Formula content="\frac{p}{x}" />
-
-Your real throughput is the bottleneck of the two:
-
-<Formula content="\min\!\left(\frac{1-s}{a+v+c},\; \frac{p}{x}\right)" />
+Your real throughput is the bottleneck of the two: <Formula inline content="\min\!\left(\frac{1-s}{a+v+c},\; \frac{p}{x}\right)" />.
 
 Now the interesting question: when does adding more agents actually help?
 
 Adding agents increases p. It helps until the agent side stops being the bottleneck.
 
-A simple rule of thumb for the crossover point is:
+A simple rule of thumb for the crossover point is <Formula inline content="p^* \approx \frac{x\,(1-s)}{a+v+c}" />.
 
-<Formula content="p^* \approx \frac{x\,(1-s)}{a+v+c}" />
-
-Below that number, agents are limiting you.
-Above that number, you are limiting them.
+Below that number, agents are limiting you. Above that number, you are limiting them.
 
 ## Example
 In one of my pet projects, an agent typically needs about 15 minutes to draft a plan and implement changes. I verify changes in a couple of minutes and switch context almost instantly. I also spend about 50 percent of my time on non-delegatable work.
 
-So roughly:
-
-<Formula content="\frac{1 - 0.5}{1 + 2 + 0} \approx 0.166 \text{ tasks per minute}" />
-
-Which means I can process one delegated task every ~6 minutes of my attention.
+So roughly <Formula inline content="\frac{1 - 0.5}{1 + 2 + 0} \approx 0.166 \text{ tasks per minute}" />, which means I can process one delegated task every ~6 minutes of my attention.
 
 If one agent produces one result every 15 minutes, then two agents are still slower than me. With three, they start to outrun my processing capacity.
 

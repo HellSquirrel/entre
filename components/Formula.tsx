@@ -4,13 +4,15 @@ import 'katex/dist/katex.min.css'
 
 type Props = {
   content: string
+  inline?: boolean
 }
 
-export const Formula: FC<Props> = ({ content }) => {
+export const Formula: FC<Props> = ({ content, inline }) => {
   const html = katex.renderToString(content, {
     throwOnError: false,
-    // @ts-ignore
-    inlineMode: true,
+    displayMode: !inline,
   })
-  return <div dangerouslySetInnerHTML={{ __html: html }} />
+  return inline
+    ? <span dangerouslySetInnerHTML={{ __html: html }} />
+    : <div dangerouslySetInnerHTML={{ __html: html }} />
 }
