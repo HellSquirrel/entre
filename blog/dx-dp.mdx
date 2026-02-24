@@ -127,14 +127,38 @@ Below is a small calculator if you'd like to run the model with your own paramet
 
 ## A practical takeaway
 
-Do the math for your own setup.
-Start with one agent.
-If it still feels reasonable - try another.
+See which side is slower - you or the agents.
+
+If agents produce results more slowly than you can process them, adding another one will increase throughput.
+
+If you process results more slowly than they generate them, adding more agents will not help. The only real gains come from reducing non-delegatable work, writing clearer prompts, verifying faster, or switching context more efficiently.
+
+In the next post, I will dive into practical ways to improve those levers.
 
 ## What's next?
 
 I hope this gives you a simple mental model for tweaking your workflow.
 
-Next, I will share practical ways to adjust these parameters, show how other people structure their setups, and then step away from raw productivity to talk about output quality.
-As I've mentioned above, the quality of your results matters more than the quantity. At least in my ideal world :)
+<Details title="To be fair, the model is too simple">
 
+There are several limitations to this mindset:
+
+- We assumed context switching is constant. That might hold for one agent. With two, maybe. Beyond that, switching cost tends to grow nonlinearly.
+
+- We assumed tasks are evenly distributed and equally prioritized. In reality, tasks vary in size, complexity, and urgency. The simple formulas do not capture that.
+
+- We assumed agents work independently, and that verification does not introduce coordination or merge overhead. This only holds if tasks are cleanly separated - for example, different parts of the codebase.
+
+- We ignored token cost. With multiple agents running in parallel, tokens disappear surprisingly fast.
+
+- We assumed negligible error and rework cost. In practice, tasks often require several loops. The model still works if you treat those loops as part of the total effort - just include all prompt, generation, verification, and correction time in the same parameters.
+
+- We assumed an infinite supply of tasks. In practice, you might just finish everything and run out of work. That is a different optimization problem 😊
+
+- And finally - you are not a web server 😉
+
+</Details>
+
+Next, I will share practical ways to adjust these parameters, look at how other people structure their setups, and then step away from raw productivity to talk about output quality.
+
+As I've mentioned above, the quality of your results matters more than the quantity. At least in my ideal world 😊
