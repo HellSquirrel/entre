@@ -27,6 +27,7 @@ import * as HowToGit from '@blog/how-to-git.mdx'
 import * as ExpressiveReact from '@blog/expressive-react-server.mdx'
 import * as ThreadsEn from '@blog/threads-en.mdx'
 import * as Tasks2d from '@blog/draw-your-plans-2d.mdx'
+import * as DxDp from '@blog/dx-dp.mdx'
 
 const pages = [
   ImageOptimization,
@@ -49,6 +50,7 @@ const pages = [
   ExpressiveReact,
   ThreadsEn,
   Tasks2d,
+  DxDp,
 ]
 
 const Img = styled('img', {

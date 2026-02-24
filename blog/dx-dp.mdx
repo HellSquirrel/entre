@@ -1,5 +1,5 @@
 ---
-title: 'Scaling the Productivity of a Spherical Developer in a Vacuum'
+title: 'Scaling the Productivity of a Spherical Developer in a Vacuum #0'
 date: '2026-02-07T00:00:00.000Z'
 tags: ['dx']
 slug: 'dx-dp'
@@ -7,19 +7,134 @@ locales: ['en']
 published: false
 ---
 
-### Introduction
+import { ThroughputCalculator } from '../components/ThroughputCalculator.tsx'
+import { Details } from '../components/Details.tsx'
+import { Formula } from '../components/Formula'
 
-I originally wanted to write a single post about productivity, mostly because developer tooling has changed a lot over the last couple of years - and my own workflow has changed with it.
 
-Along the way I collected a bunch of small tricks (and a few painful lessons). Some I learned the hard way, some I stole from friends and community folks, and some appeared only after I broke my setup for the third time and had to rebuild it from scratch.
+I originally wanted to write a single post about productivity - mostly because developer tooling has changed dramatically over the last couple of years, and my own workflow has quietly evolved with it.
 
-At first I thought I would interview a few people and put everything into one big longread. I still like longreads, but I will break things down: a little self-reflection, a few formulas, and small, readable portions.
+Along the way, I collected a bunch of small tricks - and a few painful lessons. Some I learned the hard way. Some I borrowed from friends and people in the dev community. Some only appeared after I broke my setup for the third time and had to rebuild it from scratch. Apparently, that is part of the process.
 
-This series is a mix of my own experiments, mistakes, and opinions - plus lessons I have picked up from the developer community around me. I will reference different workflows, quotes, and trade-offs (with context), because productivity is rarely one-size-fits-all.
+I have also interviewed a few people about their setups and how they work. I hope this shared experience will be useful.
 
-What we are going to cover, gradually:
+# Part 0: Introduction and Handles
 
-1. What 'productivity' and 'developer efficiency' mean from different perspectives, and how people actually measure them
-1. Software tooling and workflows (editors, automation, testing, CI, personal systems)
-1. Hardware, ergonomics, and the physical setup that quietly affects work
+Your project setup is often not something you fully control. There are company policies, prescribed tools, and codebase structures you have to follow.
+
+Let's exclude that from the discussion and assume you have full control over your project, tech stack, and workflow.
+
+Effectiveness is about juggling maintainability, requirements, and speed to reach acceptable results. Most of the time, acceptance criteria come from someone else. Or you follow your own vision of how things should be done. The latter only works if you truly know what you want to achieve - and are lucky enough to get there without drifting too far.
+
+There will always be something to optimize. The real question is where to start.
+
+Pick something that matters for your specific project. And make sure you are actually optimizing, not just following rules.
+
+Pick your metric first. For example:
+
+- You finish all sprint tasks in two days. Are you productive? From your manager's perspective, maybe you are just underloaded.
+- You have three issues: two small and one critical. You fix the two small ones. The board looks better. The release is still blocked. Were you productive - or just busy?
+
+## Think of yourself as a web server
+
+Your goal is to handle tasks and ensure that every output is correct and secure.
+
+You have subprocesses - your AI assistants. Models like Claude Opus or Gemini Pro can handle real tasks. Not perfectly. Not independently. But meaningfully.
+
+Lets assume token usage is not your main concern.
+
+Now let's apply a bit of parallel computing theory.
+
+Tasks constantly arrive. You delegate some of them to AI assistants. After they finish, you verify the result and sometimes iterate on the prompt.
+
+<Details title="Why you should always verify the results?">
+Automated tools are limited. The less domain expertise you have, the easier it is to trust them blindly.
+
+As an expert, you will notice flaws and subtle issues. That is why you need to iterate with your AI assistant.
+
+A quick real story. I had finished a refactor and needed to update tests. I knew the tests should fail after the change and asked my assistant to update them. It did. But its internal reasoning said: “I see there is an issue in the code, but the user asked to update the test, so I will implement a mock.”
+
+It was the wrong mock :)
+
+</Details>
+
+In this system:
+
+1. You block all tasks. When they are ready, you approve, reject, or ask for another iteration.
+2. Some tasks are non-delegatable. For example, reviewing architecture or, occasionally, checking cat memes.
+3. Sometimes you write code faster than your assistant - especially when you know the codebase well.
+
+<Details title="A simplified capacity model">
+This is a simplified capacity model inspired by bottleneck analysis in multi-stage systems ([related to classical queueing theory](https://en.wikipedia.org/wiki/Queueing_theory)). Real workflows are messier, but the bottleneck intuition still applies.
+</Details>
+
+Let's define:
+
+- a - time to write a prompt
+- v - time to verify and iterate
+- c - context switching cost (paid by you).
+- x - time an agent needs to generate a result
+- p - number of agents
+
+You also have non-delegatable work. Let's say it consumes a fraction s of your time. For example, 5 out of 10 minutes - 50 percent.
+
+So your remaining budget for delegated work is:
+
+<Formula content="B = 1 - s" />
+
+Every delegated task costs you:
+
+<Formula content="a + v + c" />
+
+So your personal throughput is:
+
+<Formula content="\frac{1 - s}{a + v + c}" />
+
+Agents generate results in parallel. If one result takes x time, then p agents produce:
+
+<Formula content="\frac{p}{x}" />
+
+Your real throughput is the bottleneck of the two:
+
+<Formula content="\min\!\left(\frac{1-s}{a+v+c},\; \frac{p}{x}\right)" />
+
+Now the interesting question: when does adding more agents actually help?
+
+Adding agents increases p. It helps until the agent side stops being the bottleneck.
+
+A simple rule of thumb for the crossover point is:
+
+<Formula content="p^* \approx \frac{x\,(1-s)}{a+v+c}" />
+
+Below that number, agents are limiting you.
+Above that number, you are limiting them.
+
+## Example
+In one of my pet projects, an agent typically needs about 15 minutes to draft a plan and implement changes. I verify changes in a couple of minutes and switch context almost instantly. I also spend about 50 percent of my time on non-delegatable work.
+
+So roughly:
+
+<Formula content="\frac{1 - 0.5}{1 + 2 + 0} \approx 0.166 \text{ tasks per minute}" />
+
+Which means I can process one delegated task every ~6 minutes of my attention.
+
+If one agent produces one result every 15 minutes, then two agents are still slower than me. With three, they start to outrun my processing capacity.
+
+That is why, in my case, two or three agents feel optimal. More than that becomes stressful - and the stress is not in the formula.
+
+Below is a small calculator if you'd like to run the model with your own parameters.
+<ThroughputCalculator />
+
+## A practical takeaway
+
+Do the math for your own setup.
+Start with one agent.
+If it still feels reasonable - try another.
+
+## What's next?
+
+I hope this gives you a simple mental model for tweaking your workflow.
+
+Next, I will share practical ways to adjust these parameters, show how other people structure their setups, and then step away from raw productivity to talk about output quality.
+As I've mentioned above, the quality of your results matters more than the quantity. At least in my ideal world :)
 
