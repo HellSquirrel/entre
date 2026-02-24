@@ -1,5 +1,5 @@
 import { GetServerSideProps } from 'next'
-import { Post } from '../types/blog'
+import { Post } from '../../types/blog'
 
 function generateRSSFeed(posts: Post[]) {
   const siteUrl = 'https://hellsquirrel.dev'
@@ -8,21 +8,19 @@ function generateRSSFeed(posts: Post[]) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Squirrels RSS</title>
-    <description>Ancient techs, boring philosophy and a little bit of client side magic</description>
+    <title>RSS белки</title>
+    <description>Древние технологии, скучная философия и немного клиентской магии</description>
     <link>${siteUrl}</link>
-    <language>en</language>
+    <language>ru</language>
     <lastBuildDate>${rssDate}</lastBuildDate>
-    <atom:link href="${siteUrl}/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="${siteUrl}/rss/ru" rel="self" type="application/rss+xml"/>
     ${posts
       .map(({ slug, frontmatter }) => {
         const postUrl = `${siteUrl}/blog/${slug}`
         const pubDate = new Date(frontmatter.date).toUTCString()
 
-        const itemLang = frontmatter?.locales?.[0] || 'en';
-
         return `
-    <item${itemLang !== 'en' ? ` xml:lang="${itemLang}"` : ''}>
+    <item>
       <title><![CDATA[${frontmatter.title}]]></title>
       <link>${postUrl}</link>
       <guid isPermaLink="true">${postUrl}</guid>
@@ -35,12 +33,14 @@ function generateRSSFeed(posts: Post[]) {
 </rss>`
 }
 
-function RSSFeed() {}
+function RSSFeedRu() {}
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   const rssFeed = generateRSSFeed(
     // @ts-ignore
-    __POSTS__.filter(p => p.frontmatter.published)
+    __POSTS__
+      .filter((p: Post) => p.frontmatter.published)
+      .filter((p: Post) => !p.frontmatter.locales || p.frontmatter.locales.includes('ru'))
   )
 
   res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8')
@@ -52,4 +52,4 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   }
 }
 
-export default RSSFeed
+export default RSSFeedRu

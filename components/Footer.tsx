@@ -90,6 +90,10 @@ const FooterRu: FC = () => {
               <Icon href="https://twitter.com/pgurtovaya">
                 <TwitterLogoIcon />
               </Icon>
+              {/* @ts-ignore */}
+              <Icon href="/rss/ru" external>
+                <StyledRSS />
+              </Icon>
             </li>
           </Socials>
         </Author>
@@ -127,7 +131,7 @@ export const FooterEn: FC = () => {
             </li>
             <li>
               {/* @ts-ignore */}
-              <Icon href="/rss">
+              <Icon href="/rss" external>
                 <StyledRSS />
               </Icon>
             </li>

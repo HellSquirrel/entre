@@ -9,7 +9,8 @@
       "Bash(npm view:*)",
       "Bash(python3:*)",
       "Bash(yarn install)",
-      "Bash(yarn build:*)"
+      "Bash(yarn build:*)",
+      "Bash(grep:*)"
     ]
   }
 }
