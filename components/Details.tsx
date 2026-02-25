@@ -13,12 +13,14 @@ const StyledDetails = styled('details', {
   variants: {
     withBackground: {
       true: {
-        backgroundColor: '$violet4',
+        backgroundColor: '$indigo3',
+        borderLeft: '3px solid $indigo8',
         padding: '$3',
-        borderRadius: '6px',
+        borderRadius: '0 6px 6px 0',
 
-        [`html[data-theme='dark'] &`]: {
-          backgroundColor: 'hsl(255, 30%, 20%)',
+        [`html[data-theme='light'] &`]: {
+          backgroundColor: '$violet12',
+          borderLeftColor: '$violet8',
         },
       },
     },

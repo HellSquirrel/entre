@@ -10,7 +10,8 @@
       "Bash(python3:*)",
       "Bash(yarn install)",
       "Bash(yarn build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "mcp__chrome-devtools__list_pages"
     ]
   }
 }

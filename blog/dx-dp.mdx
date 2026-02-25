@@ -39,7 +39,7 @@ Pick your metric first. The right one depends on context - and it is not always 
 
 Your goal is to handle tasks and ensure that every output is correct and secure.
 
-You have subprocesses - AI agentic tools. Think Claude Code, Cursor, or Copilot Workspace. You give them a goal, they plan, run commands, read files, write code, and iterate. They can handle real tasks. Not perfectly. Not independently. But meaningfully.
+You have subprocesses - AI agents. For example, agents backed by Gemini, Claude, or Codex. You give them a goal, they plan, run commands, read files, write code, and iterate. They can handle real tasks. Not perfectly. Not independently. But meaningfully.
 
 Each agent action burns tokens - reading files, generating plans, writing code. With multiple agents running in parallel, that adds up fast. For now, let's set that aside and assume token cost is not your main constraint.
 
@@ -47,7 +47,7 @@ Now let's apply a bit of parallel computing theory.
 
 Tasks constantly arrive. You delegate some of them to agents. After they finish, you verify the result and sometimes go back and forth with the agent until the problem is actually solved.
 
-<Details title="Why you should always verify the results?">
+<Details withBackground title="Why you should always verify the results?">
 Automated tools are limited. The less domain expertise you have, the easier it is to trust them blindly.
 
 A quick real story. I had finished a refactor and needed to update tests. I knew the tests should fail after the change and asked my agent to update them. It did. But its internal reasoning said: "I see there is an issue in the code, but the user asked to update the test, so I will implement a mock." It was the wrong mock :)
@@ -63,7 +63,7 @@ In this system:
 2. Some tasks are non-delegatable. For example, reviewing architecture or, occasionally, checking cat memes.
 3. Sometimes you write code faster than an agent would - especially when you know the codebase well.
 
-<Details title="A simplified capacity model">
+<Details withBackground title="A simplified capacity model">
 This is a simplified capacity model inspired by bottleneck analysis in multi-stage systems ([related to classical queueing theory](https://en.wikipedia.org/wiki/Queueing_theory)). Real workflows are messier, but the bottleneck intuition still applies.
 </Details>
 
@@ -121,7 +121,7 @@ In the next post, I will dive into practical ways to improve those levers.
 
 I hope this gives you a simple mental model for tweaking your workflow.
 
-<Details title="To be fair, the model is too simple">
+<Details withBackground title="To be fair, the model is too simple">
 
 There are several limitations to this mindset:
 
