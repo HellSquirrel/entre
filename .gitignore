@@ -44,3 +44,5 @@ generated.tsx
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+.claude
