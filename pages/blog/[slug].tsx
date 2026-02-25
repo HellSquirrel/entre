@@ -141,14 +141,26 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
       <Head>
         {!!frontmatter && (
           <>
-            <meta name="twitter:card" content="summary" />
+            <meta property="og:title" content={frontmatter.title} />
+            <meta
+              property="og:description"
+              content={frontmatter?.description || frontmatter.title}
+            />
+            <meta
+              property="og:image"
+              content={frontmatter.image || 'https://hellsquirrel.dev/images/evil-squirrel-blocks-the-road.jpg'}
+            />
+            <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:site" content="@pgurtovaya" />
             <meta name="twitter:title" content={frontmatter.title} />
             <meta
               name="twitter:description"
               content={frontmatter?.description || frontmatter.title}
             />
-            <meta name="twitter:image" content={frontmatter.image} />
+            <meta
+              name="twitter:image"
+              content={frontmatter.image || 'https://hellsquirrel.dev/images/evil-squirrel-blocks-the-road.jpg'}
+            />
           </>
         )}
       </Head>
