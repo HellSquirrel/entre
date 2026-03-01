@@ -6,6 +6,7 @@ import { styled } from '@styles'
 import { Pre } from '../../components/Pre'
 import { Link } from '../../components/Link'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 import * as ImageOptimization from '@blog/image-optimizations.mdx'
 import * as PerfectLoader from '@blog/perfect-loader.mdx'
@@ -100,12 +101,12 @@ export function getStaticPaths() {
 }
 
 // @ts-ignore
-const findTheBestMatch = (posts: Post[],currentSlug: string) => {
+const findTheBestMatch = (posts: Post[], currentSlug: string) => {
   const bestMatch = posts.reduce((acc, f: { frontmatter: Frontmatter }) => {
     if (f.frontmatter.slug === currentSlug) {
-      return f;
+      return f
     } else if (currentSlug.includes(f.frontmatter.slug) && !acc) {
-      return f;
+      return f
     }
     return acc
   }, null)
@@ -136,6 +137,8 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
     p => p?.frontmatter?.slug === slug,
   )?.default
 
+  const locale = useRouter().locale
+
   return (
     <>
       <Head>
@@ -148,7 +151,10 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
             />
             <meta
               property="og:image"
-              content={frontmatter.image || 'https://hellsquirrel.dev/images/evil-squirrel-blocks-the-road.jpg'}
+              content={
+                frontmatter.image ||
+                'https://hellsquirrel.dev/images/evil-squirrel-blocks-the-road.jpg'
+              }
             />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:site" content="@pgurtovaya" />
@@ -159,7 +165,10 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
             />
             <meta
               name="twitter:image"
-              content={frontmatter.image || 'https://hellsquirrel.dev/images/evil-squirrel-blocks-the-road.jpg'}
+              content={
+                frontmatter.image ||
+                'https://hellsquirrel.dev/images/evil-squirrel-blocks-the-road.jpg'
+              }
             />
           </>
         )}
@@ -167,7 +176,14 @@ const Post: FC<Props> = ({ frontmatter, slug }) => {
       {/* @ts-ignore */}
       <MDXProvider components={components}>
         <DateComponent>
-          {new Date(frontmatter?.date).toLocaleDateString('en-US')}
+          {new Date(frontmatter?.date).toLocaleDateString(
+            locale == 'ru' ? 'ru-RU' : 'en-US',
+            {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            },
+          )}
         </DateComponent>
         <h1>{frontmatter?.title}</h1>
         <div>

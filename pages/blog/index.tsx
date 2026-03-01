@@ -88,7 +88,11 @@ const ListOfAllPosts: FC<Props> = ({ posts }) => {
         ({ frontmatter: { title, date, tags, slug, external } }) => (
           <StyledPost key={title}>
             <StyledDate>
-              {new Date(date).toLocaleDateString('en-US')}
+              {new Date(date).toLocaleDateString(locale == 'ru' ? 'ru-RU' : 'en-US', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
             </StyledDate>
             {/* @ts-ignore */}
             <StyledLink href={external ? slug : `/blog/${slug}`}>
