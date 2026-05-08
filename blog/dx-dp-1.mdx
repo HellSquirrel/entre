@@ -8,10 +8,10 @@ published: false
 ---
 
 import { Details } from '../components/Details.tsx'
+import { Formula } from '../components/Formula'
 import { Image } from '../components/Image'
 import showcase from './assets/dp/showcase.png'
-
-{/* Skeleton draft. Italic notes under each heading are intent markers - delete before publishing. Tone target: technical depth with light irony, matching Part 0 (queueing theory + occasional 😉). */}
+import regionSelection from './assets/dp/region-selection.png'
 
 In the previous post we ended up with three parameters worth tweaking - `a` (prompt time), `v` (verify and iterate), and `c` (context switching) - and a small theorem that adding more agents stops helping the moment one of these becomes the bottleneck.
 
@@ -32,8 +32,6 @@ It is a personal thing, non-trivial enough to involve real architecture decision
 I built it in three days. That is short enough that I will not pretend the result is polished, and long enough that all three knobs - `a`, `v`, `c` - got yanked at least once, often in the wrong direction first.
 
 Rather than carving the post into one section per lever, I will walk through the build roughly as it happened and call out which knob I was turning at each beat. The model from Part 0 is a backdrop, not a checklist.
-
-{/* FREE WRITING ZONE - structure later. Mark lever references inline as {/_ lever: a/v/c _/} (with normal asterisks) so we can grep for them. */}
 
 ## Frontend and backend, separate repos
 
@@ -276,6 +274,8 @@ The fix is to give selection two modes: text selection for prose, and *region-as
 
 Luckily, modern frontier models are multimodal - the chat side ingests the PNG directly, so a screenshot of a formula is as legible to the LLM as the surrounding prose. No OCR step, no LaTeX reconstruction, no clever pipeline.
 
+<Image {...regionSelection} caption="The composer holding both a text excerpt and a region image clip from a math-heavy page. The text attachment carries the prose around the equation; the image carries the equation itself, pixel-perfect. The model sees both and answers Explain this against the union." />
+
 The implementation is mercifully thin because the rest of the architecture had already done the work. The viewer renders each page to an `ImageBitmap` for display and keeps them in a small LRU cache - you do that anyway for performance. Region capture just listens for shift-drag, paints a marquee, and on mouseup crops the cached bitmap into a PNG via `OffscreenCanvas`:
 
 ```ts
@@ -301,7 +301,7 @@ Dumb components are only half the story. Sooner or later they need real data, re
 
 The catch in our setup is that the backend lives in a different repo. The frontend agent does not see it - it cannot read the controllers, the database schema, or the actual endpoints. We bought ourselves cheap locality, and now we have to give the frontend just enough information about the backend to wire things up, without dragging the whole backend back into context.
 
-Once again, the boring answer wins: a documented contract between the API and the frontend. {/* TODO: link to prior writing on API contracts if you want to self-cite - the graphql-tooling series, etc. */} I have written about why this matters before, so I will keep it short here. A contract gives the agent (and you) a stable, machine-readable description of every endpoint, every input, every response. The frontend repo gets typed clients generated from it. The agent never has to guess what `POST /papers` returns - it reads the type.
+Once again, the boring answer wins: a documented contract between the API and the frontend. A contract gives the agent (and you) a stable, machine-readable description of every endpoint, every input, every response. The frontend repo gets typed clients generated from it. The agent never has to guess what `POST /papers` returns - it reads the type.
 
 A few well-trodden formats fit. [GraphQL](https://graphql.org/) is the obvious one: a typed schema that doubles as a contract, with mature codegen for clients. OpenAPI / JSON Schema covers the REST-shaped half of the world. tRPC covers the TypeScript-on-both-ends half. Any of them work, as long as the contract is the source of truth and the client types are generated from it - not hand-written, not vibes-based.
 
@@ -364,10 +364,135 @@ A small `CLAUDE.md` section keeps this in place:
 
 It is the same trick as the frontend recipe, one layer down: a small, stable, machine-readable surface the agent can build against without ever loading the rest of the system.
 
-## When the levers fight each other
+## On the backend: the same cadence
 
-*Tradeoffs: tighter verification raises v but lowers rework. Longer prompts raise a but lower v. More agents lower the agent-side bottleneck but raise c. Reinforce Part 0's message: pick the bottleneck first, then turn its lever.*
+The frontend recipe was about turning every task into a small, isolated unit the agent can finish on its own. The backend lives by the same idea, with differently shaped pieces. Backend work splits into three rough types, all independently parallelisable.
+
+### Crafting the data model
+
+Every new resource is the same three files: a SQLAlchemy model, a Pydantic schema, a FastAPI router, sitting in three mirrored directories. Nested resources mount under a parent (most live under `/api/pdfs/{pdf_id}/...`) and reuse a single ownership dependency - the agent never reinvents auth checks, it just `Depends(owned_pdf)` and derives the owner from the parent.
+
+The OpenAPI document updates automatically. The frontend regenerates its client types via `pnpm gen:api`. End-to-end, adding a resource is one prompt on each side. {/* lever: a, v - templated work, with the type checker, schema discriminated unions, and migration autogenerate carrying the verification load */}
+
+Most of the contract is types. Some of it is flow. PDF uploads, for example, are a three-step dance: client `POST`s to init, gets back a signed GCS URL plus the exact headers it has to echo, `PUT`s the bytes straight to Google, then `POST`s back to finalize. The size cap lives in the signed URL itself, not in the backend. That sort of multi-step contract is worth documenting in `CLAUDE.md` directly - the agent will not infer it from `openapi.json`, and an unprompted "let me proxy the upload through the backend" is a regression waiting to happen.
+
+### Slow things in their own process
+
+LLM calls, image analysis, anything that takes seconds and should not hold a request thread. Pattern: a jobs table with a status enum, a separate worker process that polls with `SELECT ... FOR UPDATE SKIP LOCKED` so multiple workers stay safe in parallel, and a route that enqueues a job rather than doing the work inline.
+
+For agents this is the cleanest possible split. Adding a new kind of background task is three small edits in three files (table row type, worker step, enqueueing route). The worker has no shared state with the API process; the only contract between them is the jobs table. {/* lever: c - the work splits across two processes that never compete for context */}
+
+One related rule worth pinning in `CLAUDE.md`: long model responses must not hold a database connection. The SSE handler closes the request session before calling the LLM and opens a fresh one for the streaming write. Easy to forget, expensive when forgotten - the connection pool runs out before you finish your tea.
+
+### Prompts, caches, and other knobs
+
+The fastest-changing surface. Prompt templates, context caches, payload trimming, model swaps. All small, all isolated: a prompt is a string in `prompts/`, a cache is one function, a model swap is a config change. None of them touch the rest of the codebase.
+
+The agent's job here is mostly "edit one file, run the relevant test or eval, repeat." Verification is cheap if you have an eval harness; without one, the human stays in the loop more than I would like. (Eval harness sits on my todo list somewhere between *please* and *yesterday*.)
+
+One weird invariant worth flagging early: bring-your-own-key Gemini calls *cannot* reuse the project-scoped cache the server creates with its own key. The cache lookup 404s silently, the response goes ahead with no context, and you spend twenty minutes wondering why the model forgot the paper. That kind of footgun goes straight into `CLAUDE.md` so the agent does not "optimise" the path back into a bug.
+
+Of the three backend task types, prompts are the one that genuinely requires your attention from time to time. They are subjective, the eval-harness gap means I read outputs by eye, and the model behaviour shifts under your feet. The good news is that this is exactly when the other two piles earn their keep. While you are sitting with a prompt and a sample paper, an agent can happily be building a fresh microservice in one terminal, and another can be sketching a new data model in a second. The bottleneck moves to wherever you happen to be looking, and the rest of the work keeps flowing past.
+
+---
+
+Same cadence, different surface. Templated CRUD on one side, autonomous workers on another, knob-tuning on a third. Each is its own pile of small, isolated tasks; each pile parallelises against the others without competing for `c`.
+
+## Stepping back: what was that recipe doing?
+
+Recall the model from [Part 0](/blog/dx-dp):
+
+- you process tasks at roughly <Formula inline content="(1 - s) / (a + v + c)" />,
+- agents produce results at roughly <Formula inline content="p / x" />,
+- throughput is the minimum of the two.
+
+Once `p` is big enough - which today is "a couple of agents on a laptop" - the agent side stops being the bottleneck. Your personal lane becomes `a + v + c`, and the only way up is to make those three numbers smaller. That is what the recipe in this post has been quietly doing, lever by lever:
+
+- **`a` (prompt-writing time)** went down because every task has a small surface. One presentational component. One typed API wrapper. One CSS file. The agent does not need a paragraph of context per request - the project hands it over for free through `CLAUDE.md`, generated schema types, design tokens, and a known component shape.
+- **`v` (verification time)** went down because every layer has its own cheap, deterministic check. The type checker catches wiring errors. `/showcase` plus a real browser catches rendering errors. The OpenAPI generator catches contract drift. Most of the time I am looking at the screen, not at the diff.
+- **`c` (context-switching time)** went down because the seams line up with where the work actually splits. Frontend and backend live in different repos. Components live one to a file. Style sits next to markup. The agent moves between pieces without dragging the rest of the system along.
+
+None of these are individually clever. They are normal architectural choices that happen to *also* make the agent's job small enough that I am the one running ahead, not waiting. The lever framing is just a way to notice when a design choice is doing double duty.
+
+The flip side is the one Part 0 hinted at, and the one this recipe has tried to honour: pulling levers harder than necessary stops paying. Tighter verification raises `v` until you are no longer catching anything new. Longer prompts raise `a` until you are doing the agent's job by hand. More agents raise `c`, because parallel work eats your attention nonlinearly. The point is not to drive `a + v + c` to zero - it is to drive it below `x / p` and stop.
+
+Then, sometimes, work on yourself instead of the workflow 😉.
+
+## Spawning more agents
+
+There is one more payoff to all of this, and it is the one Part 0 explicitly questioned.
+
+Part 0's parallelism rule said adding agents stops helping past a certain `p^*`, because each extra agent grows your context-switching cost `c`. That assumed every agent needs periodic attention from you. With the recipe in this post, most of the time, they do not. And the work splits naturally into two task types that both parallelise cleanly.
+
+### Type 1 - building components
+
+Pure presentational work. The prompt is precise (one component), the `CLAUDE.md` rules are clear, and the verification loop is fully self-contained:
+
+1. Build the component and its CSS.
+2. Export it from `/showcase`.
+3. Open the route in the browser and confirm it renders.
+4. Run typecheck and lint.
+5. Iterate until everything is clean, or stop and ask if it cannot.
+
+You glance at the result when it lands. Spawn roughly one agent per component on your todo list - eight components to build, eight agents working `/showcase` in parallel, never talking to each other or to you until they are done.
+
+### Type 2 - wiring components to the backend
+
+The work that comes after: hooking a built component up to a real endpoint. This one needs *slightly* more attention than Type 1, but only slightly, because the contract surface from earlier in this post does most of the verification work:
+
+- The generated OpenAPI types reject wrong endpoints, methods, params, and response shapes at compile time.
+- The browser MCP attaches to your authenticated session, so the agent verifies wiring against a real backend with real data.
+- Tests catch regressions in code that already worked.
+
+Simple wiring barely registers as work. A prompt like *"wire up bookmark deletion. The component is in place. The layout is settled. The backend endpoint is in the schema."* gives the agent everything it needs to find the typed wrapper to call, place it behind the right click handler, and confirm the result in the attached browser.
+
+### Both at once
+
+The two types do not compete for attention - they sit on different stretches of the pipeline. In practice that means client-side work tends to run on **two features at the same time**. Feature A is in component-building mode: several agents are building its presentational pieces in parallel against `/showcase`. Feature B - whose components landed yesterday or this morning - is in wiring mode: another agent (or a couple) is hooking those existing components up to the backend. One set finishes a screenful of components onto `/showcase`; the other set finishes a screenful of features into the running app. You spend your `c` budget on the small subset of decisions that actually need a human in the loop, and let everything else run.
+
+The qualifier from Part 0 still applies. *Sometimes.* Long-running tasks with cheap verification fit; subjective product work - *"build me a chat composer that feels right"* - does not. But for the kind of work that filled most of this post, *sometimes* lands closer to *most of the time*.
+
+## Orchestrating yourself and the agents
+
+The recipe on the frontend and the cadence on the backend both assume you have *agents*, plural, running in different places at the same time. In practice that means choosing from a small zoo of tools - some live in the terminal, some live inside the editor, some are a browser tab away - and giving each one the role it is best at. The mistake I have seen most often is using a single tool for everything; the second-most common is using a different tool for every prompt because the previous one disappointed you ten minutes ago.
+
+The cast on this project is two tools:
+
+- **[Claude Code](https://claude.com/claude-code)** - terminal agent. Strong MCP support, easy to spawn multiple sessions in parallel, friendly with [skills](https://code.claude.com/docs/en/skills) and slash commands.
+- **Codex app** - GUI agent. Lives in its own window with its own browser session.
+
+The important part of running them together is keeping context switching *controlled*. A few tricks I have ended up applying.
+
+### 1. Different apps - and different models - for frontend and backend
+
+The frontend and backend repos do not share a tool. I run Claude Code against the backend and the Codex app against the frontend. Two windows, two surfaces, two models doing the work.
+
+The Codex app is, for the kind of frontend work this post has been describing, an unreasonably good fit. Two small features carry most of the weight, and neither is the headline feature people usually point at.
+
+- **A clear indicator when the agent needs my input.** I do not have to keep a tab open, refresh, or skim the chat to find out whether the agent is still grinding or quietly waiting on me. The indicator pops; I look. The rest of the time my attention is somewhere else, and that is fine. {/* lever: c - cuts the polling cost to zero */}
+- **A change summary that doubles as a review surface.** When a session finishes, the app shows every touched file at a glance. One click drops me into the specific change. No `git status`, no scrolling a diff, no hunting - the summary itself is the entry point. Reviewing eight components across eight sessions is fast because every session lands the same compact landing page. {/* lever: v - turns review into a near-zero-friction step */}
+
+Both of these matter more than they sound. Once you are running three or four agents on `/showcase` in parallel, the difference between *"I have to check on each of them"* and *"they will tell me when they need me"* is the difference between feeling busy and being productive.
+
+Claude Code earns the backend slot for two reasons.
+
+- **Backend changes are typically smaller and less verbose than frontend ones.** Adding a route, writing a Pydantic schema, tweaking a query - none of these need a lot of room to breathe. The whole interaction fits comfortably into one terminal pane, with output that scrolls predictably and a diff that fits on a screen. {/* lever: a, v - small surface keeps the prompt small and the review fast */}
+- **The skills infrastructure is the strongest of any tool I have used.** Custom [skills](https://code.claude.com/docs/en/skills), slash commands, hooks - the whole machinery makes it easy to bake personal habits into the agent itself rather than re-typing them every prompt. This deserves its own post, which I will probably write someday.
+
+So a typical setup, after all of the above, looks like this: two Claude Code terminals against the backend repo - one on a model/route, one on a worker or migration - plus a Codex app window against the frontend with two agents in flight at any moment, building components and wiring features. Four agents live, always.
+
+Plug Part 0's formula into this setup. The agent crafts a feature in roughly 10 minutes - call it `x = 10`. Prompting takes about a minute (`a = 1`); verifying on `/showcase` plus a glance at the diff is around two (`v = 2`); context switching between terminals is close to zero on this substrate (`c ≈ 0`). The share of work that *cannot* be delegated has been the whole subject of this post - the recipe pushes it down on purpose - and during an implementation session it ends up around `s = 0.01`.
+
+Part 0's crossover was <Formula inline content="p^* \approx x(1-s)/(a+v+c)" />. With these numbers:
+
+<Formula content="p^* \approx \frac{10 \times 0.99}{1 + 2 + 0} \approx 3.3" />
+
+So three or four agents is where the agent side stops being the bottleneck on a single feature. Four is what I run in practice, which sits right at that crossover - agents and I are both pulling our weight, neither side waiting long on the other. The autonomous-loop argument from the previous section is what keeps four comfortable rather than chaotic: while several of those agents are quietly grinding, I am working on prompts, plans, or the next batch of components without paying a per-agent attention tax. Compare that to Part 0's example, where the same formula put the crossover at just under two agents. The recipe in this post is what moved that number.
+
+The honest downside is that orchestrating four agents at once does drain you. Cycling, prompting, steering, reviewing - it adds up. The saving grace, on most days, is that I run out of tokens faster than I run out of energy 😉.
+
+For scale: end-to-end, the whole app took about eight hours of focused work. Not in a single day, naturally - spread across several of those four-agent sessions - but eight hours is the honest sum. Without the recipe in this post I would have estimated three or four times that, and I would have been wrong on the optimistic side.
 
 ## What's next
 
-*Teaser: Part 2 will look at how other people structure their setups (the interviews from Part 0). Part 3 will step away from raw productivity and talk about output quality.*
+The next post will look at picking the right *tool* - not just architecture, but which agent, which model, which skill or slash-command setup fits which kind of task. Different tools sit on different points of the `a + v + c` curve, and choosing well is its own lever.
