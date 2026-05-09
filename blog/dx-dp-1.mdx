@@ -67,7 +67,7 @@ Rather than one section per lever, I walk through the build roughly as it happen
 
 ## Frontend and backend, separate repos
 
-Backend and frontend live in separate repos, and I build them in parallel. The split is intentional. {/* lever: c - a clean boundary makes switching between the two cheap, both for me and for whatever agent is helping at the moment */}
+Backend and frontend live in separate repos, and I build them in parallel. The split is intentional.
 
 <Details withBackground title="Sidenote: I got asked about this in an interview once">
 The interviewer wanted to know why I split work like this. The honest answer is that I want every module as isolated as possible, starting with the biggest pieces - frontend and backend. Isolation is not just a code-organization preference; it is what makes parallelism cheap.
@@ -91,21 +91,21 @@ The frontend/backend split is just the top of a hierarchy. The same separation p
 
 On the frontend I default to the most boring approach there is. Build the stupid presentational components first - the kind that take props and render markup with no idea where the data came from. Then wire them into containers, business logic, and the rest of the app. Dumb pieces first, smart pieces on top. Nothing exotic.
 
-For agent-assisted work the upside is the same. A presentational component is small and self-contained. Its props are its entire interface. The agent can build it, see it, and verify it without loading the database schema or the API client. {/* lever: a, v - small surface, easy to prompt, easy to verify */}
+For agent-assisted work the upside is the same. A presentational component is small and self-contained. Its props are its entire interface. The agent can build it, see it, and verify it without loading the database schema or the API client.
 
-When wiring things up, the agent only needs the props on one side and the data on the other: a much smaller context than "the entire app". {/* lever: c - wiring does not require keeping rendering logic in your head */}
+When wiring things up, the agent only needs the props on one side and the data on the other: a much smaller context than "the entire app".
 
 ## A simple recipe for the frontend
 
 In practice this turns into a short recipe. Step one is the easiest, and pays off the most.
 
 <Details withBackground title="A note on the stack">
-The snippet below mentions Solid because that is what I am using on this project. My general rule with new projects: keep the whole stack familiar except for exactly one new thing. Pulling every interesting trigger at once is a reliable way to lose a weekend to a setup nobody asked for. So I swap exactly one piece - this time React for [Solid.js](https://www.solidjs.com/), with Vite still doing dev-server duty. Familiar stack means short prompts and fast verification: most of what I want already lives in the agent's training data and in my own muscle memory. {/* lever: a, v */}
+The snippet below mentions Solid because that is what I am using on this project. My general rule with new projects: keep the whole stack familiar except for exactly one new thing. Pulling every interesting trigger at once is a reliable way to lose a weekend to a setup nobody asked for. So I swap exactly one piece - this time React for [Solid.js](https://www.solidjs.com/), with Vite still doing dev-server duty. Familiar stack means short prompts and fast verification: most of what I want already lives in the agent's training data and in my own muscle memory.
 </Details>
 
 ### Step 1: one component per prompt
 
-Every prompt is a short description of a single component. *"Create a simple chat composer with two buttons, send and clear."* That is the whole prompt. No layout, no business logic, no API calls, no stores. {/* lever: a - the prompt is small; lever: v - the surface to verify is also small */}
+Every prompt is a short description of a single component. *"Create a simple chat composer with two buttons, send and clear."* That is the whole prompt. No layout, no business logic, no API calls, no stores.
 
 The agent does the mechanical part: types the props, picks reasonable defaults, follows the surrounding style. I see it on screen, tweak it, move on.
 
@@ -147,7 +147,7 @@ The lesson: write the rule that closes a specific failure mode, like the load-be
 
 After the first component lands, ask the agent to set up a `/showcase` route and export every new component into it. No auth, no login wall, just a flat page reachable from the browser.
 
-This creates the loop you actually want. The agent builds a component, registers it on `/showcase`, opens the page in a browser, sees what rendered, and only then declares the task done. Verification stops being *"the diff looks plausible"* and becomes *"I looked at the thing."* {/* lever: v - a cheap, deterministic verification surface that does not require the rest of the app */}
+This creates the loop you actually want. The agent builds a component, registers it on `/showcase`, opens the page in a browser, sees what rendered, and only then declares the task done. Verification stops being *"the diff looks plausible"* and becomes *"I looked at the thing."*
 
 Look at this through the formula. `v` (your verification time) is expensive. Every minute spent confirming the agent's work is a minute you cannot spend prompting or reviewing something else. The `/showcase` route is how you push some of that work *onto the agent*: it builds, opens the page, looks, and only then comes back to you. Two things fall out. Your `v` shrinks because the agent has already done the obvious checks. And the code is more likely to be right - the same way nobody hand-checks formatting once a linter is set up. The cost is a bigger `x` (the agent does more per task), but `x` is cheap to compensate for: spin up another agent. As long as `c` stays low, that is a trade you can keep making.
 
@@ -186,7 +186,7 @@ The fix is to give it a real browser. My favourite tool here is the [Chrome DevT
 - The agent reads the browser console. Real errors, real warnings, real network failures: the same surface a human developer stares at.
 - It bypasses auth. You logged in once; the agent inherits the session. No fake test users, no "let me also build a login flow for the agent", no credentials in CI configs.
 
-For the `/showcase` route from step 2, mode 1 is plenty. The moment you start verifying anything behind a login (chat-with-paper, note uploads, anything hitting a real API), mode 2 starts paying for the occasional restart 😉. {/* lever: v - direct verification surface; lever: c - the agent verifies itself instead of paging me to look at it */}
+For the `/showcase` route from step 2, mode 1 is plenty. The moment you start verifying anything behind a login (chat-with-paper, note uploads, anything hitting a real API), mode 2 starts paying for the occasional restart 😉.
 
 To make this the default, add a short section to the instruction file:
 
@@ -226,17 +226,33 @@ A simple rule of thumb:
 - `/showcase` and other logged-out routes: mode 1 plus permission prompts is plenty.
 - Mode 2 (your real session): keep the prompts on. Treat every untrusted URL the agent might visit as if it could try to talk *to* the agent. Because it can.
 
-This is the only step in the recipe that has nothing to do with productivity. {/* lever: this is a brake, not an accelerator - thirty seconds of clicking "allow" beats one multi-hour incident review */} Counted in lever terms it is a small permanent floor on `v` and a permanent tax on `c` - a cost the model does not erase, only acknowledges.
+This is the only step in the recipe that has nothing to do with productivity. Counted in lever terms it is a small permanent floor on `v` and a permanent tax on `c` - a cost the model does not erase, only acknowledges.
 
 The four steps together shape the recipe; the rest of this post is the texture around it - styling, region clips, contracts, backend cadence - each pulling its own subset of the same levers.
 
 ## A note on styling
 
-Styling is where the recipe meets aesthetic taste, so this section is partly opinion. Lever payoff first: a flat token-based CSS system gives every new component a small, prompt-able surface and a verification target on `/showcase`, with no special vocabulary for the agent to misuse. {/* lever: a, v */} The opinions follow, since the app is for me and I get to indulge them.
+Styling is where the recipe meets aesthetic taste, so this section is partly opinion. Lever payoff first: a flat token-based CSS system gives every new component a small, prompt-able surface and a verification target on `/showcase`, with no special vocabulary for the agent to misuse. The opinions follow, since the app is for me and I get to indulge them.
 
 The first opinion: I lean on the latest CSS the browser already supports. If a feature shows up in the current [Interop](https://wpt.fyi/interop-2026) list or is marked **newly available** in [Baseline](https://web.dev/baseline/2026), it is fair game. I am the only user; my compatibility matrix is "the browser I had open this morning".
 
 The second opinion: I do not want a utility-class abstraction layer. I have nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 bg-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none md:px-6 md:py-3` is, to me, just unreadable. I would rather read CSS than read English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
+
+<Details withBackground title="What the research actually says about Tailwind for agents">
+There is no head-to-head benchmark comparing Tailwind, CSS Modules, and typed-CSS systems for coding agents. The closest direct work - [DesignBench](https://arxiv.org/abs/2506.06251) for frontend engineering tasks across React/Vue/Angular, [Design2Code](https://arxiv.org/abs/2403.03163) for visual-to-code generation - does not isolate the styling layer.
+
+What the surrounding literature does suggest:
+
+- **Locality compresses context.** Tailwind keeps structure and style in one file; CSS Modules force the agent to read TSX + CSS + tokens before making a change. Coding-agent benchmarks like [SWE-bench](https://arxiv.org/abs/2310.06770) consistently show performance scales with how cleanly the relevant code fits in context.
+- **Training-data familiarity.** Models have seen far more `flex items-center md:grid-cols-2` than your bespoke CSS Module API. The same logic that made the *More is not better* point earlier (LLMs reproduce conventions they were trained on) cuts in Tailwind's favour here.
+
+Two caveats worth knowing:
+
+- **Tailwind does not fix accessibility.** [A11YN](https://arxiv.org/abs/2510.13914) shows generated UI tends to inherit accessibility flaws regardless of the styling system - agents will happily emit `<div onClick={...}>Submit</div>` in any framework.
+- **First-pass wins are not maintenance wins.** Unconstrained Tailwind across many screens turns into class-string soup with inconsistent radii, spacing, and colours. Tailwind's lever payoff comes back only when you pair it with strict semantic tokens and a small layer of component primitives - then the agent has narrow choices instead of unlimited ones.
+
+So: for fast generation, Tailwind probably wins. For long-term coherence, *constrained* Tailwind wins. Plain CSS - my pick here - only earns its place because this is a personal project and I am the only one rolling the dice on consistency. For what it is worth, I have not noticed agent slowdowns or degraded output without Tailwind on this project - but I have not measured it explicitly either, so take that as one data point, not evidence.
+</Details>
 
 So the styling stack is unfashionably plain:
 
@@ -277,7 +293,7 @@ A typical component CSS looks like this:
 }
 ```
 
-The agent reads CSS as well as it reads JavaScript. A flat token-based system has no special vocabulary for it to misuse, and the tokens give every new component a free path to staying consistent with the rest of the app. Writing one button costs one prompt; the design system enforces visual coherence for nothing. {/* lever: a, v - small surface to prompt against, easy to verify on /showcase */}
+The agent reads CSS as well as it reads JavaScript. A flat token-based system has no special vocabulary for it to misuse, and the tokens give every new component a free path to staying consistent with the rest of the app. Writing one button costs one prompt; the design system enforces visual coherence for nothing.
 
 One honest caveat. *Newly available* features are, by definition, too new for most agents.
 
@@ -340,7 +356,7 @@ The clip is then stored alongside its PDF-space coordinates (not viewport pixels
 
 Two things this taught me:
 
-- Because the existing page loader already exposed the bitmap source, the agent did not have to invent infrastructure; it reused what was there. The clean layer boundary pays again. {/* lever: a, c */}
+- Because the existing page loader already exposed the bitmap source, the agent did not have to invent infrastructure; it reused what was there. The clean layer boundary pays again.
 - Agents that have not seen pdf.js's bitmap pipeline reach for `html2canvas` or "let's screenshot the DOM" when they hear *image of a page region*. Both are wrong: the rendered DOM is fuzzy and you would be throwing away the very bitmap pdf.js already produced. Worth pre-empting in the instruction file if you build something similar.
 
 Same shape as the vite port-fallback story earlier and the Gemini cache footgun later: the agent's first reflex is the most common-looking answer, and the most common-looking answer is sometimes a regression. Worth naming in your own head as a single pattern - *reflex defaults* - because once you see it, every new agent surprise is half-handled before it lands. Most of them earn a line in the instruction file.
@@ -392,8 +408,8 @@ export const getPdfs = query(async () => {
 
 What this buys, in lever terms:
 
-- The frontend agent never has to read the backend repo. `pnpm gen:api` plus `schema.d.ts` is the entire contract surface. {/* lever: a, c - smaller context, no cross-repo hopping */}
-- Wrong endpoints, wrong methods, wrong params, and wrong response shapes all become type errors. The type checker quietly does the verification work the agent (or I) would otherwise do by hand. {/* lever: v */}
+- The frontend agent never has to read the backend repo. `pnpm gen:api` plus `schema.d.ts` is the entire contract surface.
+- Wrong endpoints, wrong methods, wrong params, and wrong response shapes all become type errors. The type checker quietly does the verification work the agent (or I) would otherwise do by hand.
 - Adding a feature becomes a small ritual: write the endpoint on the backend, `pnpm gen:api`, add a typed wrapper in `queries.ts` or `mutations.ts`, use it from the component. Two of those four steps are mechanical: exactly the work I want delegated.
 
 Every nice picture has its exceptions. Sometimes a feature is specific enough that you have to step outside the contract on purpose.
@@ -426,7 +442,7 @@ Each of the three subsections below follows the same shape: the pattern, the lev
 
 Every new resource is the same three files: a SQLAlchemy model, a Pydantic schema, a FastAPI router, sitting in three mirrored directories. Nested resources mount under a parent (most live under `/api/pdfs/{pdf_id}/...`). They reuse a single ownership dependency: the agent never reinvents auth checks, it just `Depends(owned_pdf)` and derives the owner from the parent.
 
-The OpenAPI document updates automatically. The frontend regenerates its client types via `pnpm gen:api`. End-to-end, adding a resource is one prompt on each side. {/* lever: a, v - templated work, with the type checker, schema discriminated unions, and migration autogenerate carrying the verification load */}
+The OpenAPI document updates automatically. The frontend regenerates its client types via `pnpm gen:api`. End-to-end, adding a resource is one prompt on each side.
 
 Most of the contract is types. Some of it is flow. PDF uploads, for example, are a three-step dance: client `POST`s to init, gets back a signed GCS URL plus the exact headers it has to echo, `PUT`s the bytes straight to Google, then `POST`s back to finalize. The size cap lives in the signed URL itself, not in the backend. That sort of multi-step contract is worth documenting in the instruction file directly: the agent will not infer it from `openapi.json`, and an unprompted "let me proxy the upload through the backend" is a regression waiting to happen.
 
@@ -434,7 +450,7 @@ Most of the contract is types. Some of it is flow. PDF uploads, for example, are
 
 LLM calls, image analysis, anything that takes seconds and should not hold a request thread. Pattern: a jobs table with a status enum, a separate worker process that polls with `SELECT ... FOR UPDATE SKIP LOCKED` so multiple workers stay safe in parallel, and a route that enqueues a job rather than doing the work inline.
 
-For agents this is a nicely clean split. Adding a new kind of background task is three small edits in three files (table row type, worker step, enqueueing route). The worker has no shared state with the API process; the only contract between them is the jobs table. {/* lever: c - the work splits across two processes that never compete for context */}
+For agents this is a nicely clean split. Adding a new kind of background task is three small edits in three files (table row type, worker step, enqueueing route). The worker has no shared state with the API process; the only contract between them is the jobs table.
 
 One related rule worth pinning in the instruction file: long model responses must not hold a database connection. The SSE handler closes the request session before calling the LLM and opens a fresh one for the streaming write. Easy to forget, expensive when forgotten: the connection pool runs out fast under any real load.
 
@@ -508,8 +524,8 @@ The two types do not compete for attention; they sit on different stretches of t
 
 Two tools, deliberately split by repo:
 
-- **[Claude Code](https://claude.com/claude-code).** Terminal agent on the backend. Backend changes for me are smaller and less verbose than frontend ones - a route, a Pydantic schema, a query - and fit comfortably into one terminal pane with a diff that fits on a screen. I lean on the [skills](https://code.claude.com/docs/en/skills) infrastructure quite a bit: custom skills, slash commands, and hooks let me bake personal habits into the agent rather than re-typing them into every prompt. {/* lever: a, v */}
-- **Codex app.** GUI agent on the frontend. Two small features earn its slot for me: a clear indicator when the agent needs my input (no polling, no tab-checking; it pops, I look), and a change summary that doubles as a review surface (every touched file at a glance, one click into the change, no `git status` or diff hunting). Once a few agents are working `/showcase` at once, the difference between *"I have to check on each of them"* and *"they will tell me when they need me"* adds up over an afternoon. {/* lever: c, v */}
+- **[Claude Code](https://claude.com/claude-code).** Terminal agent on the backend. Backend changes for me are smaller and less verbose than frontend ones - a route, a Pydantic schema, a query - and fit comfortably into one terminal pane with a diff that fits on a screen. I lean on the [skills](https://code.claude.com/docs/en/skills) infrastructure quite a bit: custom skills, slash commands, and hooks let me bake personal habits into the agent rather than re-typing them into every prompt.
+- **Codex app.** GUI agent on the frontend. Two small features earn its slot for me: a clear indicator when the agent needs my input (no polling, no tab-checking; it pops, I look), and a change summary that doubles as a review surface (every touched file at a glance, one click into the change, no `git status` or diff hunting). Once a few agents are working `/showcase` at once, the difference between *"I have to check on each of them"* and *"they will tell me when they need me"* adds up over an afternoon.
 
 A typical setup, then, looks like this: two Claude Code terminals against the backend repo (one on a model/route, one on a worker or migration), plus a Codex app window against the frontend with two agents in flight at any moment. Usually four agents live at the same time.
 
