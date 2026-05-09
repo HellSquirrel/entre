@@ -188,7 +188,7 @@ The fix is to give it a real browser. My favourite tool here is the [Chrome DevT
 
 For the `/showcase` route from step 2, mode 1 is plenty. The moment you start verifying anything behind a login (chat-with-paper, note uploads, anything hitting a real API), mode 2 starts paying for the occasional restart 😉. {/* lever: v - direct verification surface; lever: c - the agent verifies itself instead of paging me to look at it */}
 
-To make this the default, the corresponding section of `CLAUDE.md` is short:
+To make this the default, add a short section to the instruction file:
 
 ```md
 ## Browser verification
@@ -236,7 +236,7 @@ Styling is where the recipe meets aesthetic taste, so this section is partly opi
 
 The first opinion: I lean on the latest CSS the browser already supports. If a feature shows up in the current [Interop](https://wpt.fyi/interop-2026) list or is marked **newly available** in [Baseline](https://web.dev/baseline/2026), it is fair game. I am the only user; my compatibility matrix is "the browser I had open this morning".
 
-The second opinion: I do not want a utility-class abstraction layer. I have nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `flex items-center justify-center gap-2 rounded-md border border-transparent ...` is, to me, just unreadable. I would rather read CSS than read English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
+The second opinion: I do not want a utility-class abstraction layer. I have nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 bg-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none md:px-6 md:py-3` is, to me, just unreadable. I would rather read CSS than read English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
 
 So the styling stack is unfashionably plain:
 
@@ -340,10 +340,10 @@ The clip is then stored alongside its PDF-space coordinates (not viewport pixels
 
 Two things this taught me:
 
-- Because the bitmap source was already exposed by the existing page loader, the agent did not have to invent infrastructure; it reused what was there. The clean layer boundary pays again. {/* lever: a, c */}
-- Agents that have not seen pdf.js's bitmap pipeline reach for `html2canvas` or "let's screenshot the DOM" when they hear *image of a page region*. Both are wrong: the rendered DOM is fuzzy and you would be throwing away the very bitmap pdf.js already produced. Worth pre-empting in `CLAUDE.md` if you build something similar.
+- Because the existing page loader already exposed the bitmap source, the agent did not have to invent infrastructure; it reused what was there. The clean layer boundary pays again. {/* lever: a, c */}
+- Agents that have not seen pdf.js's bitmap pipeline reach for `html2canvas` or "let's screenshot the DOM" when they hear *image of a page region*. Both are wrong: the rendered DOM is fuzzy and you would be throwing away the very bitmap pdf.js already produced. Worth pre-empting in the instruction file if you build something similar.
 
-Same shape as the vite port-fallback story earlier and the Gemini cache footgun later: the agent's first reflex is the most common-looking answer, and the most common-looking answer is sometimes a regression. Worth naming in your own head as a single pattern - *reflex defaults* - because once you see it, every new agent surprise is half-handled before it lands. Most of them earn a line in `CLAUDE.md`.
+Same shape as the vite port-fallback story earlier and the Gemini cache footgun later: the agent's first reflex is the most common-looking answer, and the most common-looking answer is sometimes a regression. Worth naming in your own head as a single pattern - *reflex defaults* - because once you see it, every new agent surprise is half-handled before it lands. Most of them earn a line in the instruction file.
 
 A small feature in line count, but fast to build *because* the rest of the system has clean seams.
 
@@ -402,7 +402,7 @@ In my case it was the LLM chat. I wanted simple, low-ceremony token streaming, s
 
 Worth telling the agent explicitly. Otherwise it will cheerfully try to "fix" the hand-typed code by running the generator again, and quietly delete the streaming logic on the way out.
 
-A small `CLAUDE.md` section keeps this in place:
+A short section in the instruction file keeps this in place:
 
 ```md
 ## API
@@ -420,15 +420,15 @@ Same trick as the frontend recipe, one layer down: a small, stable, machine-read
 
 The frontend recipe was about turning every task into a small, isolated unit the agent can finish on its own. The backend lives by the same idea, with differently shaped pieces. Backend work splits into three rough types, all independently parallelisable.
 
-Each of the three subsections below follows the same shape: the pattern, the lever it pulls, the rule that goes into `CLAUDE.md`, and the footgun that earned the rule. Same skeleton three times, with the actual content swapped out.
+Each of the three subsections below follows the same shape: the pattern, the lever it pulls, the rule that goes into the instruction file, and the footgun that earned the rule. Same skeleton three times, with the actual content swapped out.
 
 ### Crafting the data model
 
-Every new resource is the same three files: a SQLAlchemy model, a Pydantic schema, a FastAPI router, sitting in three mirrored directories. Nested resources mount under a parent (most live under `/api/pdfs/{pdf_id}/...`) and reuse a single ownership dependency: the agent never reinvents auth checks, it just `Depends(owned_pdf)` and derives the owner from the parent.
+Every new resource is the same three files: a SQLAlchemy model, a Pydantic schema, a FastAPI router, sitting in three mirrored directories. Nested resources mount under a parent (most live under `/api/pdfs/{pdf_id}/...`). They reuse a single ownership dependency: the agent never reinvents auth checks, it just `Depends(owned_pdf)` and derives the owner from the parent.
 
 The OpenAPI document updates automatically. The frontend regenerates its client types via `pnpm gen:api`. End-to-end, adding a resource is one prompt on each side. {/* lever: a, v - templated work, with the type checker, schema discriminated unions, and migration autogenerate carrying the verification load */}
 
-Most of the contract is types. Some of it is flow. PDF uploads, for example, are a three-step dance: client `POST`s to init, gets back a signed GCS URL plus the exact headers it has to echo, `PUT`s the bytes straight to Google, then `POST`s back to finalize. The size cap lives in the signed URL itself, not in the backend. That sort of multi-step contract is worth documenting in `CLAUDE.md` directly: the agent will not infer it from `openapi.json`, and an unprompted "let me proxy the upload through the backend" is a regression waiting to happen.
+Most of the contract is types. Some of it is flow. PDF uploads, for example, are a three-step dance: client `POST`s to init, gets back a signed GCS URL plus the exact headers it has to echo, `PUT`s the bytes straight to Google, then `POST`s back to finalize. The size cap lives in the signed URL itself, not in the backend. That sort of multi-step contract is worth documenting in the instruction file directly: the agent will not infer it from `openapi.json`, and an unprompted "let me proxy the upload through the backend" is a regression waiting to happen.
 
 ### Slow things in their own process
 
@@ -436,7 +436,7 @@ LLM calls, image analysis, anything that takes seconds and should not hold a req
 
 For agents this is a nicely clean split. Adding a new kind of background task is three small edits in three files (table row type, worker step, enqueueing route). The worker has no shared state with the API process; the only contract between them is the jobs table. {/* lever: c - the work splits across two processes that never compete for context */}
 
-One related rule worth pinning in `CLAUDE.md`: long model responses must not hold a database connection. The SSE handler closes the request session before calling the LLM and opens a fresh one for the streaming write. Easy to forget, expensive when forgotten: the connection pool runs out fast under any real load.
+One related rule worth pinning in the instruction file: long model responses must not hold a database connection. The SSE handler closes the request session before calling the LLM and opens a fresh one for the streaming write. Easy to forget, expensive when forgotten: the connection pool runs out fast under any real load.
 
 ### Prompts, caches, and other knobs
 
@@ -444,7 +444,7 @@ The fastest-changing surface. Prompt templates, context caches, payload trimming
 
 The agent's job here is mostly "edit one file, run the relevant test or eval, repeat." Verification is cheap if you have an eval harness; without one, the human stays in the loop more than I would like. (Eval harness sits on my todo list somewhere between *please* and *yesterday*.)
 
-One weird invariant worth flagging early: bring-your-own-key Gemini calls *cannot* reuse the project-scoped cache the server creates with its own key. The cache lookup 404s silently, the response goes ahead with no context, and you spend twenty minutes wondering why the model forgot the paper. That kind of footgun goes straight into `CLAUDE.md` so the agent does not "optimise" the path back into a bug.
+One weird invariant worth flagging early: bring-your-own-key Gemini calls *cannot* reuse the project-scoped cache the server creates with its own key. The cache lookup 404s silently, the response goes ahead with no context, and you spend twenty minutes wondering why the model forgot the paper. That kind of footgun goes straight into the instruction file so the agent does not "optimise" the path back into a bug.
 
 Of the three backend task types, prompts are the one that genuinely requires your attention from time to time. They are subjective, the eval-harness gap means I read outputs by eye, and the model behaviour shifts under your feet. The good news is that this is exactly when the other two piles earn their keep. While you are sitting with a prompt and a sample paper, an agent can happily be building a fresh microservice in one terminal, and another can be sketching a new data model in a second. The bottleneck moves to wherever you happen to be looking, and the rest of the work keeps flowing past.
 
@@ -462,7 +462,7 @@ Recall the model from [Part 0](/blog/dx-dp):
 
 Once `p` is big enough - which today is "a couple of agents on a laptop" - the agent side stops being the bottleneck. Your personal lane becomes `a + v + c`, and the only way up is to make those three numbers smaller. That is what the recipe in this post has been quietly doing, lever by lever:
 
-- **`a` (prompt-writing time)** went down because every task has a small surface. One presentational component. One typed API wrapper. One CSS file. The agent does not need a paragraph of context per request; the project hands it over for free through `CLAUDE.md`, generated schema types, design tokens, and a known component shape.
+- **`a` (prompt-writing time)** went down because every task has a small surface. One presentational component. One typed API wrapper. One CSS file. The agent does not need a paragraph of context per request; the project hands it over for free through the instruction file, generated schema types, design tokens, and a known component shape.
 - **`v` (verification time)** went down because every layer has its own cheap, deterministic check. The type checker catches wiring errors. `/showcase` plus a real browser catches rendering errors. The OpenAPI generator catches contract drift. Most of the time I am looking at the screen, not at the diff.
 - **`c` (context-switching time)** went down because the seams line up with where the work actually splits. Frontend and backend live in different repos. Components live one to a file. Style sits next to markup. The agent moves between pieces without dragging the rest of the system along.
 
@@ -474,22 +474,22 @@ These are normal architectural choices that happen to *also* make the agent's jo
 
 The flip side is the one Part 0 hinted at, and the one this recipe has tried to honour: pulling levers harder than necessary stops paying. Tighter verification *on your side* raises `v` until you are no longer catching anything new (the agent-side trade above has a different ceiling, set by how much real signal your tests and checks can carry). Longer prompts raise `a` until you are doing the agent's job by hand. More agents raise `c`, because parallel work eats your attention nonlinearly. The point is not to drive `a + v + c` to zero - it is to drive it below `x / p` and stop.
 
-And the recipe itself is not free. `CLAUDE.md` accumulates - by the end of this post it carries close to a dozen rules, and a few of them have started to caveat each other (regenerate the OpenAPI types, except the SSE handlers; build the component and stylesheet together, except when you do not). Plain CSS means no component library on the day you want a complicated table or a date picker. Two repos means no atomic commit when an endpoint changes shape. The Codex slot of the workflow ties one pane to a vendor. The brake from earlier is a permanent tax on `v`. Each of these is paid for elsewhere in lever savings, but they are real bills, and a recipe that pretends otherwise will mislead anyone copying it.
+And the recipe itself is not free. The instruction file accumulates - by the end of this post it carries close to a dozen rules, and a few of them have started to caveat each other (regenerate the OpenAPI types, except the SSE handlers; build the component and stylesheet together, except when you do not). Plain CSS means no component library on the day you want a complicated table or a date picker. Two repos means no atomic commit when an endpoint changes shape. The Codex slot of the workflow ties one pane to a vendor. The brake from earlier is a permanent tax on `v`. Each of these is paid for elsewhere in lever savings, but they are real bills, and a recipe that pretends otherwise will mislead anyone copying it.
 
 Then, sometimes, work on yourself instead of the workflow 😉.
 
 ## Running multiple agents
 
-Part 0's parallelism rule said adding agents stops helping past a certain `p^*`, because each extra agent grows your context-switching cost `c`. That assumed every agent needs periodic attention from you. With the recipe in this post, most of the time, they do not. The work splits naturally into two task types that both parallelise cleanly, mapped onto two different tools.
+Part 0's parallelism rule said adding agents stops helping past a certain `p^*`, because each extra agent grows your context-switching cost `c`. That assumed two things: every agent needs periodic attention from you, and `c` is the same regardless of what each agent works on. With this recipe both soften. Most agents do not need periodic attention. And `c` shrinks when the tasks resemble each other - switching between two components is almost free; switching between a web-to-PDF microservice and a bookmark-icon background is the real cost Part 0's `c` was modelling. The work splits naturally into two task types that parallelise cleanly, each mapped onto its own tool.
 
 ### Two task types that parallelise cleanly
 
-**Type 1: building components.** Pure presentational work. The prompt is precise (one component), the `CLAUDE.md` rules are clear, and the verification loop is fully self-contained:
+**Type 1: building components.** Pure presentational work. The prompt is precise (one component), the rules in the instruction file are clear, and the verification loop is fully self-contained:
 
 1. Build the component and its CSS.
 2. Export it from `/showcase`.
 3. Open the route in the browser and confirm it renders.
-4. Run typecheck and lint.
+4. Let the agent's built-in typecheck and lint run.
 5. Iterate until everything is clean, or stop and ask if it cannot.
 
 You glance at the result when it lands. In practice I end up running roughly one agent per component on my todo list: eight components to build, eight agents working `/showcase` in parallel, never talking to each other or to me until they are done.
@@ -531,4 +531,4 @@ Part 0's qualifier still applies. *Sometimes.* Long-running tasks with cheap ver
 
 ## What's next
 
-The next post will look at picking the right *tool*: not just architecture, but which agent, which model, which skill or slash-command setup fits which kind of task. Different tools sit on different points of the `a + v + c` curve, and choosing well is its own lever.
+There is more to dig into - tool choice, team setups, the shape of `c` on bigger projects - but I will pick a thread when I have something honest to write about.
