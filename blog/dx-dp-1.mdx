@@ -10,8 +10,9 @@ published: true
 import { Details } from '../components/Details.tsx'
 import { Formula } from '../components/Formula'
 import { Image } from '../components/Image'
-import showcase from './assets/dp/showcase.png'
-import regionSelection from './assets/dp/region-selection.png'
+import showcase from './assets/dp/showcase.webp'
+import regionSelection from './assets/dp/region-selection.webp'
+import paperList from './assets/dp/paper-list.webp'
 
 In [the previous post](/blog/dx-dp) we landed on a small model. Six parameters:
 
@@ -47,6 +48,8 @@ The project is a personal paper reader. I read a lot - books, and quite a few pa
 Concretely, three screens.
 
 A papers shelf - covers with reading progress on top.
+
+<Image {...paperList} caption="The papers shelf from Nutlore. Each card shows the cover, the title, and a thin progress bar across the bottom - so 'half-read' is a glance, not a memory test." />
 
 A reading view - three panes: the PDF, a chat with the LLM about whatever I have selected, and a sidebar listing past chats (each one still anchored to the selection that started it). Annotations, bookmarks, and uploaded handwritten notes live in the same view.
 
