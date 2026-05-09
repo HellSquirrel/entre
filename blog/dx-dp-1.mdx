@@ -61,9 +61,9 @@ It is a personal project - big enough to need real architecture decisions, real 
 
 I built it in three days. Short enough not to pretend the result is polished. Long enough that all three knobs (`a`, `v`, `c`) moved at least once - often in the wrong direction first. You will see one of those wrong directions in the popup story below. The rest stayed off the page.
 
-One thing to bracket up front. This is a *solo* recipe - one developer, one `CLAUDE.md`, one Chrome session, one set of opinions - and the metric I am optimising is *features-per-focused-hour* on a project I own end to end. Multi-developer team versions of any of these (shared instruction files, attached browsers per dev, who owns the eval harness) are out of scope here, and probably load-bearing enough to need their own post.
+One thing to flag up front. This is a *solo* recipe - one developer, one instruction file, one Chrome session, one set of opinions. My metric is *features-per-focused-hour* on a project I own end to end. The team-scale versions (shared instruction files, attached browsers per dev, who owns the eval harness) need their own post.
 
-Rather than one section per lever, I will walk through the build roughly as it happened, calling out which knob I was turning at each beat. The model from Part 0 is a backdrop, not a checklist.
+Rather than one section per lever, I walk through the build roughly as it happened, calling out which knob I was turning at each beat. The model from Part 0 is a backdrop, not a checklist.
 
 ## Frontend and backend, separate repos
 
@@ -73,34 +73,34 @@ Backend and frontend live in separate repos, and I build them in parallel. The s
 The interviewer wanted to know why I split work like this. The honest answer is that I want every module as isolated as possible, starting with the biggest pieces - frontend and backend. Isolation is not just a code-organization preference; it is what makes parallelism cheap.
 </Details>
 
-The reason is the obvious one: isolation is basic to any good architecture. Modules I can reason about on their own are modules I can change without holding the whole app in my head. That was true before agents existed, and would still be my preference if they vanished tomorrow.
+The reason is obvious: isolation is basic to any good architecture. I can reason about each module on its own. That means I can change one without holding the whole app in my head. That was true before agents existed, and would still be my preference if they vanished tomorrow.
 
-What is more interesting is that some research *suggests* this might also help the model. Suggests, not proves.
+More interesting: some research *suggests* this might also help the model. Suggests, not proves.
 
-**Long-context attention is leaky.** "Lost in the Middle" ([Liu et al., 2023](https://arxiv.org/abs/2307.03172)) showed LLMs reliably find information at the start and end of their context and miss things in the middle, even on models explicitly trained for long context. [RULER](https://arxiv.org/abs/2404.06654) put numbers on the drift: of 17 long-context models claiming 32K+ tokens, only half held up at 32K.
+**Long-context attention is leaky.** "Lost in the Middle" ([Liu et al., 2023](https://arxiv.org/abs/2307.03172)) showed LLMs find information at the start and end of their context and miss things in the middle, even on models explicitly trained for long context. [RULER](https://arxiv.org/abs/2404.06654) put numbers on the drift: of 17 long-context models claiming 32K+ tokens, only half held up at 32K.
 
-**Repo size correlates with task success.** A recent SWE-bench analysis ([SWE-bench Goes Live, 2025](https://arxiv.org/abs/2505.23419)) reports agents resolving single-file patches under five lines around 48% of the time, dropping below 10% once a fix spans three or more files or 100+ lines. At the repo level, projects under ~100 files clear 20% success while projects over 500 files rarely beat 5%.
+**Repo size correlates with task success.** A SWE-bench analysis ([SWE-bench Goes Live, 2025](https://arxiv.org/abs/2505.23419)) reports agents resolving single-file patches under five lines about 48% of the time. That falls below 10% once a fix spans three or more files or 100+ lines. At the repo level, projects under ~100 files clear 20%; projects over 500 files rarely beat 5%.
 
 **Prompt caches reward stable contexts.** Two repos mean two stable system prompts that cache cleanly. One sprawling repo means the agent re-reads different slices on different tasks.
 
-None of these papers say "split frontend from backend". They are about context size and locality - which a frontend/backend split happens to enforce. The architectural choice was already worth making. The model seeming to prefer it is a small bonus 😉.
+None of these papers say "split frontend from backend". They are about context size and locality - which a frontend/backend split happens to enforce. The architecture is worth doing anyway. The model also seems to prefer it - small bonus 😉.
 
 ## The same idea, one level down
 
 The frontend/backend split is just the top of a hierarchy. The same separation principle keeps paying off at smaller scales.
 
-On the frontend I default to the most boring approach there is. Build the stupid presentational components first (the kind that take props and render markup with no idea where the data came from), and only then wire them into containers, business logic, and the rest of the app. Dumb pieces first, smart pieces on top. Nothing exotic.
+On the frontend I default to the most boring approach there is. Build the stupid presentational components first - the kind that take props and render markup with no idea where the data came from. Then wire them into containers, business logic, and the rest of the app. Dumb pieces first, smart pieces on top. Nothing exotic.
 
 For agent-assisted work the upside is the same. A presentational component is small and self-contained. Its props are its entire interface. The agent can build it, see it, and verify it without loading the database schema or the API client. {/* lever: a, v - small surface, easy to prompt, easy to verify */}
 
-When it is time to wire things up, the agent only needs the props on one side and the data on the other: a much smaller context than "the entire app". {/* lever: c - wiring does not require keeping rendering logic in your head */}
+When wiring things up, the agent only needs the props on one side and the data on the other: a much smaller context than "the entire app". {/* lever: c - wiring does not require keeping rendering logic in your head */}
 
 ## A simple recipe for the frontend
 
 In practice this turns into a short recipe. Step one is the easiest, and pays off the most.
 
 <Details withBackground title="A note on the stack">
-The snippet below mentions Solid because that is what I am using on this project. My general rule with new projects: keep the whole stack familiar except for exactly one new thing. Pulling every interesting trigger at once is a reliable way to lose a weekend to a setup nobody asked for, so I swap exactly one piece - this time React for [Solid.js](https://www.solidjs.com/), with Vite still doing dev-server duty. Familiar stack means short prompts and fast verification: most of what I want already lives in the agent's training data and in my own muscle memory. {/* lever: a, v */}
+The snippet below mentions Solid because that is what I am using on this project. My general rule with new projects: keep the whole stack familiar except for exactly one new thing. Pulling every interesting trigger at once is a reliable way to lose a weekend to a setup nobody asked for. So I swap exactly one piece - this time React for [Solid.js](https://www.solidjs.com/), with Vite still doing dev-server duty. Familiar stack means short prompts and fast verification: most of what I want already lives in the agent's training data and in my own muscle memory. {/* lever: a, v */}
 </Details>
 
 ### Step 1: one component per prompt
@@ -109,7 +109,7 @@ Every prompt is a short description of a single component. *"Create a simple cha
 
 The agent does the mechanical part: types the props, picks reasonable defaults, follows the surrounding style. I see it on screen, tweak it, move on.
 
-To make this the default rather than something I retype every prompt, I keep a project-level instruction file (`CLAUDE.md` / `AGENTS.md` / `llm.md`; same idea, different names). The relevant section looks roughly like this:
+To stop retyping these rules every prompt, I keep a project-level instruction file (`CLAUDE.md` / `AGENTS.md` / `llm.md`; same idea, different file your tool reads). The relevant section looks roughly like this:
 
 ```md
 ## Frontend components
@@ -127,7 +127,21 @@ When asked to build a UI component:
 - Default to no comments. Names are documentation.
 ```
 
+<Details withBackground title="Which file does which tool read?">
+AGENTS.md is becoming the de facto cross-tool default - Codex, Cursor, aider, and most others read it natively. Claude Code is the holdout: it reads `CLAUDE.md` and only `CLAUDE.md`, with AGENTS.md support filed as a feature request ([#6235](https://github.com/anthropics/claude-code/issues/6235)) but not yet shipped.
+
+The workaround everyone uses: in your `CLAUDE.md`, add `@AGENTS.md` to import the AGENTS.md content. One source of truth, two tools, no copy-paste drift.
+</Details>
+
 The second-to-last bullet is the load-bearing one. Without it the agent gets creative and starts pulling in stores or fetching helpers, which drags in the rest of the app and undoes the locality we set up.
+
+<Details withBackground title="More is not better">
+LLMs trained on enormous amounts of code reproduce its conventions by default. They will write `camelCase` JavaScript and `snake_case` Python without being told; the same goes for naming, error handling, the basics. Enumerating the obvious in your instruction file mostly restates what the model already knows.
+
+The empirical case backs this up. Gloaguen et al. ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), 2026) measured it directly. Across multiple agents and models, context files tended to *reduce* task success and inflated inference cost by over 20%. LLM-generated context files (the kind `claude /init` produces) actually dropped task success by an average of 3% versus no file at all. Developer-written files squeaked out a +4% gain - real but modest, and only for files that stuck to minimal requirements.
+
+The lesson: write the rule that closes a specific failure mode, like the load-bearing bullet above. Skip the rest. Bloat is a regression in disguise.
+</Details>
 
 ### Step 2: the showcase route
 
@@ -135,9 +149,13 @@ After the first component lands, ask the agent to set up a `/showcase` route and
 
 This creates the loop you actually want. The agent builds a component, registers it on `/showcase`, opens the page in a browser, sees what rendered, and only then declares the task done. Verification stops being *"the diff looks plausible"* and becomes *"I looked at the thing."* {/* lever: v - a cheap, deterministic verification surface that does not require the rest of the app */}
 
+Look at this through the formula. `v` (your verification time) is expensive. Every minute spent confirming the agent's work is a minute you cannot spend prompting or reviewing something else. The `/showcase` route is how you push some of that work *onto the agent*: it builds, opens the page, looks, and only then comes back to you. Two things fall out. Your `v` shrinks because the agent has already done the obvious checks. And the code is more likely to be right - the same way nobody hand-checks formatting once a linter is set up. The cost is a bigger `x` (the agent does more per task), but `x` is cheap to compensate for: spin up another agent. As long as `c` stays low, that is a trade you can keep making.
+
+Some of this comes for free. Claude Code and Codex already run typecheck, lint, and tests by default - they detect the commands from `package.json` and config files, and run them as part of their verification loop. Your job is to name the *project-specific* checks they cannot detect on their own: a custom build script, a migration smoke test, a screenshot diff. Spell those out in the instruction file and the agent folds them into the same loop.
+
 <Image {...showcase} caption="The showcase route from my paper-reader project. Every component the agent builds gets wired up here in isolation: the chat workspace at the top, smaller primitives like buttons, inputs, and the note editor below. No auth, no app state, just the components on a page." />
 
-Add one more line to the same `CLAUDE.md`:
+Add one more line to the same instruction file:
 
 ```md
 - After creating a component, export it from `/showcase`. Open the route
@@ -163,7 +181,7 @@ The fix is to give it a real browser. My favourite tool here is the [Chrome DevT
 
 **Mode 1: spawn a new Chrome.** Clean, deterministic, no shared state. Good for stateless routes like `/showcase`, and good for anything CI-shaped.
 
-**Mode 2: attach to your existing Chrome session.** You enable Chrome's remote debugging port, the MCP connects to it, and the agent sees the same tabs, cookies, and console you do. This one breaks every now and then: new Chrome versions occasionally change the dance, and you find yourself restarting things at the wrong hour. Still worth it, for two reasons:
+**Mode 2: attach to your existing Chrome session.** You enable Chrome's remote debugging port, the MCP connects to it, and the agent sees the same tabs, cookies, and console you do. This one breaks every now and then: new Chrome versions occasionally change the protocol, and you find yourself restarting things at the wrong hour. Still worth it, for two reasons:
 
 - The agent reads the browser console. Real errors, real warnings, real network failures: the same surface a human developer stares at.
 - It bypasses auth. You logged in once; the agent inherits the session. No fake test users, no "let me also build a login flow for the agent", no credentials in CI configs.
@@ -450,7 +468,7 @@ Once `p` is big enough - which today is "a couple of agents on a laptop" - the a
 
 What `s` actually measures, end to end, is the residue this post has been quietly naming all along: the glance at `/showcase` to see if the thing rendered, the backstop verification when the type checker cannot carry the case, reading prompt outputs by eye, reviewing the change summary when an agent flags it, approving security prompts, and writing the code myself on the few cases where prompting it would cost more than typing it. Part 0 put `s` at 0.5; this list - short, deliberate, mostly visual - drove it to roughly 0.01.
 
-There is a quieter trade in those numbers worth surfacing. The formula is not a constraint to minimise; it is a system to rebalance. The most useful move, and the one this recipe has been making without naming it, is to push verification *from `v` onto `x`* - typecheck and lint as part of the agent's loop, the browser MCP reading its own console, the OpenAPI generator catching contract drift at compile time, `/showcase` as a place the agent verifies itself before declaring done. Each of those makes `x` a little larger and `v` correspondingly smaller. If `x` grows enough that `p / x` slips behind, the answer is one more agent - and that costs almost nothing here, because `c` is half a minute. A comprehensive test suite the agent actually runs is the strongest version of this trade; the eval harness from earlier is the version I still owe myself. When verification sits on the agent's side of the line, *slower agents are not a problem - they are room to push `v` further down and `p` further up.* The trade only pays when `c` is cheap; in a setting where context switching is expensive (team coordination, big stateful contexts to reload), slower agents are just slower agents.
+There is a trade in those numbers worth recapping. The formula is not a constraint to minimise; it is a system to rebalance. The most useful move - the one already named at `/showcase` and made throughout - is to push verification *from `v` onto `x`*: typecheck and lint as part of the agent's loop, the browser MCP reading its own console, the OpenAPI generator catching contract drift at compile time. Each of those makes `x` a little larger and `v` correspondingly smaller. If `x` grows enough that `p / x` slips behind, the answer is one more agent - and that costs almost nothing here, because `c` is half a minute. A comprehensive test suite the agent actually runs is the strongest version of this trade; the eval harness from earlier is the version I still owe myself. When verification sits on the agent's side of the line, *slower agents are not a problem - they are room to push `v` further down and `p` further up.* The trade only pays when `c` is cheap; in a setting where context switching is expensive (team coordination, big stateful contexts to reload), slower agents are just slower agents.
 
 These are normal architectural choices that happen to *also* make the agent's job small enough that I am the one running ahead, not waiting. The lever framing is a way to notice when a design choice is doing double duty.
 
