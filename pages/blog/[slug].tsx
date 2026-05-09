@@ -29,6 +29,7 @@ import * as ExpressiveReact from '@blog/expressive-react-server.mdx'
 import * as ThreadsEn from '@blog/threads-en.mdx'
 import * as Tasks2d from '@blog/draw-your-plans-2d.mdx'
 import * as DxDp from '@blog/dx-dp.mdx'
+import * as DxDp1 from '@blog/dx-dp-1.mdx'
 
 const pages = [
   ImageOptimization,
@@ -52,6 +53,7 @@ const pages = [
   ThreadsEn,
   Tasks2d,
   DxDp,
+  DxDp1,
 ]
 
 const Img = styled('img', {

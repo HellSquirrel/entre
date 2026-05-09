@@ -1,5 +1,5 @@
 ---
-title: 'Calibrating the Spherical Developer: Turning the Levers'
+title: 'Calibrating the Spherical Developer: Turning the Levers #1'
 date: '2026-05-06T00:00:00.000Z'
 tags: ['dx']
 slug: 'dx-dp-1'
@@ -12,9 +12,8 @@ import { Formula } from '../components/Formula'
 import { Image } from '../components/Image'
 import showcase from './assets/dp/showcase.png'
 import regionSelection from './assets/dp/region-selection.png'
-import nutlore from './assets/dp/nutlore.png'
 
-In the previous post we landed on a small model. Six parameters:
+In [the previous post](/blog/dx-dp) we landed on a small model. Six parameters:
 
 - `a` - prompt time
 - `v` - your verify-and-iterate time
@@ -31,7 +30,7 @@ Two lanes. The left side is what *you* can process. The right side is what your 
 
 Adding agents helps until the right side catches up. After that, the only way up is to shrink `s`, `a`, `v`, or `c`.
 
-That is Part 0's claim. But the parameters are not fixed - and that is what this post is about. You choose which side of the human/agent line each piece of work sits on. And you can spend cheap parameters to buy down expensive ones.
+That is [Part 0](/blog/dx-dp)'s claim. But the parameters are not fixed - and that is what this post is about. You choose which side of the human/agent line each piece of work sits on. And you can spend cheap parameters to buy down expensive ones.
 
 The interesting question is not how low you can push `a + v + c`. It is which trades the formula will let you make.
 
@@ -54,8 +53,6 @@ A reading view - three panes: the PDF, a chat with the LLM about whatever I have
 A settings screen for LLM choice and layout preferences.
 
 That is the whole app - I call it Nutlore.
-
-<Image {...nutlore} caption="The reading view in Nutlore. Three panes: the PDF on the right, the current chat with the LLM in the middle (with two anchored selections quoted at the top), and a sidebar listing past chats - each still pointing back at the selection that started it. Annotations, bookmarks, and uploaded handwritten notes live in the same view." />
 
 It is a personal project - big enough to need real architecture decisions, real tests, and real "wait, why is this broken now" moments, and small enough that nobody is asking when it ships.
 
@@ -236,7 +233,7 @@ Styling is where the recipe meets aesthetic taste, so this section is partly opi
 
 The first opinion: I lean on the latest CSS the browser already supports. If a feature shows up in the current [Interop](https://wpt.fyi/interop-2026) list or is marked **newly available** in [Baseline](https://web.dev/baseline/2026), it is fair game. I am the only user; my compatibility matrix is "the browser I had open this morning".
 
-The second opinion: I do not want a utility-class abstraction layer. I have nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 bg-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none md:px-6 md:py-3` is, to me, just unreadable. I would rather read CSS than read English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
+The second opinion: I do not want a utility-class abstraction layer. I have nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 bg-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none md:px-6 md:py-3` is, to me, just unreadable. I would rather read CSS than English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
 
 <Details withBackground title="What the research actually says about Tailwind for agents">
 There is no head-to-head benchmark comparing Tailwind, CSS Modules, and typed-CSS systems for coding agents. The closest direct work - [DesignBench](https://arxiv.org/abs/2506.06251) for frontend engineering tasks across React/Vue/Angular, [Design2Code](https://arxiv.org/abs/2403.03163) for visual-to-code generation - does not isolate the styling layer.
