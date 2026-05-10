@@ -73,17 +73,13 @@ Backend and frontend live in separate repos, and I build them in parallel. The s
 The interviewer wanted to know why I split work like this. The honest answer is that I want every module as isolated as possible, starting with the biggest pieces - frontend and backend. Isolation is not just a code-organization preference; it is what makes parallelism cheap.
 </Details>
 
-The reason is obvious: isolation is basic to any good architecture. I can reason about each module on its own. That means I can change one without holding the whole app in my head. That was true before agents existed, and would still be my preference if they vanished tomorrow.
+The reason is obvious: isolation is basic to any good architecture. I can reason about each module on its own, and change one without holding the whole app in my head. That was true before agents existed, and would still be my preference if they vanished tomorrow.
 
-More interesting: some research *suggests* this might also help the model. Suggests, not proves.
+Does it also help the model? Two findings used to point that way. "[Lost in the Middle](https://arxiv.org/abs/2307.03172)" (2023) showed LLMs missing information in the middle of long contexts. A SWE-bench analysis ([2025](https://arxiv.org/abs/2505.23419)) found agents resolving single-file patches about 48% of the time, dropping under 10% once a fix spans three or more files - a separate point, more about how far a change has to reach than how big the context is.
 
-**Long-context attention is leaky.** "Lost in the Middle" ([Liu et al., 2023](https://arxiv.org/abs/2307.03172)) showed LLMs find information at the start and end of their context and miss things in the middle, even on models explicitly trained for long context. [RULER](https://arxiv.org/abs/2404.06654) put numbers on the drift: of 17 long-context models claiming 32K+ tokens, only half held up at 32K.
+How much of that still bites today is honestly hard to say. Context windows have grown a lot - Claude Opus 4.7 takes 200K by default and 1M in beta; Gemini 3.1 Pro and GPT-5.4 both reach a million. A small fullstack repo fits comfortably in one prompt, and frontier models handle long contexts much better than the 2023 cohort. I am not aware of the head-to-head comparisons that would settle it. Caching probably still rewards stable, smaller contexts, but that is intuition at this point more than evidence.
 
-**Repo size correlates with task success.** A SWE-bench analysis ([SWE-bench Goes Live, 2025](https://arxiv.org/abs/2505.23419)) reports agents resolving single-file patches under five lines about 48% of the time. That falls below 10% once a fix spans three or more files or 100+ lines. At the repo level, projects under ~100 files clear 20%; projects over 500 files rarely beat 5%.
-
-**Prompt caches reward stable contexts.** Two repos mean two stable system prompts that cache cleanly. One sprawling repo means the agent re-reads different slices on different tasks.
-
-None of these papers say "split frontend from backend". They are about context size and locality - which a frontend/backend split happens to enforce. The architecture is worth doing anyway. The model also seems to prefer it - small bonus 😉.
+The architecture is worth doing anyway.
 
 ## The same idea, one level down
 
@@ -100,7 +96,7 @@ When wiring things up, the agent only needs the props on one side and the data o
 In practice this turns into a short recipe. Step one is the easiest, and pays off the most.
 
 <Details withBackground title="A note on the stack">
-The snippet below mentions Solid because that is what I am using on this project. My general rule with new projects: keep the whole stack familiar except for exactly one new thing. Pulling every interesting trigger at once is a reliable way to lose a weekend to a setup nobody asked for. So I swap exactly one piece - this time React for [Solid.js](https://www.solidjs.com/), with Vite still doing dev-server duty. Familiar stack means short prompts and fast verification: most of what I want already lives in the agent's training data and in my own muscle memory.
+The snippet below mentions Solid because that is what I am using on this project. My general rule with new projects: keep the whole stack familiar except for exactly one new thing. Pulling every interesting trigger at once is a reliable way to lose a weekend to a setup nobody asked for. So I swap exactly one piece - this time React for [Solid](https://www.solidjs.com/), with Vite still doing dev-server duty. Familiar stack means short prompts and fast verification: most of what I want already lives in the agent's training data and in my own muscle memory.
 </Details>
 
 ### Step 1: one component per prompt
@@ -205,6 +201,24 @@ The last bullet matters more than it looks. Without it, the agent will cheerfull
 
 Alternatively, the same rules fit nicely into a [Claude skill](https://code.claude.com/docs/en/skills): a small, named bundle of instructions (and optional scripts) the agent only pulls in when a relevant task comes up. A `browser-verification` skill keeps these rules out of every prompt's preamble and only activates when something actually browser-shaped is happening.
 
+<Details withBackground title="If you have not used skills before">
+A skill is a structured way to teach the agent new tricks. Instead of pasting an explanation into every prompt, you package it once and let the agent reach for it when the task matches.
+
+A skill is a folder with a `SKILL.md` at the top: short frontmatter (name, description) and a body telling the agent how to do that one kind of task. The agent sees every skill's *description* up front, but only loads the body when a task matches - the same "more is not better" point from earlier, applied to workflows rather than rules.
+
+The folder is the powerful part. Alongside `SKILL.md` you can ship `scripts/` (small helpers the agent runs instead of rolling its own) and `references/` (longer docs it loads only when the body tells it to). A skill is not a prompt fragment - it is *instructions, code, and documentation* travelling together, pulled in as one unit when the task matches. That is what makes it more than a glorified snippet.
+
+Every major coding agent ships its own version:
+
+- [Claude Agent Skills](https://code.claude.com/docs/en/skills)
+- [Codex Skills](https://developers.openai.com/codex/skills)
+- [Gemini CLI Agent Skills](https://geminicli.com/docs/cli/skills/)
+
+Same folder layout, same `SKILL.md` manifest, mostly portable between them if you stick to instruction-only skills.
+
+One caveat that carries over from the security note earlier: a skill with scripts has the same blast radius as any other code you install. Read it, pin it, keep it in source control. Instruction-only skills are the cheap default; script-backed ones deserve the same review as any other dependency.
+</Details>
+
 ### Step 4: stay a little paranoid
 
 When the Chrome DevTools MCP is running, the agent pauses and asks before each click, screenshot, navigation, or form submit. After the tenth permission popup of the afternoon, there is a tempting way out: flip the agent into full-auto mode and let it do whatever it wants.
@@ -236,7 +250,13 @@ Styling is where the recipe meets aesthetic taste, so this section is partly opi
 
 The first opinion: I lean on the latest CSS the browser already supports. If a feature shows up in the current [Interop](https://wpt.fyi/interop-2026) list or is marked **newly available** in [Baseline](https://web.dev/baseline/2026), it is fair game. I am the only user; my compatibility matrix is "the browser I had open this morning".
 
-The second opinion: I do not want a utility-class abstraction layer. I have nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 bg-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none md:px-6 md:py-3` is, to me, just unreadable. I would rather read CSS than English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
+One important caveat before anyone copies this. *I am the only user* is doing a lot of work in that sentence. On any project with real users, your compatibility matrix is *theirs*, not yours - and that is exactly what Interop and Baseline are for. They are not arbitrary cutoffs. They are a shared agreement on what is safe to ship across the browsers your audience actually runs. Skip them only when your audience is a sample size of one.
+
+<Details withBackground title="What Baseline actually is">
+From [web.dev/baseline](https://web.dev/baseline): "Web Platform Baseline brings clarity to information about browser support for web platform features. Baseline gives you clear information about which web platform features are ready to use in your projects today. When reading an article, or choosing a library for your project, if the features used are all part of Baseline, you can trust the level of browser compatibility."
+</Details>
+
+The second opinion: I do not want a utility-class abstraction layer. Nothing personal against Tailwind (plenty of teams ship beautifully with it), but markup decorated with `group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 bg-white shadow-sm hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 motion-reduce:transition-none md:px-6 md:py-3` is, to me, just unreadable. I would rather read CSS than English-flavoured shorthand *for* CSS. The lever argument still applies if you ship Tailwind happily - substitute its tokens for mine.
 
 <Details withBackground title="What the research actually says about Tailwind for agents">
 There is no head-to-head benchmark comparing Tailwind, CSS Modules, and typed-CSS systems for coding agents. The closest direct work - [DesignBench](https://arxiv.org/abs/2506.06251) for frontend engineering tasks across React/Vue/Angular, [Design2Code](https://arxiv.org/abs/2403.03163) for visual-to-code generation - does not isolate the styling layer.
@@ -251,7 +271,7 @@ Two caveats worth knowing:
 - **Tailwind does not fix accessibility.** [A11YN](https://arxiv.org/abs/2510.13914) shows generated UI tends to inherit accessibility flaws regardless of the styling system - agents will happily emit `<div onClick={...}>Submit</div>` in any framework.
 - **First-pass wins are not maintenance wins.** Unconstrained Tailwind across many screens turns into class-string soup with inconsistent radii, spacing, and colours. Tailwind's lever payoff comes back only when you pair it with strict semantic tokens and a small layer of component primitives - then the agent has narrow choices instead of unlimited ones.
 
-So: for fast generation, Tailwind probably wins. For long-term coherence, *constrained* Tailwind wins. Plain CSS - my pick here - only earns its place because this is a personal project and I am the only one rolling the dice on consistency. For what it is worth, I have not noticed agent slowdowns or degraded output without Tailwind on this project - but I have not measured it explicitly either, so take that as one data point, not evidence.
+So: for fast generation, Tailwind probably wins. For long-term coherence, *constrained* Tailwind wins. Plain CSS - my pick here - only earns its place because this is a personal project and I am the only one rolling the dice on consistency. For what it is worth, no obvious agent slowdowns or degraded output without Tailwind on this project - though I have not measured it explicitly either, so take that as one data point, not evidence.
 </Details>
 
 So the styling stack is unfashionably plain:
@@ -301,7 +321,7 @@ Models learn from the web as it was when their training data was frozen. Anythin
 
 The reader is built around PDF text selection. Quite a few features hang off it: notes, bookmarks, "ask the LLM about this paragraph", a few others. All of them want to pop a small panel up next to whatever the user just selected, and stay glued to it as the page scrolls or the window resizes. A classic floating-popup problem.
 
-I learned this the hard way on the first attempt. I asked Claude for the popup; I got back exactly the 2020 answer - JavaScript that calls `getBoundingClientRect` on the selection, attaches scroll and resize listeners to keep the position fresh, hand-rolls flip logic for when the popup would clip the right edge, and renders the panel with `position: absolute` plus inline `top` / `left` values. Solid, well-understood code, and it broke in three subtle ways the moment the layout got interesting: the popup drifted on scroll inside the page's transformed viewer, flipped to the wrong side near the viewport edge, and lingered after the selection cleared. That was the wrong direction the post's intro hinted at.
+I learned this the hard way on the first attempt. Asked Claude for the popup, got back exactly the 2020 answer - JavaScript that calls `getBoundingClientRect` on the selection, attaches scroll and resize listeners to keep the position fresh, hand-rolls flip logic for when the popup would clip the right edge, and renders the panel with `position: absolute` plus inline `top` / `left` values. Solid, well-understood code, and it broke in three subtle ways the moment the layout got interesting: the popup drifted on scroll inside the page's transformed viewer, flipped to the wrong side near the viewport edge, and lingered after the selection cleared. That was the wrong direction the post's intro hinted at.
 
 The answer sharp frontenders have been quietly using for a while is [CSS anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Anchor_positioning). The relevant CSS in this project, lifted straight from the repo:
 
@@ -332,6 +352,10 @@ The general lesson: the agent's mental model of "modern web" is dated by definit
 
 One workflow detail: I always have the agent build the component and its stylesheet **together**, in the same prompt. Splitting it into "build the component" and then "now style it" produces awkward seams: the markup ends up shaped around whatever the agent guessed about styling on the first pass, and the CSS arrives later with the wrong assumptions baked in. Component and style are one unit of work, one verification on `/showcase`, one diff to review.
 
+## Design, made for agents
+
+If you want your design system itself to be more agent-friendly, Google's [design-md specification](https://stitch.withgoogle.com/docs/design-md/specification) is worth a look - a markdown-flavoured way to describe a design system so an agent can read it directly, the same way it reads `AGENTS.md`. Same shape as the OpenAPI trick from earlier in this post: hand the agent a small, stable, machine-readable surface instead of re-explaining the system per prompt.
+
 ## Formulas and graphs
 
 Another reader-specific wrinkle. PDFs ship with a recognised text layer, which is great for prose and unreliable for everything else. Formulas come back as garbled character runs, diagrams have no text at all, and figures with embedded labels are a coin toss. Asking the user to highlight LaTeX-rendered math by dragging across phantom characters is not a path to a good experience.
@@ -339,6 +363,8 @@ Another reader-specific wrinkle. PDFs ship with a recognised text layer, which i
 The fix is to give selection two modes: text selection for prose, and *region-as-image* selection for everything else. Hold Shift, drag a rectangle on a page, and the rectangle becomes a PNG clip the user can attach to chat, save as a note, or hand to any feature that wants it.
 
 Luckily, modern frontier models are multimodal: the chat side ingests the PNG directly, so a screenshot of a formula is as legible to the LLM as the surrounding prose. No OCR step, no LaTeX reconstruction, no clever pipeline.
+
+One aside worth slipping in here, because it shapes the rest of the post: I picked the [Gemini API](https://ai.google.dev/) for this project. Two practical reasons. Some of my infra already lives in Google Cloud, so adding one more Google API kept the auth and billing surface small. And [grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding) is genuinely useful for a paper reader - "who else cited this" or "is there a follow-up" come back with fresh links instead of hallucinated DOIs.
 
 <Image {...regionSelection} caption="The composer holding both a text excerpt and a region image clip from a math-heavy page. The text attachment carries the prose around the equation; the image carries the equation itself, pixel-perfect. The model sees both and answers 'Explain this' against the union." />
 
@@ -547,4 +573,8 @@ Part 0's qualifier still applies. *Sometimes.* Long-running tasks with cheap ver
 
 ## What's next
 
-There is more to dig into - tool choice, team setups, the shape of `c` on bigger projects - but I will pick a thread when I have something honest to write about.
+This is one cadence - mine. The formula does not care what you build; it cares about your `a`, `v`, `c`, and how cheaply you can push verification onto the agent's side. Your numbers will land somewhere else.
+
+The recipe also leans on familiarity - not with this app, but with the *shape* of fullstack work. API calls, components, services, routes, schemas, jobs: well-trodden ground. The agent reflexes earlier (`html2canvas` for `OffscreenCanvas`, proxying the upload, regenerating the SSE handlers) were easy to spot because the *kind* of mistake was familiar. You only know what *right* looks like when you have seen the pattern before. That is what makes `v` cheap.
+
+What happens when everything is unfamiliar - the domain, the technology, the language? How do you build a system you have never tried to build before? That is what the next post is about.
