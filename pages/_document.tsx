@@ -2,14 +2,6 @@ import React from 'react'
 import NextDocument, { Html, Head, Main, NextScript } from 'next/document'
 import { getCssText } from '@styles'
 
-const gTagId = 'G-7WLMRYD21T'
-
-const scriptContent = `
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', '${gTagId}');`
-
 export default class Document extends NextDocument {
   render() {
     return (
@@ -35,16 +27,6 @@ export default class Document extends NextDocument {
         <body>
           <Main />
           <NextScript />
-          <script
-            defer
-            src={`https://www.googletagmanager.com/gtag/js?id=${gTagId}`}
-          />
-          <script
-            id="gtag-init"
-            dangerouslySetInnerHTML={{
-              __html: scriptContent,
-            }}
-          />
         </body>
       </Html>
     )
