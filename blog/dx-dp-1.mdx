@@ -490,98 +490,76 @@ One weird invariant worth flagging early: bring-your-own-key Gemini calls *canno
 
 Of the three backend task types, prompts are the one that genuinely requires your attention from time to time. They are subjective, the eval-harness gap means I read outputs by eye, and the model behaviour shifts under your feet. The good news is that this is exactly when the other two piles earn their keep. While you are sitting with a prompt and a sample paper, an agent can happily be building a fresh microservice in one terminal, and another can be sketching a new data model in a second. The bottleneck moves to wherever you happen to be looking, and the rest of the work keeps flowing past.
 
----
-
 Same cadence, different surface. Templated CRUD on one side, autonomous workers on another, knob-tuning on a third. Each is its own pile of small, isolated tasks; each pile parallelises against the others without competing for `c`.
 
 ## Stepping back: what was that recipe doing?
 
-Recall the model from [Part 0](/blog/dx-dp):
+OK - back to our small formula:
 
 - you process tasks at roughly <Formula inline content="(1 - s) / (a + v + c)" />,
 - agents produce results at roughly <Formula inline content="p / x" />,
 - throughput is the minimum of the two.
 
-Once `p` is big enough - which today is "a couple of agents on a laptop" - the agent side stops being the bottleneck. Your personal lane becomes `a + v + c`, and the only way up is to make those three numbers smaller. That is what the recipe in this post has been quietly doing, lever by lever:
+Once `p` (number of agents) is big enough, the agent side stops being the bottleneck. Your lane becomes the parameters on your side, and the only way up is to make them smaller.
 
-- **`a` (prompt-writing time)** went down because every task has a small surface. One presentational component. One typed API wrapper. One CSS file. The agent does not need a paragraph of context per request; the project hands it over for free through the instruction file, generated schema types, design tokens, and a known component shape.
-- **`v` (verification time)** went down because every layer has its own cheap, deterministic check. The type checker catches wiring errors. `/showcase` plus a real browser catches rendering errors. The OpenAPI generator catches contract drift. Most of the time I am looking at the screen, not at the diff.
-- **`c` (context-switching time)** went down because the seams line up with where the work actually splits. Frontend and backend live in different repos. Components live one to a file. Style sits next to markup. The agent moves between pieces without dragging the rest of the system along.
+So - how did we tune these parameters? What tradeoffs did we make? Lever by lever:
 
-What the non-delegatable share (`s`) measures is what is left over: the glance at `/showcase` to see if the thing rendered, the backstop check when the type checker cannot carry the case, reading prompt outputs by eye, reviewing the change summary when an agent flags it, approving security prompts, and writing the code myself on the few cases where prompting it would cost more than typing it.
+- **`a` (prompt-writing time)** went down because every task has a small surface. One presentational component. One typed API wrapper. One CSS file. The agent does not need a paragraph of context per request - the project hands it over for free, through the instruction file, the generated schema types, the design tokens, and a known component shape.
+- **`v` (verification time)** went down because every layer has its own cheap, automatic check. The type checker catches wiring errors. `/showcase` plus a real browser catches rendering errors. The OpenAPI generator catches contract drift. Most of the time I am looking at the screen, not at the diff.
+- **`c` (context-switching time)** went down because the pieces are small and similar. A component is one file, easy to check, easy to hold in my head. Switching from button to button, input to input, is almost free - same shape, same checks. No need to swap the whole system in and out of my head to move tasks.
 
-Part 0 put `s` at 0.5. This list - short, deliberate, mostly visual - drove it to roughly 0.01.
+What `s` measures is the work I cannot hand off. The architecture keeps that pile small. Simple components mean the agent writes most of the code I would have written myself. What is left: the important architectural decisions, steering the process, approving security prompts, the occasional edge case where typing beats prompting, and the judgment calls a personal project asks for - what to build next, what feels right.
 
-There is a trade in those numbers worth recapping. The formula is not a constraint to minimise; it is a system to rebalance.
+The recipe only works when the agent and I share the same mental model of the architecture. Components, routes, jobs, schemas: well-trodden ground, so the agent's reflexes line up with my intent. Imagine I had picked something fun instead - say, modelling the entire app as a fold over event monoids, with side effects expressed as a free monad over an interpreter algebra. Lovely in theory. But the agent's training data has thousands of controller-service-repository codebases for every one of those. Its reflexes would pull one way, my architecture the other. Every prompt becomes a translation exercise. `s` stops being small.
 
-The most useful move - already named at `/showcase` and used throughout - is to push verification *off your side and onto the agent's*: typecheck and lint inside the agent's loop, the browser MCP reading its own console, the OpenAPI generator catching contract drift at compile time. Each one makes the agent take a little longer per task and your verification correspondingly shorter. If the agent slows down enough that its throughput slips behind yours, the answer is one more agent - and that costs almost nothing here, because context switching is half a minute.
+One move did most of the work: push verification off your side and onto the agent's. The formula is not asking you to push every parameter to zero - it is asking which one you would rather pay for. Spending more `x` (the agent does more per task) to buy down `v` (your verification time) is the trade everything else leans on.
 
-A comprehensive test suite the agent actually runs is the strongest version of this trade. The eval harness from earlier is the version I still owe myself.
+The shape is the one we used throughout. Typecheck and lint run inside the agent's loop. The browser MCP hands the page console to the agent. The OpenAPI generator catches contract drift at compile time. Each one makes the agent take longer per task and yours shorter to match.
 
-When verification sits on the agent's side of the line, *slower agents are not a problem - they are room to push your verification time further down and your agent count further up.* The trade only pays when context switching is cheap; where it is expensive (team coordination, big stateful contexts to reload), slower agents are just slower agents.
+Let the agent run lengthy checks - a full test suite, deeper verification, anything that pushes more `v` onto its side. If it slows down past your pace, spin up another one. Context switching is cheap, so you can afford it.
 
-These are normal architectural choices. They *also* shrink the agent's job enough that I am the one running ahead, not waiting. The lever framing is a way to notice when a design choice is doing double duty.
-
-Part 0 hinted at the flip side, and this recipe has tried to honour it: pulling levers harder than necessary stops paying. Tighter verification *on your side* raises your verification time until you are no longer catching anything new (the agent-side trade above has a different ceiling, set by how much real signal your tests and checks can carry). Longer prompts raise your prompt-writing time until you are doing the agent's job by hand. More agents raise your context-switching cost, because parallel work eats your attention faster than you would expect. The point is not to drive your time per task to zero - it is to drive it below what the agent side takes, and stop.
-
-And the recipe itself is not free. The instruction file accumulates - by the end of this post it carries close to a dozen rules, and a few have started to caveat each other (regenerate the OpenAPI types, except the SSE handlers; build the component and stylesheet together, except when you do not). Plain CSS means no component library on the day you want a complicated table or a date picker. Two repos means no atomic commit when an endpoint changes shape. The Codex slot of the workflow ties one pane to a vendor. The brake from earlier is a permanent tax on verification time. Each one pays for itself elsewhere in lever savings, but they are real bills, and a recipe that pretends otherwise will mislead anyone copying it.
-
-Then, sometimes, work on yourself instead of the workflow 😉.
+So: rebalance, do not minimize. Slow agent? Throw another one.
 
 ## Running multiple agents
 
-Part 0's parallelism rule said adding agents stops helping past a certain crossover, because each extra agent grows your context-switching cost. That assumed two things: every agent needs periodic attention from you, and the switching cost is the same regardless of what each agent works on.
+Part 0 said extra agents stop helping past a crossover. This recipe shifts that math. Most agents do not need your attention. Switching between similar tasks is cheap. The work splits into piles.
 
-With this recipe both soften. Most agents do not need periodic attention. And the switching cost shrinks when the tasks resemble each other - switching between two components is almost free; switching between a web-to-PDF microservice and a bookmark-icon background is the real cost Part 0 was modelling. The work splits naturally into two task types that parallelise cleanly, each mapped onto its own tool.
+The components pile parallelises the hardest. One agent per item on the todo: eight components to build, eight agents working `/showcase` in parallel, never talking to each other or to me until they are done.
 
-### Two task types that parallelise cleanly
+The wiring pile needs a little more attention, but only a little - the typed contract surface from earlier does most of the verification. A prompt like *"wire up bookmark deletion. The component is in place. The layout is settled. The backend endpoint is in the schema."* gives the agent everything it needs.
 
-**Type 1: building components.** Pure presentational work. The prompt is precise (one component), the rules in the instruction file are clear, and the verification loop is fully self-contained:
-
-1. Build the component and its CSS.
-2. Export it from `/showcase`.
-3. Open the route in the browser and confirm it renders.
-4. Let the agent's built-in typecheck and lint run.
-5. Iterate until everything is clean, or stop and ask if it cannot.
-
-You glance at the result when it lands. In practice I end up running roughly one agent per component on my todo list: eight components to build, eight agents working `/showcase` in parallel, never talking to each other or to me until they are done.
-
-**Type 2: wiring components to the backend.** The work that comes after: hooking a built component up to a real endpoint. Needs *slightly* more attention than Type 1, but only slightly, because the contract surface from earlier in this post does most of the verification work:
-
-- The generated OpenAPI types reject wrong endpoints, methods, params, and response shapes at compile time.
-- The browser MCP attaches to your authenticated session, so the agent verifies wiring against a real backend with real data.
-- Tests catch regressions in code that already worked.
-
-A prompt like *"wire up bookmark deletion. The component is in place. The layout is settled. The backend endpoint is in the schema."* gives the agent everything it needs to find the typed wrapper, place it behind the right click handler, and confirm the result in the attached browser.
-
-The two types do not compete for attention; they sit on different stretches of the pipeline. Client-side work tends to run on **two features at the same time**: Feature A is in component-building mode, several agents building presentational pieces in parallel against `/showcase`; Feature B (whose components landed yesterday) is in wiring mode, another agent or two hooking those existing components up to the backend. You spend your context-switching budget on the few decisions that actually need a human in the loop, and let everything else run.
+The two piles sit at different stages of the pipeline, so they do not compete for attention. A typical run has two features in flight: Feature A in component-building mode (several agents on `/showcase`), Feature B (whose components landed yesterday) in wiring mode (another agent or two hooking up endpoints). You spend context-switching budget on the decisions that actually need a human; everything else runs.
 
 ### The tools that match this work
 
-Two tools, deliberately split by repo:
+Two tools, split by repo:
 
-- **[Claude Code](https://claude.com/claude-code).** Terminal agent on the backend. Backend changes for me are smaller and less verbose than frontend ones - a route, a Pydantic schema, a query - and fit comfortably into one terminal pane with a diff that fits on a screen. I lean on the [skills](https://code.claude.com/docs/en/skills) infrastructure quite a bit: custom skills, slash commands, and hooks let me bake personal habits into the agent rather than re-typing them into every prompt.
-- **Codex app.** GUI agent on the frontend. Two small features make it worth the slot for me: a clear indicator when the agent needs my input (no polling, no tab-checking; it pops, I look), and a change summary that doubles as a review surface (every touched file at a glance, one click into the change, no `git status` or diff hunting). Once a few agents are working `/showcase` at once, the difference between *"I have to check on each of them"* and *"they will tell me when they need me"* adds up over an afternoon.
+- **[Claude Code](https://claude.com/claude-code).** Terminal agent on the backend. Backend changes are smaller - a route, a Pydantic schema, a query - and fit into one pane with a diff on screen.
+- **[Codex app](https://developers.openai.com/codex/).** GUI agent on the frontend. Two features earn it the slot. A clear indicator when the agent needs me - it pops, I look. And a change summary that doubles as a review surface - touched files at a glance, one click into the change. With several agents working `/showcase` at once, *"I check on each of them"* vs *"they tell me when they need me"* adds up over an afternoon.
 
-A typical setup, then, looks like this: two Claude Code terminals against the backend repo (one on a model/route, one on a worker or migration), plus a Codex app window against the frontend with two agents in flight at any moment. Usually four agents live at the same time.
+Both tools read instruction files and run skills, allowing efficient prompting.
+
+Typical setup: two terminals for the backend (one on a model/route, one on a worker or migration), plus a Codex window on the frontend with two agents in flight. Usually four agents live at once.
 
 ### Plugging in the formula
 
-In my paper-reader sessions, an agent takes roughly fifteen minutes end-to-end on a feature - prompt, generation, the iteration loop from the previous section, the lot - so agent time per task is fifteen minutes, the same convention Part 0 used. Prompting takes about a minute; verifying on `/showcase` plus a glance at the diff is around two; context switching between terminals lands around half a minute. The non-delegatable share, which the rest of this post has been chipping away at, ends up around 0.01.
+In my paper-reader sessions:
 
-In formula terms: `x = 15`, `a = 1`, `v = 2`, `c ≈ 0.5`, `s = 0.01`.
+- `x = 10` minutes (agent time per task)
+- `a = 20` seconds (prompting)
+- `v = 2` minutes (verification)
+- `c = 20` seconds (context switching between terminals)
+- `s = 0.01` (Part 0 put `s` at 0.5; the recipe drove it down)
 
-Part 0's crossover was <Formula inline content="p^* \approx x(1-s)/(a+v+c)" />. With these numbers:
+Part 0's crossover was <Formula inline content="p^* \approx x(1-s)/(a+v+c)" />. With these numbers (in minutes):
 
-<Formula content="p^* \approx \frac{15 \times 0.99}{1 + 2 + 0.5} \approx 4.24" />
+<Formula content="p^* \approx \frac{10 \times 0.99}{0.33 + 2 + 0.33} \approx 3.7" />
 
-So about four agents is where the agent side stops being the bottleneck on a single feature. Four is what I tend to run, sitting right at the crossover - close enough that I would rather be the one waiting than have an agent sit idle. Part 0's example put the same crossover at just under three, so for me the choices in this post nudge it up by roughly two agents - same units, apples to apples.
+So about four agents is where the agent side stops being the bottleneck on a single feature. Four is what I tend to run, sitting right at the crossover - close enough that I would rather be the one waiting than have an agent sit idle.
 
-A wall-clock sanity check. The reader took about eight hours of focused work over three days, in a few four-agent sessions stitched together rather than a single sprint. At `x / p ≈ 15 / 4 ≈ 4` minutes between feature completions and roughly the same on the personal side, the eight hours was mostly cycling between four panes, not eight hours of typing. Numbers and lived experience, for once, in the same room.
+With this setup I move fast - but four agents at once drains me quickly. Cycling, prompting, steering, reviewing. Energy gone. More coffee than I would like to admit (and tokens too 😉).
 
-There is an honest downside: orchestrating four agents at once does drain you. Cycling, prompting, steering, reviewing: it adds up over an afternoon.
-
-Part 0's qualifier still applies. *Sometimes.* Long-running tasks with cheap verification fit; subjective product work (*"build me a chat composer that feels right"*) does not. But for the kind of work that filled most of this post, *sometimes* turned out to be most of the time.
+Then, sometimes, work on yourself instead of the workflow 😉.
 
 ## What's next
 
