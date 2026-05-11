@@ -75,9 +75,9 @@ The interviewer wanted to know why I split work like this. The honest answer is 
 
 The reason is obvious: isolation is basic to any good architecture. I can reason about each module on its own, and change one without holding the whole app in my head. That was true before agents existed, and would still be my preference if they vanished tomorrow.
 
-Does it also help the model? Two findings used to point that way. "[Lost in the Middle](https://arxiv.org/abs/2307.03172)" (2023) showed LLMs missing information in the middle of long contexts. A SWE-bench analysis ([2025](https://arxiv.org/abs/2505.23419)) found agents resolving single-file patches about 48% of the time, dropping under 10% once a fix spans three or more files - a separate point, more about how far a change has to reach than how big the context is.
+Does it also help the model? Two findings used to point that way. "[Lost in the Middle](https://arxiv.org/abs/2307.03172)" (2023) showed LLMs missing information in the middle of long contexts. A SWE-bench analysis ([2025](https://arxiv.org/abs/2505.23419)) found agents resolving small single-file patches (fewer than five lines) about 48% of the time, dropping under 10% once a fix spans three or more files - a separate point, more about how far a change has to reach than how big the context is.
 
-How much of that still bites today is honestly hard to say. Context windows have grown a lot - Claude Opus 4.7 takes 200K by default and 1M in beta; Gemini 3.1 Pro and GPT-5.4 both reach a million. A small fullstack repo fits comfortably in one prompt, and frontier models handle long contexts much better than the 2023 cohort. I am not aware of the head-to-head comparisons that would settle it. Caching probably still rewards stable, smaller contexts, but that is intuition at this point more than evidence.
+How much of that still bites today is honestly hard to say. Context windows have grown a lot - Claude Opus 4.7 ships with 1M tokens; Gemini 3.1 Pro and GPT-5.4 both reach a million too (GPT-5.4 defaults to 272K with 1M as an opt-in). A small fullstack repo fits comfortably in one prompt, and frontier models handle long contexts much better than the 2023 cohort. I am not aware of the head-to-head comparisons that would settle it. Caching probably still rewards stable, smaller contexts, but that is intuition at this point more than evidence.
 
 The architecture is worth doing anyway.
 
@@ -134,7 +134,7 @@ The second-to-last bullet is the load-bearing one. Without it the agent gets cre
 <Details withBackground title="More is not better">
 LLMs trained on enormous amounts of code reproduce its conventions by default. They will write `camelCase` JavaScript and `snake_case` Python without being told; the same goes for naming, error handling, the basics. Enumerating the obvious in your instruction file mostly restates what the model already knows.
 
-The empirical case backs this up. Gloaguen et al. ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), 2026) measured it directly. Across multiple agents and models, context files tended to *reduce* task success and inflated inference cost by over 20%. LLM-generated context files (the kind `claude /init` produces) actually dropped task success by an average of 3% versus no file at all. Developer-written files squeaked out a +4% gain - real but modest, and only for files that stuck to minimal requirements.
+The empirical case backs this up. Gloaguen et al. ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), 2026) measured it directly. Across multiple agents and models, context files tended to *reduce* task success and inflated inference cost by over 20%. LLM-generated context files (the kind `claude /init` produces) shaved 0.5% off resolution rate on SWE-bench Lite and 2% on AGENTbench versus no file at all - small, but the wrong sign. Developer-written files squeaked out a +4% gain - real but modest, and only for files that stuck to minimal requirements.
 
 The lesson: write the rule that closes a specific failure mode, like the load-bearing bullet above. Skip the rest. Bloat is a regression in disguise.
 </Details>
