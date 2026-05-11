@@ -346,7 +346,7 @@ The answer sharp frontenders have been quietly using for a while is [CSS anchor 
 
 The JavaScript side has exactly one job: feed the four custom properties (`--selection-note-anchor-top/left/width/height`) from the current selection's viewport rect. The browser handles the rest: placement, scroll-tracking, falling back to a different side when the popup would clip the viewport. No resize listener, no flip logic, no `position: absolute` arithmetic.
 
-Anchor positioning is in *Baseline newly available* for 2026. Chrome 125 in mid-2024, Safari 26 in late 2025, Firefox 147 in early 2026. Exactly *too new for last year's agent*. I ended up writing a small explicit instruction for the agent: *"do not use `position: absolute` for the note popup. Read the [MDN anchor positioning guide](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Anchor_positioning) and use `position-anchor` plus `position-area`."* Two prompts instead of one - annoying, but cheap once you learn the shape of the smell.
+Anchor positioning is in *Baseline newly available* for 2026. Chrome 125 in mid-2024, Safari 26 in late 2025, Firefox 147 in early 2026. Exactly *too new for last year's agent*. I ended up writing a small explicit instruction for the agent: *"do not use `position: absolute` for the note popup. Read the [MDN anchor positioning guide](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Anchor_positioning/Using) and use `position-anchor` plus `position-area`."* Two prompts instead of one - annoying, but cheap once you learn the shape of the smell.
 
 The general lesson: the agent's mental model of "modern web" is dated by definition. Treat any hand-rolled JS for something the platform now does for free as a small smell, and keep a couple of bookmarks (Interop, Baseline, MDN Guides) handy for the rewrite prompt.
 
@@ -364,7 +364,7 @@ The fix is to give selection two modes: text selection for prose, and *region-as
 
 Luckily, modern frontier models are multimodal: the chat side ingests the PNG directly, so a screenshot of a formula is as legible to the LLM as the surrounding prose. No OCR step, no LaTeX reconstruction, no clever pipeline.
 
-One aside worth slipping in here, because it shapes the rest of the post: I picked the [Gemini API](https://ai.google.dev/) for this project. Two practical reasons. Some of my infra already lives in Google Cloud, so adding one more Google API kept the auth and billing surface small. And [grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding) is genuinely useful for a paper reader - "who else cited this" or "is there a follow-up" come back with fresh links instead of hallucinated DOIs.
+One aside worth slipping in here, because it shapes the rest of the post: I picked the [Gemini API](https://ai.google.dev/) for this project. Two practical reasons. Some of my infra already lives in Google Cloud, so adding one more Google API kept the auth and billing surface small. And [grounding with Google Search](https://ai.google.dev/gemini-api/docs/grounding) is genuinely useful for a paper reader - "who else cited this" or "is there a follow-up" come back with current results, follow-ups included, rather than whatever the model remembered at training time.
 
 <Image {...regionSelection} caption="The composer holding both a text excerpt and a region image clip from a math-heavy page. The text attachment carries the prose around the equation; the image carries the equation itself, pixel-perfect. The model sees both and answers 'Explain this' against the union." />
 
@@ -397,7 +397,7 @@ The catch in our setup is that the backend lives in a different repo. The fronte
 
 Once again, the boring answer wins: a documented contract between the API and the frontend. A contract gives the agent (and you) a stable, machine-readable description of every endpoint, every input, every response. The frontend repo gets typed clients generated from it. The agent never has to guess what `POST /papers` returns; it reads the type.
 
-A few well-trodden formats fit, each with a different lever cost. [GraphQL](https://graphql.org/) gives you a typed schema that doubles as a contract with mature codegen, but it brings a separate runtime and a bigger surface to ingest into context. [tRPC](https://trpc.io/) buys best-in-class type safety end to end, but assumes a monorepo, which would undo the repo split from the start of this post. OpenAPI / JSON Schema covers the REST-shaped half of the world and was free with FastAPI. Any of them works in the abstract; the choice that earns its place is the one whose lever costs line up with the architecture you already have.
+A few well-trodden formats fit, each with a different lever cost. [GraphQL](https://graphql.org/) gives you a typed schema that doubles as a contract with mature codegen, but it brings a separate runtime and a bigger surface to ingest into context. [tRPC](https://trpc.io/) buys best-in-class type safety end to end, but leans on a monorepo, which would undo the repo split from the start of this post. OpenAPI / JSON Schema covers the REST-shaped half of the world and was free with FastAPI. Any of them works in the abstract; the choice that earns its place is the one whose lever costs line up with the architecture you already have.
 
 For this project I went with something different. The backend is [FastAPI](https://fastapi.tiangolo.com/), which already generates an OpenAPI document at `/openapi.json` for free: the contract is a side-effect of writing the backend, not a separate artefact to keep in sync. On the frontend, two small libraries from the [openapi-ts](https://openapi-ts.dev/) project do all the work:
 
@@ -484,6 +484,8 @@ One related rule worth pinning in the instruction file: long model responses mus
 
 The fastest-changing surface. Prompt templates, context caches, payload trimming, model swaps. All small, all isolated: a prompt is a string in `prompts/`, a cache is one function, a model swap is a config change. None of them touch the rest of the codebase.
 
+One disclaimer before going further. LLMOps is a whole field of its own now - prompt registries, eval platforms, regression dashboards. [LangSmith](https://www.langchain.com/langsmith), [Langfuse](https://langfuse.com/), [Promptfoo](https://www.promptfoo.dev/), [Braintrust](https://www.braintrust.dev/), and others all do versions of "store prompts, run evals, watch for regressions." For anything past a pet project, pick one and stick with it - the moment users depend on your prompts, ad-hoc folders and eyeballed outputs stop being enough. Nutlore has not crossed that line, so the three knobs in this section stay deliberately small: templates in a folder, a thin cache layer, the occasional model swap. The point is that even the bare minimum still benefits from the same isolation rule the rest of the recipe leans on.
+
 The agent's job here is mostly "edit one file, run the relevant test or eval, repeat." Verification is cheap if you have an eval harness; without one, the human stays in the loop more than I would like. (Eval harness sits on my todo list somewhere between *please* and *yesterday*.)
 
 One weird invariant worth flagging early: bring-your-own-key Gemini calls *cannot* reuse the project-scoped cache the server creates with its own key. The cache lookup 404s silently, the response goes ahead with no context, and you spend twenty minutes wondering why the model forgot the paper. That kind of footgun goes straight into the instruction file so the agent does not "optimise" the path back into a bug.
@@ -563,8 +565,6 @@ Then, sometimes, work on yourself instead of the workflow 😉.
 
 ## What's next
 
-This is one cadence - mine. The formula does not care what you build; it cares about your `a`, `v`, `c`, and how cheaply you can push verification onto the agent's side. Your numbers will land somewhere else.
+The recipe I have shared works well on familiar ground. As a fullstack developer, I have built tons of apps like this. API contracts, rendering, all these things are mostly familiar to me. I know how to build them - or I think I know 😅.
 
-The recipe also leans on familiarity - not with this app, but with the *shape* of fullstack work. API calls, components, services, routes, schemas, jobs: well-trodden ground. The agent reflexes earlier (`html2canvas` for `OffscreenCanvas`, proxying the upload, regenerating the SSE handlers) were easy to spot because the *kind* of mistake was familiar. You only know what *right* looks like when you have seen the pattern before. That is what makes `v` cheap.
-
-What happens when everything is unfamiliar - the domain, the technology, the language? How do you build a system you have never tried to build before? That is what the next post is about.
+What happens when nothing is familiar? That is the next post.
