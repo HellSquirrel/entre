@@ -3,6 +3,7 @@ import { styled } from '@styles'
 import { IconButton } from './IconButton'
 import { GitHubLogoIcon, TwitterLogoIcon } from '@radix-ui/react-icons'
 import Dragon from './dragon.svg'
+import Bluesky from './bluesky.svg'
 import Link from 'next/link'
 import { LocaleProvider } from './LocaleProvider'
 import RSS from './rss.svg'
@@ -91,6 +92,10 @@ const FooterRu: FC = () => {
                 <TwitterLogoIcon />
               </Icon>
               {/* @ts-ignore */}
+              <Icon href="https://bsky.app/profile/pgurtovaia.bsky.social">
+                <Bluesky />
+              </Icon>
+              {/* @ts-ignore */}
               <Icon href="/rss/ru" external>
                 <StyledRSS />
               </Icon>
@@ -127,6 +132,12 @@ export const FooterEn: FC = () => {
               {/* @ts-ignore */}
               <Icon href="https://twitter.com/pgurtovaya">
                 <TwitterLogoIcon />
+              </Icon>
+            </li>
+            <li>
+              {/* @ts-ignore */}
+              <Icon href="https://bsky.app/profile/pgurtovaia.bsky.social">
+                <Bluesky />
               </Icon>
             </li>
             <li>
