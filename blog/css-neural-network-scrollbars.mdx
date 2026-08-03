@@ -1,0 +1,26 @@
+---
+title: 'A JS-less Neural Network on… Scrollbars'
+date: '2026-08-03T00:00:00.000Z'
+tags: ['css']
+slug: 'css-neural-network-scrollbars'
+locales: ['en']
+published: true
+description: 'Training a tiny neural network in pure CSS - scroll positions as parameters, snap points as writes, the render loop as the clock. A goldfish learns to swim. No JavaScript anywhere.'
+image: '/images/css-nn-scrollbars.png'
+---
+
+Modern CSS has superpowers: real trigonometry, exponents, custom functions, even conditionals via `if()`. Two things it famously lacks: loops, and variables you can update. A training loop needs both.
+
+So I built one anyway - [a tiny neural network that trains itself, live, in pure CSS](https://acorns.nutlore.me/css-neural-network/). No JavaScript on the page. None in a build step either.
+
+The trick, in three lines:
+
+- **Variables live in scrollbars.** Scroll position is the one number the browser keeps between frames that a stylesheet can both read and write. Each parameter is a scroller - how far it is scrolled *is* the value.
+- **Reads and writes are layout tricks.** A `scroll-timeline` reads the position back as a number. `calc()` computes real residuals and gradients from the training data - the dataset sits in the stylesheet as variables, and the labels come from asking `sin()` at runtime. Then `scroll-snap-type: mandatory` writes the result: park the snap target somewhere, and the scrollbar must follow. That drag is the assignment.
+- **The render loop is the `for` loop.** Nothing ticks the machine. Being rendered is being ticked - one momentum step per frame, forever.
+
+The story on the page: a goldfish 🐠 learns to swim like `sin(x)`, taught by a fish that knows the answer natively. You can grab a scrollbar mid-training and fight the optimizer with your thumb. The optimizer wins. It has more stamina.
+
+Needs a recent Chrome ([animation-timeline](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/animation-timeline), [@function](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@function), [sibling-index()](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/sibling-index)). Elsewhere the tank freezes over for the season - the teacher swims on under the ice.
+
+The full write-up lives on the demo page itself: the two-phase flip-flop that dodges the self-reference guard, the math in MathML, and the optimizer in CSS, piece by piece. [Go poke the fish.](https://acorns.nutlore.me/css-neural-network/)
