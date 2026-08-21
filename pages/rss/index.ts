@@ -16,7 +16,7 @@ function generateRSSFeed(posts: Post[]) {
     <atom:link href="${siteUrl}/rss" rel="self" type="application/rss+xml"/>
     ${posts
       .map(({ slug, frontmatter }) => {
-        const postUrl = `${siteUrl}/blog/${slug}`
+        const postUrl = frontmatter.external ? slug : `${siteUrl}/blog/${slug}`
         const pubDate = new Date(frontmatter.date).toUTCString()
 
         return `
