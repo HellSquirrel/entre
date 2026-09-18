@@ -1,0 +1,175 @@
+---
+title: 'Wasm, CSS, Robots'
+date: '2026-09-18T00:00:00.000Z'
+tags: ['Wasm', 'css']
+slug: 'wasm-css-robots'
+locales: ['en']
+published: false
+description: ''
+image: ''
+---
+
+import { Details } from '../components/Details'
+
+Open [webstatus.dev](https://webstatus.dev/), pick Baseline 2021, then Baseline 2026. Look at what moved.
+
+- CSS has almost become a second programming language. 2021 gave us `:is()`, `aspect-ratio` and flexbox `gap`. 2026 gives style queries, `sibling-index()`, `progress()` and `@scope`.
+- Wasm is a long way from its MVP. Garbage collection, tail calls, exceptions - all shipped. Promise integration landed four days ago.
+- Iterators are thriving in JavaScript. Iterator helpers in 2025, `Iterator.concat()` this spring.
+
+Meanwhile the world of crutches - frameworks and devtools - moves slower than the platform under it. Maybe, just maybe, it is time to experiment with something that fits the _modern_ platform.
+
+That was my thinking when I set out to build something fun that would replace my default tools, and see how it goes. Spoiler: I ended up with something very similar to what devtools do right now. Eccentric designs are hard to craft. But I learned a few things along the way, and I want to share them with you.
+
+So I tried to prototype a different way to build UI. A typical app is React, some state manager, a funny component structure, maybe a design system. What can I throw away? Obviously JavaScript :) TypeScript, sorry.
+
+On top of that, I wanted to get rid of the store that holds the state, and of any kind of virtualization. And finally: if CSS is so cool 💅, why not let it control the page instead of boring HTML rewrites?
+
+With that in mind, here is the model:
+
+- JavaScript is swapped for Rust. Most of the time the developer writes Rust, which obviously compiles to Wasm and lands on the page as a standalone module.
+- That Rust is glued to CSS through a slim JavaScript shim.
+- By default everything that happens turns into CSS - a variable, a class or an attribute. In some cases we touch the HTML too.
+- Rendering is implicit. The code itself is pretty imperative, with functional abstractions on top. More on that later.
+
+Now we have two worlds. Rust is nice and peaceful: every value has exactly one owner. The page is where users are having fun, and nobody owns anything.
+
+Every time something happens on the page _or_ in the environment, it becomes an event. A click on a button and a tick of the clock look like this:
+
+```rust
+Event::Input { key: "post:42".into(), input: Input::Toggle }
+Event::Tick { ms: 16 }
+```
+
+Events live in the Rust world and build up one loooong sequence: the log. The tiny JS shim only delivers them. The user clicks a button:
+
+```html
+<button data-on="click:toggle">like</button>
+```
+
+The shim turns that into one call across the boundary: the id of `toggle`, no row, no text.
+
+```js
+app.dispatch(id, -1, new Uint8Array())
+```
+
+On the other side it becomes `Event::Input { input: Input::Toggle, .. }` and goes to the end of the log.
+
+But you want interactivity, right? It would be cool if something actually happened when you click the button :)
+
+The log doesn't care. It just accumulates. To get a page update you need to, unfortunately, change some state. There is no way to get rid of state. Unfair! 😤
+
+To get your state, you just _fold_ the log. A plain [left fold](https://en.wikipedia.org/wiki/Fold_(higher-order_function)): `reduce` if you speak JavaScript, `foldl` if you speak Haskell. You write a function that takes the state so far and one event, and returns the next state. For the like button the whole state is one flag:
+
+```rust
+pub struct View {
+    pub liked: bool,
+}
+
+pub fn step(v: View, _: u64, ev: &Ev) -> View {
+    match ev {
+        Event::Input { input: Input::Toggle, .. } => View { liked: !v.liked },
+        _ => v,
+    }
+}
+```
+
+The `u64` in the middle is the event's position in the log. The like button doesn't need it, so it's ignored.
+
+Hello, Redux 👋
+
+But our system works the other way round. The state is disposable: drop it, fold the log again, get it back. The actions are the thing we keep, all of them. Backend people have a name for this: [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html).
+
+Note the `View` in the example. There is no global state. There are views, and each one is its own fold over the same log. Want two? Fold twice, or zip them into one.
+
+Now we need to apply the view to what the user can see. How? Step one: find who owns it. Meet our good old friend, the component.
+
+```rust
+logfold_core::component! {
+    pub mod ui;
+    domain Like;
+    inputs { toggle => Toggle }
+    root { class liked; }
+    state View;
+    step = step;
+    project = project;
+}
+```
+
+Don't worry about all the parameters too much. The important one is `project`.
+
+```rust
+pub fn project(v: &View) -> Projection {
+    Projection::new().set(ui::liked.slot(), u8::from(v.liked))
+}
+
+// simplified: the real one is sorted and batches writes
+pub struct Projection {
+    pairs: Vec<(Slot, f64)>,
+}
+
+// what ui::liked.slot() is for our button
+Slot { target: Target::Root, kind: SlotKind::Class, name: intern("liked") }
+```
+
+So `project` takes a view and turns it into a projection. A projection carries two things, many times over:
+
+- a slot - a named place on the page. Here there is one, `ui::liked`, generated from `root { class liked; }` in the declaration, so a typo is a compile error.
+- a number. For a class it says present or absent: 1 or 0.
+
+The slot says where the number lands and what it becomes. For the like button:
+
+- `target` is `Root`, the `<html>` element itself. A named target would be an element with `data-fold="name"`.
+- `kind` is `Class`. The number toggles a class on that element. `Attr` would write `data-liked="1"` instead, and `Var` would set `--liked: 1`.
+- `name` is `liked`.
+
+The whole trip of one click, top to bottom:
+
+```
+click ──▶ Event::Input { input: Toggle, .. }    appended to the log
+                     │
+                     ▼ step
+              View { liked: true }
+                     │
+                     ▼ project
+      (Slot { Root, Class, "liked" }, 1)
+                     │
+                     ▼ shim: one classList.toggle
+             <html class="liked">
+                     │
+                     ▼ stylesheet
+      html.liked [data-fold=like]::before { content: "♥ " }
+```
+
+Not HTML, not a tree. A flat list of pairs. That's all Rust knows about the page. It never sees a heart. The stylesheet decides what `liked` looks like:
+
+```css
+[data-fold=like]::before { content: "♡ "; }
+html.liked [data-fold=like]::before { content: "♥ "; }
+```
+
+That was the basics. Now the fun part.
+
+## Challenges
+
+### A memory leak with a business model
+
+Our calculations look great, but there is a caveat. We just built a huge memory leak. The log is never cleaned up.
+
+On top of that, sometimes we don't want to fold at all. We want our new shiny state right now, and folding the whole log to get it is too much work.
+
+To solve this we introduce checkpoints. Since our state is a left fold, we can freeze it at any point and throw away the sequence before it. The law that makes this legal is one line:
+
+```
+fold(log) == fold_from(state_at(k), log[k..])   // for any k
+```
+
+<Details withBackground title="What if there are many folds?">
+We zip them all together before we go. `zip` runs two folds over the same events in one pass and keeps a pair of states, so a checkpoint is always the state of _one_ fold. Views derived with `map` need no storage at all: they are functions of that state.
+</Details>
+
+<Details withBackground title="Time travel between checkpoints">
+Checkpoints live in a B-tree, ordered by time. To show the page as it was at some moment, ask the tree for the last checkpoint before that moment, then replay the few events between the two. That is the whole slider.
+
+A small Wasm lesson. After I added the cleanup, every bundle grew by 2.6 KB. The culprit was a single call to `BTreeMap::remove`: nothing else in the app removed anything from a tree, so the whole removal code came along just for it. To shrink the bundle back, I had to get rid of that one method. Instead of removing old checkpoints, we now rebuild the tree from the ones we keep. Same tree, same result, and the 2.6 KB are gone.
+</Details>

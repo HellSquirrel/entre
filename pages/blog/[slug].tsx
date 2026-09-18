@@ -30,6 +30,7 @@ import * as ThreadsEn from '@blog/threads-en.mdx'
 import * as Tasks2d from '@blog/draw-your-plans-2d.mdx'
 import * as DxDp from '@blog/dx-dp.mdx'
 import * as DxDp1 from '@blog/dx-dp-1.mdx'
+import * as WasmCssRobots from '@blog/wasm-css-robots.mdx'
 
 const pages = [
   ImageOptimization,
@@ -54,6 +55,7 @@ const pages = [
   Tasks2d,
   DxDp,
   DxDp1,
+  WasmCssRobots,
 ]
 
 const Img = styled('img', {
