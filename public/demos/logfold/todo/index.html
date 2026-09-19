@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>LogFold: todo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- the contract, generated from the component's declaration at build time -->
+<link rel="stylesheet" href="gen/todo.css">
+<style>
+  /* Appearance lives here and is never generated. Every visible decision
+     follows from an attribute, a variable or a text the host writes. */
+  html { color-scheme: light; background: #fff; }
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 1rem; color: #222; }
+  h2 { font-size: 1rem; margin: 1.25rem 0 .25rem; color: #555; }
+  .muted { color: #777; font-size: .9rem; }
+  .draft { width: 100%; font: inherit; padding: .5rem .75rem; border: 1px solid #bbb; border-radius: 6px; }
+  ul { list-style: none; padding: 0; }
+  /* a row exists only while the host says so */
+  .item { display: none; padding: .4rem .75rem; border-bottom: 1px solid #eee; }
+  .item.present { display: flex; gap: .75rem; align-items: baseline; }
+  /* the row's number is an attribute the host writes once, printed as is:
+     a counter would restyle every later row, sibling-index() every sibling */
+  .item::before { content: attr(data-n); color: #999; font-variant-numeric: tabular-nums; min-width: 1.5ch; }
+  /* the checkbox is a real one: the host writes its `checked` property, so
+     a screen reader hears the state, Space toggles it, and the label makes
+     the title its name. The look follows from :checked, not from a class. */
+  .item label { display: flex; gap: .75rem; align-items: baseline; flex: 1; cursor: pointer; }
+  .item .check { accent-color: #2e7d32; width: 1.1em; height: 1.1em; margin: 0; align-self: center; }
+  .item:has(.check:checked) .title { text-decoration: line-through; color: #767676; }
+  /* the count as text, from the variable the host writes on the root;
+     the plural is a style query on the same variable */
+  .count::after { counter-reset: n var(--count); content: counter(n) " items"; }
+  @container style(--count: 1) { .count::after { content: counter(n) " item"; } }
+</style>
+
+<p><input class="draft" name="draft" aria-label="new item" data-on="enter:add" placeholder="what needs doing? press enter"></p>
+<ul>
+  <!-- rows are cloned from this the first time the host names one -->
+  <template data-fold="item"><li class="item"><label><input class="check" type="checkbox" data-checked="done" data-on="click:toggle"><span class="title" data-text="title"></span></label></li></template>
+</ul>
+<p class="muted"><span data-fold="count" class="count"></span></p>
+<h2>History</h2>
+<div id="history"></div>
+
+<script type="module">
+  import init, { TodoApp } from "./pkg/todo-app/todo_app.js";
+  import manifest from "./gen/todo.manifest.mjs";
+  import { mount } from "./logfold.mjs";
+  import { timeline } from "./timeline.mjs";
+  await init();
+  const host = mount(new TodoApp(), { manifest });
+  timeline(host, document.getElementById("history"));
+</script>

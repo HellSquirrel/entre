@@ -25,7 +25,7 @@ export const {
     },
 
     sizes: {
-      max: '800px',
+      max: '920px',
       step: '100px',
       icon: '20px',
       unit: '1px',

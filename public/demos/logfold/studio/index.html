@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>LogFold: studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- the contract, generated from the component's declaration at build time:
+     typed @property registrations and the room's constants -->
+<link rel="stylesheet" href="gen/studio.css">
+<style>
+  /* Everything visible follows from numbers the host writes on <html> and on
+     the 96 cells. Booleans arrive as classes that are present or absent,
+     enums as classes spelled by name, positions and counts as variables.
+     Motion is CSS transitions on those. Nothing here is generated: this is
+     appearance, and it is the designer's. */
+  html { color-scheme: light; background: #fff; }
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 1rem; color: #222; }
+  h2 { font-size: 1rem; margin: 1rem 0 .25rem; color: #555; }
+  /* a phone is narrower than twelve 40px cells */
+  @media (max-width: 540px) { :root { --cell_px: 26; } }
+  /* a long session is a long history: keep it in a box */
+  .lf-timeline .lf-lanes { max-height: 4.5rem; overflow: auto; }
+  button { font: inherit; padding: .35rem .7rem; margin-right: .25rem; }
+  nav a { margin-right: 1rem; }
+  .muted { color: #777; font-size: .9rem; }
+  .panel { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .panel .group { display: inline-flex; }
+
+  /* the panel lights whatever the state says */
+  html.running .b-run, html:not(.running) .b-pause,
+  html.policy-naive .b-naive, html.policy-careful .b-careful,
+  html.dropouts .b-dropouts { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+  html.latched .b-estop { background: #d32f2f; color: #fff; border-color: #d32f2f; }
+
+  /* the room: cells that always exist; state paints them. Size and count come from the contract. */
+  .room { position: relative; display: grid; grid-template-columns: repeat(var(--room_w), calc(var(--cell_px) * 1px));
+          grid-auto-rows: calc(var(--cell_px) * 1px); width: calc(var(--room_w) * var(--cell_px) * 1px); border: 1px solid #bbb; background: #e9e6df; }
+  .cell { box-sizing: border-box; border: 1px solid rgba(0,0,0,.08); transition: background .3s; }
+  .cell.cleaned { background: #bfe3c0; }
+  .cell.furniture { background: #8d6e63; }
+  .cell.dock { box-shadow: inset 0 0 0 3px #4a90e2; }
+
+  /* actors: one cell each, positioned by variables; the transition is the gliding */
+  .actor { position: absolute; left: 0; top: 0; width: calc(var(--cell_px) * 1px); height: calc(var(--cell_px) * 1px); pointer-events: none;
+           transition: translate .25s ease-out, opacity .25s; }
+  .her { translate: calc(var(--her_x) * var(--cell_px) * 1px) calc(var(--her_y) * var(--cell_px) * 1px); }
+  .her::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #333; transition: background .2s; }
+  html.mode-stopped .her::before { background: #999; }
+  html.attacking .her::before { background: #d32f2f; }
+  .her::after { content: "▲"; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 11px; transition: rotate .2s; }
+  html.heading-none .her::after { content: ""; }
+  html.heading-east .her::after { rotate: 90deg; }
+  html.heading-south .her::after { rotate: 180deg; }
+  html.heading-west .her::after { rotate: 270deg; }
+  .human { translate: calc(var(--human_x) * var(--cell_px) * 1px) calc(var(--human_y) * var(--cell_px) * 1px); }
+  .human::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: #2196f3; }
+
+  /* what she knows: the last sighting fades with age; the ring while it is fresh and she is careful */
+  .sighting { translate: calc(var(--seen_x) * var(--cell_px) * 1px) calc(var(--seen_y) * var(--cell_px) * 1px);
+                     opacity: clamp(0.15, 1 - var(--seen_age) * 0.25, 1); }
+  html:not(.seen) .sighting { opacity: 0; }
+  .sighting::before { content: ""; position: absolute; inset: 12px; border-radius: 50%; border: 2px dashed #2196f3; }
+  .ring { position: absolute; left: calc(var(--cell_px) * -1px); top: calc(var(--cell_px) * -1px);
+                     width: calc(var(--cell_px) * 3px); height: calc(var(--cell_px) * 3px); box-sizing: border-box; pointer-events: none;
+                     translate: calc(var(--seen_x) * var(--cell_px) * 1px) calc(var(--seen_y) * var(--cell_px) * 1px);
+                     border: 2px dashed rgba(211,47,47,.7); opacity: 0; transition: translate .25s ease-out, opacity .25s; }
+  html.policy-careful.fresh .ring { opacity: 1; }
+
+  /* status as text: counters from variables, the mode from an attribute */
+  .status .n::before { counter-reset: n var(--v); content: counter(n); }
+  html.mode-idle .mode-text::before { content: "idle"; }
+  html.mode-cleaning .mode-text::before { content: "cleaning"; }
+  html.mode-docking .mode-text::before { content: "docking"; }
+  html.mode-stopped .mode-text::before { content: "stopped"; }
+  html.latched .mode-text::after { content: " · motors latched"; color: #d32f2f; }
+</style>
+
+<p class="muted">Press <em>start</em>. You are the blue dot: click here first, then the arrow keys move you (or use the arrow buttons).</p>
+
+<div class="panel">
+  <span class="group"><button class="b-run" data-on="click:run">run</button><button class="b-pause" data-on="click:pause">pause</button></span>
+  <span class="group"><button data-on="click:slower">slower</button><button data-on="click:faster">faster</button></span>
+  <span class="group"><button class="b-naive" data-on="click:naive">naive</button><button class="b-careful" data-on="click:careful">careful</button></span>
+  <button class="b-dropouts" data-on="click:dropouts">dropouts</button>
+  <span class="group"><button data-on="click:start">start</button><button data-on="click:dock">dock</button><button class="b-estop" data-on="click:estop">e-stop</button></span>
+  <!-- you, for a screen without arrow keys -->
+  <span class="group"><button data-on="click:west" aria-label="move left">◀</button><button data-on="click:north" aria-label="move up">▲</button><button data-on="click:south" aria-label="move down">▼</button><button data-on="click:east" aria-label="move right">▶</button></span>
+</div>
+
+<div class="room" id="room">
+  <i data-fold="ring" class="ring"></i>
+  <i data-fold="seen" class="actor sighting"></i>
+  <i data-fold="human" class="actor human"></i>
+  <i data-fold="her" class="actor her"></i>
+</div>
+<p class="status"><span data-fold="mode" class="mode-text"></span> · cleaned <span class="n" style="--v: var(--cleaned)"></span> / 89 · bumps <span class="n" style="--v: var(--bumps)"></span> · attacks <span class="n" style="--v: var(--attacks)"></span> · ticks <span class="n" style="--v: var(--ticks)"></span> · <span class="n" style="--v: var(--fps)"></span> fps</p>
+
+<h2>History</h2>
+<div id="history"></div>
+
+<script type="module">
+  import init, { StudioApp } from "./pkg/studio-app/studio_app.js";
+  import manifest from "./gen/studio.manifest.mjs";
+  import { mount } from "./logfold.mjs";
+  import { timeline } from "./timeline.mjs";
+  await init();
+
+  // The skeleton's cells: one per family member, named by the contract's
+  // family and indexed column-major like the component. Still static; just
+  // not typed by hand.
+  const { room_w: W, room_h: H } = manifest.consts;
+  const room = document.getElementById("room");
+  const cells = document.createDocumentFragment();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = document.createElement("i"); i.className = "cell"; i.dataset.fold = `cell-${x * H + y}`; cells.append(i);
+  }
+  room.prepend(cells);
+
+  const host = mount(new StudioApp(), { manifest });
+  timeline(host, document.getElementById("history"));
+
+  // inputs the skeleton cannot express with data-on: keys
+  const keys = { ArrowUp: "north", ArrowRight: "east", ArrowDown: "south", ArrowLeft: "west" };
+  document.addEventListener("keydown", (e) => {
+    if (e.key in keys) { e.preventDefault(); host.dispatch(keys[e.key]); }
+    if (e.key === " ") { e.preventDefault(); host.frame(1000 / (host.vars.get("--fps") || 4)); }
+  });
+
+  // embedded in a post: time passes only while the reader can see the room
+  let inView = true;
+  new IntersectionObserver(([e]) => { inView = e.isIntersecting; }).observe(document.documentElement);
+
+  // the clock: while the state says running, one frame per 1/fps seconds
+  (function loop() {
+    const fps = host.vars.get("--fps") || 4;
+    if (host.vars.get("running") === 1 && !document.hidden && inView) host.frame(1000 / fps);
+    setTimeout(loop, 1000 / fps);
+  })();
+</script>

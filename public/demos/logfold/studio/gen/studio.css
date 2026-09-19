@@ -1,0 +1,14 @@
+/* generated from the component's slots!; do not edit */
+@property --fps { syntax: "<integer>"; inherits: true; initial-value: 4; }
+@property --her_x { syntax: "<integer>"; inherits: true; initial-value: 0; }
+@property --her_y { syntax: "<integer>"; inherits: true; initial-value: 0; }
+@property --human_x { syntax: "<integer>"; inherits: true; initial-value: 6; }
+@property --human_y { syntax: "<integer>"; inherits: true; initial-value: 6; }
+@property --seen_x { syntax: "<integer>"; inherits: true; initial-value: -1; }
+@property --seen_y { syntax: "<integer>"; inherits: true; initial-value: -1; }
+@property --seen_age { syntax: "<integer>"; inherits: true; initial-value: -1; }
+@property --attacks { syntax: "<integer>"; inherits: true; initial-value: 0; }
+@property --bumps { syntax: "<integer>"; inherits: true; initial-value: 0; }
+@property --cleaned { syntax: "<integer>"; inherits: true; initial-value: 0; }
+@property --ticks { syntax: "<integer>"; inherits: true; initial-value: 0; }
+:root { --room_w: 12; --room_h: 8; --cell_px: 40; }
