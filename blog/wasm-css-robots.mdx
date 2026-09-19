@@ -19,24 +19,24 @@ import Hero from './assets/wasm-css-robots/logfold.svg'
   style={{ display: 'block', width: '100%', maxWidth: 560, height: 'auto', margin: '0 auto 24px' }}
 />
 
-Compare Baseline 2021 with Baseline 2026 on [webstatus.dev](https://webstatus.dev/). A lot has changed. CSS can handle more UI logic, and Wasm has new ways to work with JavaScript values.
+Compare Baseline 2021 with Baseline 2026 on [webstatus.dev](https://webstatus.dev/). A lot has changed. CSS became surprisingly more programmable - we even have `if()` now. Wasm improved just as much, picking up garbage collection and new ways to handle JavaScript values.
 
-My usual stack was still React and a pile of components. I wondered how far Wasm and CSS alone could take me. No virtual DOM, and please, please, no state managers. A good excuse to write a toy framework.
+My usual stack was still React and a giant pile of components. I started wondering how far Wasm and CSS alone could take me. No virtual DOM, and please, no state managers. Really, it was just a great excuse to write a toy framework.
 
-Spoiler: I rediscovered several ideas my usual tools already use. Apparently, changing the programming language does not make me original.
+Spoiler alert: I ended up rediscovering several core ideas my daily tools already rely on. It turns out good architecture is stubborn - it follows you even when you switch programming languages.
 
-Here is the idea:
+Here is the main idea:
 
-- The application logic is written in Rust and compiled to Wasm.
-- A small JavaScript adapter, or shim, connects the Wasm module to the page. So much for doing the whole thing in Rust and CSS.
-- State changes become values CSS can read, ideally [CSS variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties). Some updates still need DOM changes, as we will see.
-- The runtime handles updates to the page. Components describe their state and what should be visible; they do not call a render function themselves.
+- The application logic lives in Rust and compiles to Wasm.
+- A tiny JavaScript adapter - a shim - connects the Wasm module to the page. So much for skipping JavaScript entirely.
+- State changes project into values that CSS can read directly, like [CSS variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties). Though some things still require actual DOM updates, as we will see.
+- The runtime handles those page updates. Components just describe how they want to map the state to reality.
 
-There are two worlds here. On the Rust side, everything is happy and orderly: types, ownership, events arriving in a neat sequence. On the JavaScript side, there is a page and a user happily increasing the entropy. The shim connects the two.
+We are basically dealing with two different worlds. On the Rust side, everything is strictly typed, neatly owned, and events arrive in perfect order. Over on the JavaScript side, there is a web page and a user happily maximizing entropy. The shim is what connects the two.
 
 ## A like button with a memory
 
-Let’s start with something small. Hooray, the LIKE button! Or, to be precise, the 84 KB like button. 27 KB brotlied. It likes. It unlikes. That is the whole feature list.
+Let's start with something small. Behold, the LIKE button! Or, to be precise, the 84 KB like button (27 KB compressed with Brotli). It likes. It unlikes. That concludes the entire feature list.
 
 <iframe
   src="/demos/logfold/like/index.html"
@@ -45,15 +45,15 @@ Let’s start with something small. Hooray, the LIKE button! Or, to be precise, 
   style={{ width: '100%', height: 340, border: '1px solid #ccc', borderRadius: 8 }}
 />
 
-Click it a few times, then drag the slider backwards. The runtime applies changes from the past state to the same button you just clicked.
+Click it a few times to build up some history, then drag the slider backwards. The runtime applies changes from past states directly to the same button you just clicked. Time travel, basically.
 
 <Details withBackground title="Where do all those kilobytes come from?">
-The button brings the framework along with it. For these demos, `wasm-pack` runs the build: Rust compiles the app and runtime into a `.wasm` module, `wasm-bindgen` generates the JavaScript glue to call it, and `wasm-opt` optimizes the module for size. Add the shim that connects it to the page and the generated CSS, and we have our bundle.
+The button naturally brings the whole framework along for the ride. For these demos, `wasm-pack` handles the build - Rust compiles the app and runtime into a `.wasm` module, `wasm-bindgen` generates the JavaScript glue, and `wasm-opt` optimizes the module for size. Throw in the JS shim and the generated CSS, and we get our final bundle.
 
-For all three demos, I count the Wasm module, wasm-bindgen glue, shared shim, generated CSS and any imported manifest. The page HTML and timeline JavaScript are excluded. KB means 1,000 bytes; Brotli totals compress each file separately at quality 11. The bundle section below has the breakdown.
+For all three demos, the bundle size includes the Wasm module, wasm-bindgen glue, the shared shim, generated CSS, and any imported manifests. (The static page HTML and the timeline slider's JavaScript are excluded). A KB means 1,000 bytes, and the Brotli totals represent each file compressed separately at quality 11. We will break down the exact sizes further down the page.
 </Details>
 
-Here is the route from a click to a CSS value. We will follow it one step at a time:
+Here is the exact journey from a user click to a CSS value. Let's trace it step by step:
 
 ```
 click ──▶ Event::Input { input: Toggle, .. }    appended to the log
@@ -73,35 +73,35 @@ click ──▶ Event::Input { input: Toggle, .. }    appended to the log
 
 ### A click becomes an event
 
-The Rust runtime has a host that manages the component. It records inputs from the page or the outside world as events. A button click might look like this:
+The Rust runtime runs a host that manages the component. Its job is to ingest inputs from the outside world and record them as events. A simple button click might look like this:
 
 ```rust
 Event::Input { key: "post:42".into(), input: Input::Toggle }
 ```
 
-Rust stores these events in order, forming the log. The shim delivers the inputs from the page, starting with this button:
+Rust appends these events in strict sequential order, forming a log. The JavaScript shim acts as the courier, delivering inputs from the DOM, starting with this button:
 
 ```html
 <button class="like" data-on="click:toggle">like</button>
 ```
 
-A click makes one call into Wasm. The arguments identify `toggle`, with no row index or text to send.
+A click fires a single call across the Wasm boundary. The arguments just identify the `toggle` action - there is no row index or text payload needed here.
 
 ```js
 app.dispatch(id, -1, new Uint8Array())
 ```
 
-Rust turns the input into `Event::Input { input: Input::Toggle, .. }` and appends it to the log.
+Rust parses the raw input into an event and appends it to the log.
 
 ### A fold turns events into state
 
-So far, I have built a button that keeps a diary. To make it do anything visible, we need to turn that history into state.
+So far, I have built a button with a diary. To make it actually do something visible, we need to collapse that history into state.
 
-We get state by _folding_ the log: going through the events in order and updating the state at each step. This is a [left fold](https://en.wikipedia.org/wiki/Fold_(higher-order_function)), like JavaScript's `reduce` or Haskell's `foldl`.
+We get state by _folding_ the log: going through the events in order and updating the state at each step. This is a classic [left fold](https://en.wikipedia.org/wiki/Fold_(higher-order_function)) - just like JavaScript's `reduce` or Haskell's `foldl`.
 
-A log and a fold. That is the idea, and all the effort I put into the name: [LogFold](https://github.com/HellSquirrel/log-fold).
+A log and a fold. That is the core idea, and absolutely all the effort I put into naming the framework: [LogFold](https://github.com/HellSquirrel/log-fold).
 
-The step function takes the current state and one event, then returns the next state. We call this state `View` because it holds what the component needs to show. For the like button, that is a single flag:
+The `step` function takes the current state and a single event, returning the next state. We call this struct a `View` because it represents the conceptual state of the component. For our like button, that is just a lonely boolean:
 
 ```rust
 pub struct View {
@@ -116,17 +116,17 @@ pub fn step(v: View, _: u64, ev: &Ev) -> View {
 }
 ```
 
-The `u64` in the middle is the event's position in the log. The like button doesn't need it, so it's ignored.
+Hello, Redux 👋. Except here, persisting the history is actually the runtime's job.
 
-Hello, Redux 👋 Except here, keeping the history is part of the runtime's job.
+That `u64` parameter squeezed in the middle is the event's index in the log. Our like button couldn't care less about time, so it ignores it.
 
-We can throw the state away and rebuild it from the log. Almost: checkpoints add a catch, which we will get to later. Keeping the event history this way has a name: [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html).
+Because we store the log, we can casually throw the state away and rebuild it from scratch. (Well, mostly - checkpoints introduce a small catch we will discuss later). Retaining the event history instead of just the current state is affectionately known as [event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html).
 
-The `View` in this example holds the state needed by the like button. There are no stores with global state. Each view is its own fold over the same log. Two views can run separately, or `zip` can combine their folds into one pass.
+The `View` in this example only holds the data the like button cares about. There are no massive global stores here. Each view defines its own isolated fold over the exact same log. Multiple views can process the log independently, or we can `zip` them together to evaluate them in a single pass.
 
 ### State becomes CSS values
 
-To connect that state to the page, we declare a component. I was trying something different and ended up back at components, just like the ones I usually write in JavaScript.
+To connect that state back to the page, we declare a component. I tried something new, but ended up right back at familiar components - just like the ones I write in JavaScript.
 
 ```rust
 logfold_core::component! {
@@ -141,7 +141,7 @@ logfold_core::component! {
 }
 ```
 
-The declaration connects the inputs, state and functions. For now, the part we need is `project`:
+This macro wires together the inputs, state, and transition functions. The critical piece we need right now is `project`:
 
 ```rust
 pub fn project(v: &View) -> Projection {
@@ -157,22 +157,22 @@ pub struct Projection {
 Slot { target: Target::Root, kind: SlotKind::Var, name: intern("--like-liked") }
 ```
 
-`project` converts the state into a list of pairs. That list is the projection. Each pair contains:
+`project` translates the state into a vector of pairs, representing our projection. Each pair is composed of:
 
-- A slot: a named output on the page. Here, `ui::liked` is generated from `root { var liked: int; }`. A typo in its Rust name becomes a compile error.
-- A number: for our boolean state, either 1 or 0.
+- A slot: a named output target on the page. Here, `ui::liked` is strongly typed and auto-generated from `root { var liked: int; }`. A typo in Rust results in a reassuring compiler error.
+- A number: for our boolean state, we just cast it to `1` or `0`.
 
-The slot describes where and how to apply the number. For the like button:
+The slot metadata dictates exactly where and how to apply the value. For our button:
 
-- `target` is `Root`, the `<html>` element itself. A named target would be an element with `data-fold="name"`.
-- `kind` is `Var`, so the number becomes a CSS variable.
-- `name` is `--like-liked`: the component's prefix plus the slot's name. `liked` is a popular word, and a component usually lives on somebody else's page.
+- `target` is `Root`, mapped to the `<html>` element itself. If we needed a specific element, it would be a named target like `data-fold="name"`.
+- `kind` is `Var`, indicating the number should become a CSS variable.
+- `name` is `--like-liked`: the component's internal prefix merged with the slot's name. We use a prefix because `liked` is too generic of a word to risk polluting a host page's namespace.
 
-The host keeps the last projection it sent and compares it with the new one. It sends only the changed pairs to the page. These make up the patch. For the like button, it contains one pair. The component does not need to request a render; the host applies the patch.
+The runtime caches the last projection it emitted and diffs it against the new one. It strictly ships the delta - the patch - to the JavaScript shim. For the like button, the patch is exactly one pair. The component never manually begs for a re-render; the host calculates and applies the patch automatically.
 
-Both the slot and its value travel as numbers, so we do not have to convert names on every click.
+Both the slot identifier and its payload cross the Wasm boundary as raw `f64` numbers, sparing us the CPU cycles of serializing strings on every click.
 
-The patch sets `--like-liked: 1` in a stylesheet. With constructable stylesheets, the like update changes only the CSS object model, or CSSOM: the shim owns a `:root {}` rule and writes the variable there. No nodes, classes or attributes change. The stylesheet handles the appearance:
+This patch effectively sets `--like-liked: 1` in a dynamic stylesheet. By leveraging constructable stylesheets, toggling the button only mutates CSS. The shim manages a virtual `:root {}` rule and forcefully writes the variable there. No DOM nodes are touched, no classes are toggled, no attributes are updated. The stylesheet is entirely responsible for reacting to the change:
 
 ```css
 .like {
@@ -196,14 +196,14 @@ There is a browser-support limit: `if()` is Chromium-only today. In other curren
 ```
 
 <Details withBackground title="What actually crosses, and where it lands">
-Every change is five numbers: which element, which row, what kind, which name, what value. A click on the like button sends exactly this:
+Every change is just five numbers: which element, which row, what kind, which name, and what value. A click on the like button sends exactly this:
 
 ```js
 [0, -1, 0, 1, 1]
 // element 0 is "root", -1 is "no row", kind 0 is a variable, name 1 is "--like-liked", value 1 is "on"
 ```
 
-The shim fetches each name once and caches it. At startup, it creates a stylesheet with one empty rule. Root variables are written into that rule:
+The shim fetches each name once and caches it. At startup, it creates a stylesheet with a single empty rule. Root variables are injected straight into that rule:
 
 ```js
 const sheet = new CSSStyleSheet()
@@ -213,33 +213,33 @@ document.adoptedStyleSheets.push(sheet)
 sheet.cssRules[0].style.setProperty('--like-liked', 1)
 ```
 
-This is a write to the CSS object model, not to the document. In our measurements it was about as cheap as toggling a class. The generated stylesheet registers the variable, so it has a type and a default:
+This is a direct write to CSS, completely bypassing the document. In our measurements, it was roughly as cheap as toggling a CSS class. The generated stylesheet also registers the variable, giving it a strict type and a default:
 
 ```css
 @property --like-liked { syntax: "<integer>"; inherits: true; initial-value: 0; }
 ```
 
-A named target can receive variables through a rule on its class, without the shim looking up an element. Repeated rows carry their values on the elements themselves.
+A named target can receive variables through a rule on its class, meaning the shim does not even need to look up the element. Repeated rows just carry their values on the elements themselves.
 
-The history panel still updates its own DOM after a click. Browsers without constructable stylesheets also use a fallback that writes root variables to `<html>`'s inline style. So the like action leaves the DOM alone when it uses a constructable stylesheet; the history panel and the fallback still change it.
+The history panel still updates its own DOM after a click. Browsers without constructable stylesheets also use a fallback that writes root variables directly to `<html>`'s inline style. So, the like action leaves the DOM alone when it uses a constructable stylesheet - the history panel and the fallback still change it.
 </Details>
 
-Rust's description of the page is a flat list of slot-value pairs. The HTML structure and appearance stay on the browser side.
+Ultimately, Rust's view of the page is just a flat vector of numeric slot-value pairs. The semantic HTML structure and visual styling are rightfully confined to the browser.
 
 ## Challenges
 
-Even a like button raised two questions: how much does crossing between Rust and JavaScript cost, and why is the bundle so large?
+Even a simple like button raised two questions: how much does crossing between Rust and JavaScript actually cost, and why is the bundle so large?
 
 ### The border
 
-The boundary between Rust and JavaScript sounds expensive. In our measurements, small numeric calls were cheap; converting strings took more work.
+Crossing the border between those two worlds sounds expensive. In our measurements, however, small numeric calls were cheap - it is converting strings that takes real work.
 
-Rust's ordinary data structures live in Wasm's linear memory, an array of bytes. JavaScript can access those bytes through typed-array views. JavaScript objects, including DOM nodes, live elsewhere. Rust can keep handles to them, but their contents do not become Rust data. Here is what matters for our framework:
+In the Rust world, ordinary data structures live in Wasm's linear memory, which is just a big array of bytes. JavaScript can peer into those bytes through typed-array views. Meanwhile, JavaScript objects (including DOM nodes) live out in JavaScript-land. Rust can hold handles to them, but their contents do not magically cross over to become Rust data. Here is how that border affects our framework:
 
-- Numbers need no string encoding or object serialization. That suits our numeric patches.
-- Converting between a Rust `String` and a JavaScript string copies and re-encodes the contents: Rust uses UTF-8, while JavaScript exposes UTF-16 code units. Keeping a reference to an existing JS string avoids that conversion.
-- Wasm can receive a host value as an `externref`. With wasm-bindgen, Rust stores a handle to that value; calling its JavaScript methods still involves host calls.
-- Calling the DOM from Rust does not bypass the browser's DOM, style or layout work. Rust does not get a secret faster DOM.
+- Numbers need no string encoding or object serialization. This suits our numeric patches perfectly.
+- Converting between a Rust `String` and a JavaScript string copies and re-encodes the contents across the border - Rust uses UTF-8, while JavaScript exposes UTF-16 code units. Keeping a reference to an existing JS string avoids that conversion.
+- Wasm can receive a host value as an `externref`. With wasm-bindgen, Rust stores a handle to that value, but calling its JavaScript methods still involves a trip back across the border.
+- Calling the DOM from Rust does not bypass the browser's native DOM, style, or layout work. Rust does not get a secret, faster DOM in its own world.
 
 <Details withBackground title="A detour: JS string builtins and Rust">
 Wasm 3.0 brought [JS String Builtins](https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/JavaScript_builtins). Holding a JavaScript string as an `externref` was already possible. The new part is working on it through functions from the reserved `wasm:js-string` namespace: `length`, `concat`, `substring`, `equals`. The engine recognizes these imports and can optimize them without an application-written JavaScript wrapper. Reading a JS string's length needs no conversion to UTF-8. Creating or concatenating strings can still allocate.
@@ -265,11 +265,11 @@ Our current pipeline does not use the new builtins. With wasm-bindgen 0.2.128 an
 
 </Details>
 
-For now, LogFold takes the straightforward route: the log keeps Rust-owned text, so its core can run outside a JavaScript host too. Names are fetched and cached by the shim, and patches carry numeric IDs. Text the user typed enters the log as UTF-8 bytes; a text patch carries the event's position, and the shim asks for a JavaScript string when a row needs to show it. That conversion still costs us. That is a tradeoff I chose for LogFold.
+For the time being, LogFold takes the stubborn route: the log strictly keeps Rust-owned text, which intentionally allows the core logic to run outside a JavaScript host too. Variable names are fetched and cached once by the shim, so subsequent patches only need to carry numeric IDs. When a user types text, it enters the log as UTF-8 bytes. If a patch needs to display text, it just sends the event's numerical index, prompting the shim to request the JavaScript string just in time. This string allocation still costs us, but it is a deliberate architectural tradeoff.
 
 ### The bundle
 
-Then there is the bundle size. Compiling Rust to Wasm still brings along support code. These builds have no garbage collector, but they still include an allocator, panic support and collections. Here is what makes up the like runtime, counting the files listed above and compressing with Brotli quality 11 (decimal KB):
+Then there is the glaring issue of bundle size. Compiling Rust to Wasm inevitably drags along standard library baggage. Even though we avoid shipping a garbage collector, we still have to include a memory allocator, panic formatting support, and standard collections. Here is the breakdown of the like button runtime (counting the files listed above, compressed with Brotli at maximum quality):
 
 ```
 the Wasm module         19.01 KB
@@ -280,17 +280,17 @@ the generated CSS        0.10 KB
                         27.17 KB
 ```
 
-That is 27 KB compressed, or 84 KB uncompressed, for a like button I could write in a few lines of JavaScript. Earlier [twiggy](https://rustwasm.github.io/twiggy/) profiles of named, uncompressed Wasm builds pointed at the host and exports, framework machinery, collections, panic formatting and the allocator. Those profiles describe the Wasm module, not shares of the compressed total above.
+That is 27 KB compressed (84 KB uncompressed) for a like button I could write in a few lines of JavaScript. When I ran [twiggy](https://rustwasm.github.io/twiggy/) profiles on earlier uncompressed Wasm builds, the size mostly came from the host and exports, framework machinery, standard collections, panic formatting, and the memory allocator. (Keep in mind those profiles describe the raw Wasm module, not the compressed totals above).
 
-The like-button logic is a tiny part of its own bundle. Most of the weight is the machinery we brought along to flip one flag. The exact percentages change between builds. It is still a lot of code for a heart.
+The actual business logic for the like button is a tiny fraction of its own bundle. Most of the weight is the infrastructure we brought along just to flip one flag. No matter how you slice it, it is a lot of code for a heart.
 
-I tried a few ways to reduce that overhead:
+Naturally, I tried a few ways to trim that overhead:
 
-- **Swapped the allocator.** In our earlier Wasm build, the default allocator, dlmalloc, contributed about 8 KB of uncompressed code. Our apps allocate small, short-lived things, so we use [talc](https://github.com/SFBdragon/talc), which contributed about half of that in the measured build.
-- **Threw out the standard sort.** In an earlier build, one call to `sort` added about 17 KB to the uncompressed Wasm module. A hand-written merge sort costs a fraction of that.
-- **Less formatting.** `assert_eq!` looks innocent, but when it fails it prints both values, and that links the number formatting code. We use a plain `assert!` with a fixed message.
-- **Lists are opt-in.** The list machinery sits behind a trait object, so a like button does not pay for rows it does not have.
-- **The usual compiler flags.** `lto`, one codegen unit, `panic = "abort"`, and `wasm-opt -Oz` on top. One surprise: `opt-level = "z"` made the file smaller and the _compressed_ file bigger, so we kept the default.
+- **Swapped the allocator.** Rust's default Wasm allocator (`dlmalloc`) was hogging roughly 8 KB of uncompressed space. Our framework mostly allocates small, short-lived vectors, so swapping to the leaner [talc](https://github.com/SFBdragon/talc) allocator cut that footprint in half.
+- **Jettisoned the standard sort.** Shockingly, a single innocent call to Rust's standard `sort` bloated the uncompressed Wasm module by 17 KB. A rudimentary, hand-written merge sort consumes a fraction of that.
+- **Stripped out formatting.** The `assert_eq!` macro feels harmless, but if it triggers, it faithfully formats and prints both sides of the equation. This forces the compiler to statically link the heavy formatting traits. Switching to a primitive `assert!` with a static string shaved off precious kilobytes.
+- **Dynamic trait objects for lists.** The heavy machinery for managing dynamic DOM lists is hidden behind a trait object. If a component (like our like button) does not use lists, the linker aggressively strips that dead code out.
+- **The dark arts of Wasm optimization.** We enabled Link-Time Optimization (`lto = true`), restricted compilation to a single codegen unit, set `panic = "abort"`, and ran `wasm-opt -Oz` as a post-build step. Hilariously, setting Rust's `opt-level = "z"` produced a smaller binary but a *larger* Brotli-compressed file, so we reverted to the default `opt-level`.
 
 <Details withBackground title="The build without wasm-bindgen">
 There is also a build without wasm-bindgen at all: plain `extern "C"` functions and numbers. The current raw Wasm module is 52.18 KB uncompressed and 17.85 KB Brotli, versus 54.74 KB and 19.01 KB for the bindgen module. It also needs no generated bindgen JS, which is another 2.27 KB Brotli in the normal build. These are module and glue comparisons; the raw path has its own loader, so they are not whole-page totals.
@@ -298,9 +298,9 @@ There is also a build without wasm-bindgen at all: plain `extern "C"` functions 
 
 ## The todo list
 
-The like button has a fixed structure. A growing list is a different problem. CSS can restyle, move or hide existing elements, but it cannot create the DOM elements for new items.
+The like button was easy because it has a fixed structure. A dynamically growing list is a different beast entirely. CSS is fantastic at restyling, moving, or hiding existing elements, but it cannot conjure new DOM elements out of thin air.
 
-So I built a todo list. A toy framework has traditions to respect.
+So, naturally, I built a todo list. If you are writing a toy framework, you have traditions to respect.
 
 <iframe
   src="/demos/logfold/todo/index.html"
@@ -309,44 +309,44 @@ So I built a todo list. A toy framework has traditions to respect.
   style={{ width: '100%', height: 460, border: '1px solid #ccc', borderRadius: 8 }}
 />
 
-Type something, press Enter, tick a box. The slider under the list works as before: drag it back and the list goes back in time, titles included.
+Type something, press Enter, tick a box. The slider under the list works exactly as before: drag it backwards and the list travels back in time, titles and all.
 
 <Details withBackground title="Please don't feed the todo list evil HTML">
-The todo rows treat your input as text. I missed the history panel, which still inserts it as HTML. Please keep your groceries free of evil scripts until I fix that bug. My polite request is doing no actual security work :)
+The todo rows properly treat your input as plain text. However, I accidentally missed the history panel, which still dangerously inserts it as HTML. Please keep your groceries free of evil scripts until I fix that bug. Yes, I realize my polite request is doing absolutely zero security work here. :)
 </Details>
 
-This needs three additions to the framework: text inputs, new rows and native checkbox state.
+To pull this off, we need three major additions to the framework: text inputs, dynamic new rows, and native checkbox state.
 
 ### Text
 
-A todo title can be anything the user types. The stylesheet cannot know it in advance, and our projection currently contains only numbers.
+A todo title can be literally anything the user types. The stylesheet cannot possibly know it in advance, and right now, our projections exclusively deal in numbers.
 
-CSS can display a string from an attribute, but generated content does not offer the same reliable selection and copying as ordinary text. I would like to be able to copy my shopping list. We need a real text node.
+CSS *can* theoretically display strings pulled from an attribute, but CSS-generated content does not allow for reliable text selection or copying. I want to be able to highlight and copy my todo list, so we need a real, standard DOM text node.
 
-An input can carry text. Adding `text` to its declaration tells the host to include the field's value as bytes:
+An input event can carry text. Adding `text` to its declaration tells the runtime host to grab the input field's value as raw bytes:
 
 ```rust
 inputs { add: text => Add, toggle: index => Toggle }
 ```
 
-Press Enter, and `Add("buy milk")` is appended to the log. The projection can still contain only numbers: the title slot stores the position of that event.
+Press Enter, and an `Add("write another toy framework, but now in C++")` event is appended to our log. Our projection still only needs to contain numbers: the title slot simply stores the log position of that specific event.
 
 ```rust
 // item.id is where its Add event sits in the log
 .set(ui::item::title.at(row), item.id as f64)
 ```
 
-So the patch says "row 0, title, 7". The shim asks Rust for the text of event 7 and writes it into the row as a real text node:
+So the resulting patch just says "row 0, title, event 7". The JavaScript shim then asks Rust for the text of event 7 and writes it directly into the row as a real DOM text node:
 
 ```js
 row.querySelector('[data-text="title"]').textContent = app.text(7)
 ```
 
-The text crosses into Rust with the input and returns as a JS string when a row needs to display it. The patches carry only its event index. Because the host retains the text, either in the log or its archive, historical views can display the original titles too.
+The text crosses the border into Rust when it is typed, and crosses back into JavaScript when a row needs to display it. The patches carry only its event index. Because the host safely retains the text in the log, historical views can perfectly display the original titles too.
 
 ### New rows
 
-Next, the shim needs an element for the new item. The page provides a `<template>` containing one row:
+Next, the shim needs to actually render the new item. The host page provides a `<template>` containing the markup for exactly one row:
 
 ```html
 <ul>
