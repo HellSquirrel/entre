@@ -4,19 +4,17 @@
 <title>LogFold: like</title>
 <link rel="stylesheet" href="gen/like.css">
 <style>
-  /* Every appearance decision lives here. The state arrives as a class on
-     the root, <html class="like-liked">, so a plain class selector does the work. */
+  /* Every appearance decision lives here. Rust sends one number, and it
+     arrives as one CSS variable. */
   html { color-scheme: light; background: #fff; }
   body { font: 16px/1.5 system-ui, sans-serif; margin: 1rem; color: #222; }
   button { font: inherit; padding: .5rem 1rem; }
   h2 { font-size: 1rem; margin: 1.25rem 0 .25rem; color: #555; }
 
-  /* Why rewrite the DOM if we can just update CSS? The component's state
-     reaches this stylesheet as one variable, --like-liked (0 or 1), and
-     every rule below reads that variable. No rule selects on a state class
-     or on an attribute. (The write itself is one class on <html>;
-     gen/like.css turns it into the variable.) scale is always set: a
-     transform that appears from nothing is a new layer per element. */
+  /* Why mutate the HTML if we can just update CSS? The state is one
+     variable, --like-liked, which the shim sets in a stylesheet rule of
+     its own. A like mutates nothing in this document: not a class, not an
+     attribute, not a node. Every rule below reads the variable. */
   .like { font-size: 2rem; padding: .5rem 1.5rem; color: #222; background: #fff; border: 2px solid currentColor; border-radius: 8px;
           scale: calc(1 + var(--like-liked) * .1); transition: scale .15s, color .15s; }
   .like::before { content: "♡ "; }

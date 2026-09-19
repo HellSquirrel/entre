@@ -86,6 +86,34 @@ export function mount(app, { root = document, manifest = null } = {}) {
   const slot = (n) => { if (!slots.has(n)) slots.set(n, manifest?.slots?.[n]); return slots.get(n); };
   const enumClass = (n, x) => { const v = slot(n)?.values; return v && !Number.isNaN(x) && v[x] !== undefined ? `${n}-${v[x]}` : null; };
   const classFor = (n, x) => (slot(n)?.values ? enumClass(n, x) : (!Number.isNaN(x) && x !== 0 ? n : null));
+  // Root variables go into a stylesheet, not onto <html>: one `:root {}`
+  // rule in a constructable sheet this mount owns. Setting a variable there
+  // is a CSSOM write and nothing else: no attribute changes, no node is
+  // touched, a MutationObserver on the document sees nothing. Measured at
+  // the same cost as a class or an inline style. Where constructable
+  // sheets are missing, the inline style of <html> is the fallback.
+  //
+  // A named target's variables go the same way, into a rule on the class of
+  // the target's name (`target count { var n: int; }` is `.count { --n }`).
+  // The markup already carries the class, so the shim never looks the
+  // element up and never touches it; every element with the class gets the
+  // number, and only that subtree inherits it.
+  const ROOT = document.documentElement;
+  const sheet = (() => {
+    try {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(":root {}");
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+      return sheet;
+    } catch { return null; }
+  })();
+  const rootStyle = sheet ? sheet.cssRules[0].style : ROOT.style;
+  const classRules = new Map();                   // target name -> the style of its `.name {}` rule
+  const classStyle = (n) => {
+    let st = classRules.get(n);
+    if (!st) { st = sheet.cssRules[sheet.insertRule(`.${CSS.escape(n)} {}`, sheet.cssRules.length)].style; classRules.set(n, st); }
+    return st;
+  };
   const lastClass = new WeakMap();                // element -> { enum slot name: class on it now }
   const checkedNow = new WeakMap();               // control -> what the host last said its `checked` is
   const setChecked = (control, on) => { control.checked = on; checkedNow.set(control, on); };
@@ -95,7 +123,7 @@ export function mount(app, { root = document, manifest = null } = {}) {
     let w = writers.get(key);
     if (w) return w;
     const n = name(nameId);
-    if (kind === 0) w = (el, x) => { Number.isNaN(x) ? el.style.removeProperty(n) : el.style.setProperty(n, x); };
+    if (kind === 0) w = (el, x) => { const st = el === ROOT ? rootStyle : el.style; Number.isNaN(x) ? st.removeProperty(n) : st.setProperty(n, x); };
     else if (kind === 1) w = (el, x) => { Number.isNaN(x) ? el.removeAttribute(n) : el.setAttribute(n, x); };
     else if (kind === 2) w = (el, x) => { (el.querySelector(`[data-text="${n}"]`) ?? el).textContent = Number.isNaN(x) ? "" : (app.text(x) ?? ""); };
     else if (kind === 5) w = (el, x) => setChecked(el.querySelector(`[data-checked="${n}"]`) ?? el, x === 1);
@@ -229,6 +257,11 @@ export function mount(app, { root = document, manifest = null } = {}) {
             else (r.texts ??= []).push([n, x]);
             continue;
           }
+        }
+        if (kind === 0 && index < 0 && sheet && name(id) !== "root") {   // a named target's variable: a class rule, no element
+          const st = classStyle(name(id)), n = name(nameId);
+          Number.isNaN(x) ? st.removeProperty(n) : st.setProperty(n, x);
+          continue;
         }
         const el = target(id, index);
         if (!el) continue;
