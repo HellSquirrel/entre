@@ -184,9 +184,9 @@ This patch effectively sets `--like-liked: 1` in a dynamic stylesheet. By levera
 }
 ```
 
-Arithmetic with [`calc()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/calc) for the scale, `if()` for the rest. The variable is read right where it is needed, with no selector for the state at all. In our tests, its cost was roughly similar to a plain class selector. Rust never sees a heart. It doesn't know what `liked` looks like, and it shouldn't.
+Arithmetic with [`calc()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/calc) for the scale, `if()` for the rest. The variable is read right where it is needed, with no selector for the state at all. In my tests, its cost was roughly similar to a plain class selector. Rust never sees a heart. It doesn't know what `liked` looks like, and it shouldn't.
 
-There is a browser-support limit: `if()` is Chromium-only today. In other current browsers the demo falls back to a style query on the same variable, which was a bit slower in our tests:
+There is a browser-support limit: `if()` is Chromium-only today. In other current browsers the demo falls back to a style query on the same variable, which was a bit slower in my tests:
 
 ```css
 @container style(--like-liked: 1) {
@@ -213,7 +213,7 @@ document.adoptedStyleSheets.push(sheet)
 sheet.cssRules[0].style.setProperty('--like-liked', 1)
 ```
 
-This is a direct write to CSS, completely bypassing the document. In our measurements, it was roughly as cheap as toggling a CSS class. The generated stylesheet also registers the variable, giving it a strict type and a default:
+This is a direct write to CSS, completely bypassing the document. In my measurements, it was roughly as cheap as toggling a CSS class. The generated stylesheet also registers the variable, giving it a strict type and a default:
 
 ```css
 @property --like-liked { syntax: "<integer>"; inherits: true; initial-value: 0; }
@@ -232,7 +232,7 @@ Even a simple like button raised two questions: how much does crossing between R
 
 ### The border
 
-Crossing the border between those two worlds sounds expensive. In our measurements, however, small numeric calls were cheap - it is converting strings that takes real work.
+Crossing the border between those two worlds sounds expensive. In my measurements, however, small numeric calls were cheap - it is converting strings that takes real work.
 
 In the Rust world, ordinary data structures live in Wasm's linear memory, which is just a big array of bytes. JavaScript can peer into those bytes through typed-array views. Meanwhile, JavaScript objects (including DOM nodes) live out in JavaScript-land. Rust can hold handles to them, but their contents do not magically cross over to become Rust data. Here is how that border affects our framework:
 
@@ -290,7 +290,7 @@ Naturally, I tried a few ways to trim that overhead:
 - **Jettisoned the standard sort.** Shockingly, a single innocent call to Rust's standard `sort` bloated the uncompressed Wasm module by 17 KB. A rudimentary, hand-written merge sort consumes a fraction of that.
 - **Stripped out formatting.** The `assert_eq!` macro feels harmless, but if it triggers, it faithfully formats and prints both sides of the equation. This forces the compiler to statically link the heavy formatting traits. Switching to a primitive `assert!` with a static string shaved off precious kilobytes.
 - **Dynamic trait objects for lists.** The heavy machinery for managing dynamic DOM lists is hidden behind a trait object. If a component (like our like button) does not use lists, the linker aggressively strips that dead code out.
-- **The dark arts of Wasm optimization.** We enabled Link-Time Optimization (`lto = true`), restricted compilation to a single codegen unit, set `panic = "abort"`, and ran `wasm-opt -Oz` as a post-build step. Hilariously, setting Rust's `opt-level = "z"` produced a smaller binary but a *larger* Brotli-compressed file, so we reverted to the default `opt-level`.
+- **The dark arts of Wasm optimization.** I enabled Link-Time Optimization (`lto = true`), restricted compilation to a single codegen unit, set `panic = "abort"`, and ran `wasm-opt -Oz` as a post-build step. Hilariously, setting Rust's `opt-level = "z"` produced a smaller binary but a *larger* Brotli-compressed file, so I reverted to the default `opt-level`.
 
 <Details withBackground title="The build without wasm-bindgen">
 There is also a build without wasm-bindgen at all: plain `extern "C"` functions and numbers. The current raw Wasm module is 52.18 KB uncompressed and 17.85 KB Brotli, versus 54.74 KB and 19.01 KB for the bindgen module. It also needs no generated bindgen JS, which is another 2.27 KB Brotli in the normal build. These are module and glue comparisons; the raw path has its own loader, so they are not whole-page totals.
@@ -414,7 +414,7 @@ Then `sibling-index()` reached Baseline: a function that tells an element which 
 .item::before { counter-reset: n calc(sibling-index() - 1); content: counter(n); }
 ```
 
-So we measured it in Chrome. On a list of ten thousand rows, appending one more got about four times slower than with the old counter. So much for my assumption that each row could handle this independently. The newest CSS function in this post came last in this test.
+So I measured it in Chrome. On a list of ten thousand rows, appending one more got about four times slower than with the old counter. So much for my assumption that each row could handle this independently. The newest CSS function in this post came last in this test.
 
 In the end, Rust supplies the row number too. The shim writes it to an attribute when the row appears, and CSS displays it with [`attr()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr).
 
@@ -454,7 +454,7 @@ We zip them all together before we go. `zip` runs two folds over the same events
 <Details withBackground title="Time travel between checkpoints">
 Checkpoints live in a B-tree, ordered by event position. To show a past state, we find the nearest checkpoint at or before that position, then replay the remaining events. This is how the slider shows the past.
 
-A small Wasm lesson. In an earlier build, checkpoint cleanup pulled extra tree-removal code into the Wasm module through a single call to `BTreeMap::remove`. To shrink the module, we had to stop calling that method. Instead of removing old checkpoints, we now rebuild the tree from the ones we keep. Same retained checkpoints, less machinery to ship.
+A small Wasm lesson. In an earlier build, checkpoint cleanup pulled extra tree-removal code into the Wasm module through a single call to `BTreeMap::remove`. To shrink the module, I had to stop calling that method. Instead of removing old checkpoints, we now rebuild the tree from the ones we keep. Same retained checkpoints, less machinery to ship.
 </Details>
 
 ## Brunhilda
@@ -484,7 +484,7 @@ if (running) host.frame(1000 / fps)
 
 `frame(250)` advances virtual time by 250 ms. The log strictly stores the total elapsed time in `Tick.ms`: 250, 500, 750, and so on. These ticks also record whatever the simulated sensors report at that exact moment.
 
-This is exactly why the time travel slider flawlessly works on Brunhilda too. Replaying the commands, sensor reports, and ticks in order gives me the exact same robot state. Even the simulation speed is just state: "faster" and "slower" are ordinary inputs, identical to a click on the like button.
+This is exactly why the time travel slider flawlessly works on Brunhilda too. Replaying the commands, sensor reports, and ticks in order gives us the exact same robot state. Even the simulation speed is just state: "faster" and "slower" are ordinary inputs, identical to a click on the like button.
 
 ### A brain, a studio, a world
 
@@ -512,7 +512,7 @@ This was also where testing the behavior mattered. I built the first prototype q
 
 The fuzzer tests a networked like-button model against a simulated server, trying to break the effects logic. That model still needs code to send real network requests. I will leave that for another post.
 
-And that concludes my third app. Behold, the ROBOT! Or, to be precise, the 144 KB robot runtime (46 KB Brotlied), including its imported manifest. She cleans. She docks. She stops when told. With the naive pathfinding policy, she still aggressively attacks me. That is the whole feature list.
+And that concludes our third app. Behold, the ROBOT! Or, to be precise, the 144 KB robot runtime (46 KB Brotlied), including its imported manifest. She cleans. She docks. She stops when told. With the naive pathfinding policy, she still aggressively attacks me. That is the whole feature list.
 
 ## So, how fast is it?
 
