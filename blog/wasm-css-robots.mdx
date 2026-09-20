@@ -361,48 +361,48 @@ Next, the shim needs to actually render the new item. The host page provides a `
 </ul>
 ```
 
-Rust describes the rows as a family of slots:
+Rust formally describes the rows as a family of slots:
 
 ```rust
 family item { class present; checked done; attr n: int; text title; }
 ```
 
-There is no separate "create a row" command. Rust projects numbers: "row 3 is present, its number is 4, its title is event 12". When a patch names a row the shim has never seen, the shim makes one:
+Notice there is no separate "create a row" command. Rust purely projects numeric facts: "row 3 is present, its number is 4, its title is event 12". When a patch targets a row index the shim has never seen, the shim simply creates it:
 
-- It collects everything the patch says about the new row: classes, attributes, the title.
-- It renders the row from the template as a string, with those first values already in it.
-- All new rows of one patch go in with a single `insertAdjacentHTML`. A thousand rows is one parse, not a thousand clones.
-- It remembers the element under its row number, so later writes go straight to it.
+- It eagerly collects everything the patch dictates about the new row (classes, attributes, the title).
+- It renders the row from the HTML template into a raw string, with those initial values interpolated.
+- All new rows for a given patch are injected via a single `insertAdjacentHTML` call. Adding a thousand rows requires a single DOM parse, not a thousand slow element clones.
+- It memoizes the element reference by its row number, so subsequent writes go straight to the target.
 
-We add the title as text after inserting the row, so a todo called `<script>` stays a todo.
+We explicitly append the title as a text node *after* inserting the raw HTML row, ensuring a todo titled `<script>` safely remains just a todo.
 
-In this todo list, rows are never removed. A row the state no longer mentions loses its `present` class, and the stylesheet hides it.
+In this particular todo list, rows are never actually removed from the DOM. If the state no longer mentions a row, it merely loses its `present` class, and the stylesheet quietly hides it.
 
 ### The checkbox
 
-The checkbox also needs a DOM update. Its `checked` state is a native element property that CSS cannot set. We give it a slot of its own:
+The native checkbox requires a bit of special treatment. Its `checked` state is a native element property that CSS simply cannot override. So, we grant it a dedicated slot of its own:
 
 ```rust
 family item { class present; checked done; attr n: int; text title; }
 ```
 
-The shim writes `checked` on the input marked `data-checked="done"`, and CSS reads that state through [`:checked`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:checked):
+The JavaScript shim applies `checked` directly to the input marked `data-checked="done"`, and CSS reacts to that state using the native [`:checked`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:checked) pseudo-class:
 
 ```css
 .item:has(.check:checked) .title { text-decoration: line-through; }
 ```
 
-The click also carries the row's index, as specified by `toggle: index` in the declaration. Rust uses it to toggle the corresponding item.
+When clicked, the event payload also carries the row's numeric index, precisely as requested by `toggle: index` in the component macro. Rust then uses this index to correctly identify and toggle the item in its state.
 
 <Details withBackground title="A confession about keys">
-Our rows are identified by position. A click says "toggle row 2", and Rust flips the third item: indices start at zero. This works for our app because we never remove an item or insert one in the middle.
+Our rows are currently identified purely by their position. A click effectively says "toggle row 2", and Rust blindly flips the third item (since indices start at zero). This approach survives in our toy app only because we never actually remove an item or insert one in the middle.
 
-If you click while viewing the past, the action still goes at the end of the log and the page jumps back to the present. It does not create a new branch of history. If we allowed removals or insertions in the middle, row 2 in the past could be a different todo from row 2 now, and we could toggle the wrong one. The fix is the usual one: give every row a stable key. We even have one for free, the place of its `Add` event in the log. Hello, React keys.
+If you click a checkbox while time-traveling in the past, the action is still appended to the end of the log and the page rubber-bands back to the present. It does *not* create an alternate timeline branch. If we allowed removals or middle insertions, "row 2" in the past could be an entirely different todo from "row 2" in the present, leading us to toggle the wrong item. The robust fix is the classic one: give every row a stable, unique key. Conveniently, we already have one for free - the position of its initial `Add` event in the log. Hello again, React keys.
 </Details>
 
 ### A row that knows its number
 
-Every todo has a number in front of it. I thought CSS could handle that for me, but `sibling-index()` made appending a row slower in our Chrome test. In the end, Rust supplies the number as an attribute and CSS displays it with [`attr()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr). The dull solution won.
+Every single todo has a number in front of it. Originally, I figured CSS could easily handle the counting for me, but it turned out that `sibling-index()` actually made appending a new row slower in my Chrome benchmarks. In the end, Rust explicitly supplies the number as an attribute, and CSS just displays it using [`attr()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/attr). The boring, dull solution won out.
 
 <Details withBackground title="How CSS lost the counting job">
 The first version used a [CSS counter](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Counter_styles/Using_counters). It works, but the numbering depends on what came before. A change near the top can make the browser recalculate the numbers below it.
@@ -429,7 +429,7 @@ family item { class present; checked done; attr n: int; text title; }
 This adds one write when a row appears and no further numbering updates for our append-only list. In this test, the cost was reasonably close to having no numbers at all.
 </Details>
 
-And that is our second app. Hooray, the TODO list! Or, to be precise, the 92 KB todo runtime. 30 KB brotlied. Using the same counting rules, that is about 2.4 KB more than the like runtime before rounding. It adds. It ticks. It cannot remove an item, it cannot edit one, and a reload loses everything, because the log lives in memory. That is the whole feature list.
+And that concludes our second app. Behold, the TODO list! Or, to be precise, the 92 KB todo runtime (30 KB compressed with Brotli). Using the same counting rules as before, that is roughly 2.4 KB larger than our lonely like button runtime. It adds items. It ticks checkboxes. It cannot remove an item, it cannot edit an item, and refreshing the page wipes everything out because the event log lives exclusively in volatile memory. That concludes the entire feature list.
 
 ## How much history can we keep?
 
@@ -459,9 +459,9 @@ A small Wasm lesson. In an earlier build, checkpoint cleanup pulled extra tree-r
 
 ## Brunhilda
 
-For something more complicated, I borrowed a problem from my daily life. I have a robot vacuum cleaner lurking in my apartment, and she tries to sweep me up whenever I am in her way. I am fond of her anyway. She has a strong character, so she got a strong name: Brunhilda.
+For something slightly more complex, I borrowed a problem from my daily life. I have a robot vacuum cleaner lurking in my apartment, and she relentlessly tries to sweep me up whenever I am in her way. I am fond of her anyway. She has a strong character, so she got a strong name: Brunhilda.
 
-The next app simulates this arrangement: Brunhilda sweeping the apartment, the furniture standing in her way, and me walking around.
+The next app simulates this exact arrangement: Brunhilda sweeping the apartment, the furniture standing in her way, and me helplessly walking around.
 
 <iframe
   src="/demos/logfold/studio/index.html"
@@ -470,59 +470,59 @@ The next app simulates this arrangement: Brunhilda sweeping the apartment, the f
   style={{ width: '100%', height: 800, border: '1px solid #ccc', borderRadius: 8 }}
 />
 
-Press Start. You are the blue dot: click inside the room, then use the arrow keys to move. And yes, there is a slider.
+Press Start. You are the blue dot: click inside the room, then use the arrow keys to move. And yes, there is a time travel slider.
 
 ### Time
 
-To make the app work we need one more concept: time. A like button doesn't care what time it is. A robot does.
+To make this simulation work, I needed one more concept: time. A like button doesn't care what time it is. A robot does.
 
-Rust never reads a clock. Time arrives as another event in the log, `Event::Tick { ms: 250 }`, and the page owns the clock. While the state says "running", a small loop on the page advances the simulation a few times a second:
+Rust never reads a native system clock. Time simply arrives as another event in the log, like `Event::Tick { ms: 250 }`, and the JavaScript page owns the actual clock. While the state says "running", a small `requestAnimationFrame` loop on the page artificially advances the simulation a few times a second:
 
 ```js
 if (running) host.frame(1000 / fps)
 ```
 
-`frame(250)` advances virtual time by 250 ms. The log stores the total elapsed time in `Tick.ms`: 250, 500, 750, and so on. Frames also record what the simulated sensors report.
+`frame(250)` advances virtual time by 250 ms. The log strictly stores the total elapsed time in `Tick.ms`: 250, 500, 750, and so on. These ticks also record whatever the simulated sensors report at that exact moment.
 
-This is why the slider works on Brunhilda too. Replaying the commands, sensor reports and ticks in order gives us the same robot state. Even the speed is state: faster and slower are ordinary inputs, like a click on the like button.
+This is exactly why the time travel slider flawlessly works on Brunhilda too. Replaying the commands, sensor reports, and ticks in order gives me the exact same robot state. Even the simulation speed is just state: "faster" and "slower" are ordinary inputs, identical to a click on the like button.
 
 ### A brain, a studio, a world
 
-To make Brunhilda move, we wrote a small crate for her brain. It is a fold, like everything else here: events in, a state out. Her events are commands (start, dock, stop), sensor reports (a bump, "the human is at this cell") and ticks. That is her whole vocabulary.
+To make Brunhilda move, I wrote a small, isolated crate for her brain. It is a fold, just like everything else here: events go in, a state comes out. Her input events are commands (start, dock, stop), sensor reports (a bump, "the human is at this cell"), and ticks. That is her entire vocabulary.
 
-The same framework builds the rest: the controls of the studio, and the simulated world - the room, the furniture, me.
+The exact same framework builds the rest: the UI controls of the studio, and the simulated world—the room, the furniture, me.
 
-The separation is similar to the one between Rust and the page. Rust describes what should be visible as data; the browser host applies it.
+This separation is strikingly similar to the one between Rust and the web page. Rust describes what should be visible as data; the browser host blindly applies it.
 
-Brunhilda's brain works the same way. Events come in; a heading or an emergency-stop request comes out as data. The host acts on it. Her brain knows nothing about the page or the simulation. She lives in the Matrix!
+Brunhilda's brain works the exact same way. Events come in; a heading or an emergency-stop request comes out as pure data. The host then acts on it. Her brain knows absolutely nothing about the web page or the simulation. She lives in the Matrix!
 
-In principle, a host for real wheels could keep the same brain crate, as long as it uses the same sensor and movement model. I have not tested that. My furniture has suffered enough.
+In principle, a host for real physical wheels could run the exact same brain crate, as long as it uses the same sensor and movement model. I have not tested that. My furniture has suffered enough.
 
-I worried that this boundary would slow things down, but it also helps organize the code. The component says what should happen, and the host makes it happen. That works for both a page and a simulated robot.
+I briefly worried that this strict boundary would slow things down, but it naturally helps organize the code. The component declares what should happen, and the host makes it happen. That architecture scales for both a web page and a simulated robot.
 
 ### Effects
 
-Her emergency stop is an effect. The full design needs its own post, but the basic idea is simple. A fold never performs the effect itself. It only says what it wants, as a value: "this request should be in flight", "the motors should be stopped".
+Her emergency stop is an *effect*. The full design of effects needs its own post, but the basic idea is simple. A fold never actually performs the effect itself. It only declares what it wants as a value: "this network request should be in flight", or "the motors should be stopped".
 
-The host compares that with what it has already started and records a `Started` event before starting the effect. If the effect has an answer, that comes back as another event. The emergency stop is fire-and-forget; it has no answer to wait for.
+The host compares that desire with what it has already started and safely records a `Started` event *before* triggering the effect. If the effect yields an answer, that answer comes back as just another event. The emergency stop is fire-and-forget; it has no answer to wait for.
 
-Replay uses the recorded events to rebuild state. It does not send the request again. Dragging a slider should not accidentally order a second pizza.
+Replaying the log uses the previously recorded events to seamlessly rebuild state. It does *not* execute the request again. Dragging a time travel slider should not accidentally order a second pizza.
 
-This was also where testing the behavior mattered. I built the first prototype quickly with my LLM agents, then spent much longer fixing bugs and refining it. Along the way, I used a bundle analyzer, made the benchmarks more consistent and wrote a fuzzer.
+This was also where testing the behavior mattered. I built the first prototype quickly with my LLM agents, then spent much longer fixing bugs and refining it. Along the way, I used a bundle analyzer, made the benchmarks more consistent, and wrote a fuzzer.
 
 The fuzzer tests a networked like-button model against a simulated server, trying to break the effects logic. That model still needs code to send real network requests. I will leave that for another post.
 
-And that is our third app. Hooray, the ROBOT! Or, to be precise, the 144 KB robot runtime. 46 KB brotlied, with the same counting rules and its imported manifest included. She cleans. She docks. She stops when told. With the naive policy she still attacks me. That is the whole feature list.
+And that concludes my third app. Behold, the ROBOT! Or, to be precise, the 144 KB robot runtime (46 KB Brotlied), including its imported manifest. She cleans. She docks. She stops when told. With the naive pathfinding policy, she still aggressively attacks me. That is the whole feature list.
 
 ## So, how fast is it?
 
-I also wanted to compare the runtime with vanilla JS and React. These tests cover a few table operations, only a small part of what a full framework does.
+I also wanted to see how the runtime stacked up against vanilla JS and React. Note that these tests only cover a few raw table operations - just a tiny slice of what a full-fledged framework actually does.
 
-I used [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark), which creates, updates, swaps and clears table rows.
+I used the [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark) suite, which measures creating, updating, swapping, and clearing table rows.
 
-The benchmark expects real text in the table. So LogFold uses a separate adapter for this benchmark in place of its usual shim. Rust still produces numeric patches; the adapter writes text and manages rows. The results below measure Rust and this adapter together. The demos use CSS differently, so these numbers do not tell us how fast that part is.
+The benchmark naturally expects real text in the table. Because of this, LogFold uses a separate, specialized DOM adapter for this benchmark instead of its usual CSS-heavy shim. Rust still natively produces numeric patches; the adapter just translates those to text and manages the DOM rows. The results below measure Rust and this adapter working together. Since the demos use CSS quite differently, these numbers do not reflect the CSS performance.
 
-I ran the benchmark's own driver on my laptop.<sup><a href="#benchmark-machine" id="benchmark-machine-ref" aria-label="Benchmark machine details">1</a></sup> These are median times in milliseconds, alongside the vanilla JS reference and React 19.2 hooks entry:
+I ran the benchmark's own driver on my laptop.<sup><a href="#benchmark-machine" id="benchmark-machine-ref" aria-label="Benchmark machine details">1</a></sup> These are the median times in milliseconds, placed alongside the vanilla JS reference and the React 19.2 hooks entry:
 
 <DataTable
   caption="js-framework-benchmark, its own driver, one laptop. LogFold uses a benchmark-specific DOM adapter. Medians, milliseconds. Lower is better."
@@ -538,7 +538,7 @@ I ran the benchmark's own driver on my laptop.<sup><a href="#benchmark-machine" 
   ]}
 />
 
-The same run also measured bundle size, first paint and memory. These saved results predate the updated demos above. The driver counts implementation files, including the benchmark adapter, but excludes shared `/css` assets and HTTP headers. Compression here means Brotli.
+The exact same run also measured bundle size, first paint, and memory. These saved results predate the updated demos shown above. The driver only counts implementation files (including the benchmark adapter) but excludes shared `/css` assets and HTTP headers. Compression here means Brotli.
 
 <DataTable
   caption="Same benchmark, same run. Lower is better."
@@ -551,9 +551,11 @@ The same run also measured bundle size, first paint and memory. These saved resu
   ]}
 />
 
-LogFold finishes close to vanilla JS in these tests. Rust computes the changes and the adapter applies them directly to the DOM. The JavaScript side has no tree to compare, although the browser still has style, layout and paint work to do.
+LogFold holds its own surprisingly well in this narrow test. It sits in a very similar tier for basic table operations, though it lags a bit on creating 10k rows. The 31 KB bundle is impressively light for a framework carrying over the Wasm bundle. And the 4 MiB memory peak on 1,000 rows suggests it remains incredibly frugal when nothing forces the browser's hand, despite the inherent memory overhead of keeping an event log.
 
-The bundle is heavier: about twelve times vanilla's compressed size, including the Rust support code discussed earlier. The benchmark also reports roughly twice vanilla's memory figure. I have not separated the cost of the log from the state, checkpoints and other allocations, so I do not yet know how much each contributes.
+Memory was also stable across iterations for the Rust heap, while JS memory showed the exact same GC peaks and troughs as the mainstream frameworks. The host JS simply drops references to old log values whenever it creates a checkpoint. The V8 garbage collector seemed perfectly happy to clean up those values. I saw no obvious memory leak beyond the intentionally retained history itself.
+
+There are, of course, limits. A massive array of state will eventually trigger painful garbage collection sweeps for all elements. Pushing 10,000 arrays of 10,000 numbers in JS will eventually exhaust memory. Wasm linear memory can bloat too. I fully expect these upper bounds to matter significantly more in large applications. But for a toy, it is more than enough.
 
 <Details withBackground title="The fine print">
 - One laptop, one session. Results will vary between machines and runs. CPU medians come from 15 samples, or 25 for row selection. The saved memory and first-paint figures each have one observation.
@@ -562,14 +564,12 @@ The bundle is heavier: about twelve times vanilla's compressed size, including t
 - React and its ecosystem support much more than this toy. That makes the comparison narrow; it does not explain any particular timing in the table.
 </Details>
 
-## Wrapping up
+## The end
 
-This is still a long way from a full-featured framework. Three demos and a robot with questionable manners do not quite get us there. But the results are promising.
+This toy framework met the absurd goals I started out with. CSS absolutely *can* handle state, and a fold of events *can* reliably build that state without JS. It works smoothly across three demos and runs fast enough to compete on a small table.
 
-The approach turned out to be less crazy than I expected. Performance looks good in the tests so far, and the bundle sizes seem acceptable for the experiments I want to build next. I say this after spending several paragraphs making fun of my own like button.
+Will it power my next real app? Maybe. With a good agent setup, it's not quite difficult to adjust a home-built solution for almost every need. However, to make the framework suitable for every production case, much more work is needed. So I can teach it to solve my task, however it will never compete with a real framework.
 
-I also found myself enjoying writing components in Rust. I think I will keep playing with it and see how it goes.
-
-Hope you enjoyed the story :)
+But it was wildly fun.
 
 <p id="benchmark-machine"><small><a href="#benchmark-machine-ref" aria-label="Back to benchmark">1.</a> Machine: 16-inch MacBook Pro (2021), Apple M1 Max, 32 GB memory; macOS 26.5.2 (25F84). Browser: Google Chrome 152.0.7977.83 (Official Build), arm64.</small></p>
