@@ -108,6 +108,12 @@ const nextConfig = {
       destination: '/blog',
       permanent: true,
     },
+    {
+      // the write-up moved onto the demo page itself
+      source: '/blog/css-neural-network-scrollbars',
+      destination: 'https://acorns.nutlore.me/css-neural-network/',
+      permanent: true,
+    },
   ],
 }
 
